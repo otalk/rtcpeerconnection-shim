@@ -761,7 +761,7 @@ module.exports = function(edgeVersion) {
             return SDPUtils.parseCandidate(cand);
           })
           .filter(function(cand) {
-            return cand.component === '1';
+            return cand.component === '1' || cand.component === 1;
           });
       if (description.type === 'offer' && !rejected) {
         transceiver = self.transceivers[sdpMLineIndex] ||
