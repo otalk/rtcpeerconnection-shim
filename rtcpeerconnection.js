@@ -554,16 +554,19 @@ module.exports = function(edgeVersion) {
 
   RTCPeerConnection.prototype.setLocalDescription = function(description) {
     var self = this;
+    var args = arguments;
 
     if (!isActionAllowedInSignalingState('setLocalDescription',
         description.type, this.signalingState)) {
-      var e = new Error('Can not set local ' + description.type +
-          ' in state ' + this.signalingState);
-      e.name = 'InvalidStateError';
-      if (arguments.length > 2 && typeof arguments[2] === 'function') {
-        window.setTimeout(arguments[2], 0, e);
-      }
-      return Promise.reject(e);
+      return new Promise(function(resolve, reject) {
+        var e = new Error('Can not set remote ' + description.type +
+            ' in state ' + self.signalingState);
+        e.name = 'InvalidStateError';
+        if (args.length > 2 && typeof args[2] === 'function') {
+          args[2].apply(null, [e]);
+        }
+        reject(e);
+      });
     }
 
     var sections;
@@ -646,45 +649,38 @@ module.exports = function(edgeVersion) {
     // If a success callback was provided, emit ICE candidates after it
     // has been executed. Otherwise, emit callback after the Promise is
     // resolved.
-    var hasCallback = arguments.length > 1 &&
-      typeof arguments[1] === 'function';
-    if (hasCallback) {
-      var cb = arguments[1];
-      window.setTimeout(function() {
-        cb();
-        if (self.iceGatheringState === 'new') {
-          self.iceGatheringState = 'gathering';
-          self._emitGatheringStateChange();
-        }
-        self._emitBufferedCandidates();
-      }, 0);
-    }
-    var p = Promise.resolve();
-    p.then(function() {
-      if (!hasCallback) {
-        if (self.iceGatheringState === 'new') {
-          self.iceGatheringState = 'gathering';
-          self._emitGatheringStateChange();
-        }
-        // Usually candidates will be emitted earlier.
-        window.setTimeout(self._emitBufferedCandidates.bind(self), 500);
+    var cb = arguments.length > 1 && typeof arguments[1] === 'function' &&
+        arguments[1];
+    return new Promise(function(resolve) {
+      if (cb) {
+        cb.apply(null);
       }
+      if (self.iceGatheringState === 'new') {
+        self.iceGatheringState = 'gathering';
+        self._emitGatheringStateChange();
+      }
+      // Usually candidates will be emitted earlier.
+      window.setTimeout(self._emitBufferedCandidates.bind(self), 500);
+
+      resolve();
     });
-    return p;
   };
 
   RTCPeerConnection.prototype.setRemoteDescription = function(description) {
     var self = this;
+    var args = arguments;
 
     if (!isActionAllowedInSignalingState('setRemoteDescription',
         description.type, this.signalingState)) {
-      var e = new Error('Can not set remote ' + description.type +
-          ' in state ' + this.signalingState);
-      e.name = 'InvalidStateError';
-      if (arguments.length > 2 && typeof arguments[2] === 'function') {
-        window.setTimeout(arguments[2], 0, e);
-      }
-      return Promise.reject(e);
+      return new Promise(function(resolve, reject) {
+        var e = new Error('Can not set remote ' + description.type +
+            ' in state ' + self.signalingState);
+        e.name = 'InvalidStateError';
+        if (args.length > 2 && typeof args[2] === 'function') {
+          args[2].apply(null, [e]);
+        }
+        reject(e);
+      });
     }
 
     var streams = {};
@@ -975,10 +971,12 @@ module.exports = function(edgeVersion) {
       });
     }, 4000);
 
-    if (arguments.length > 1 && typeof arguments[1] === 'function') {
-      window.setTimeout(arguments[1], 0);
-    }
-    return Promise.resolve();
+    return new Promise(function(resolve) {
+      if (args.length > 1 && typeof args[1] === 'function') {
+        args[1].apply(null);
+      }
+      resolve();
+    });
   };
 
   RTCPeerConnection.prototype.close = function() {
@@ -1071,6 +1069,8 @@ module.exports = function(edgeVersion) {
 
   RTCPeerConnection.prototype.createOffer = function() {
     var self = this;
+    var args = arguments;
+
     if (this._pendingOffer) {
       throw new Error('createOffer called while there is a pending offer.');
     }
@@ -1217,13 +1217,17 @@ module.exports = function(edgeVersion) {
       type: 'offer',
       sdp: sdp
     });
-    if (arguments.length && typeof arguments[0] === 'function') {
-      window.setTimeout(arguments[0], 0, desc);
-    }
-    return Promise.resolve(desc);
+    return new Promise(function(resolve) {
+      if (args.length > 0 && typeof args[0] === 'function') {
+        args[0].apply(null, [desc]);
+      }
+      resolve(desc);
+    });
   };
 
   RTCPeerConnection.prototype.createAnswer = function() {
+    var args = arguments;
+
     var sdp = SDPUtils.writeSessionBoilerplate();
     if (this.usingBundle) {
       sdp += 'a=group:BUNDLE ' + this.transceivers.map(function(t) {
@@ -1280,10 +1284,12 @@ module.exports = function(edgeVersion) {
       type: 'answer',
       sdp: sdp
     });
-    if (arguments.length && typeof arguments[0] === 'function') {
-      window.setTimeout(arguments[0], 0, desc);
-    }
-    return Promise.resolve(desc);
+    return new Promise(function(resolve) {
+      if (args.length > 0 && typeof args[0] === 'function') {
+        args[0].apply(null, [desc]);
+      }
+      resolve(desc);
+    });
   };
 
   RTCPeerConnection.prototype.addIceCandidate = function(candidate) {
@@ -1325,10 +1331,13 @@ module.exports = function(edgeVersion) {
         this.remoteDescription.sdp = sections.join('');
       }
     }
-    if (arguments.length > 1 && typeof arguments[1] === 'function') {
-      window.setTimeout(arguments[1], 0);
-    }
-    return Promise.resolve();
+    var args = arguments;
+    return new Promise(function(resolve) {
+      if (args.length > 1 && typeof args[1] === 'function') {
+        args[1].apply(null);
+      }
+      resolve();
+    });
   };
 
   RTCPeerConnection.prototype.getStats = function() {
@@ -1363,7 +1372,7 @@ module.exports = function(edgeVersion) {
           });
         });
         if (cb) {
-          window.setTimeout(cb, 0, results);
+          cb.apply(null, results);
         }
         resolve(results);
       });
