@@ -681,7 +681,8 @@ describe('Edge shim', () => {
 
     describe('when called after addTrack', () => {
       describe('with an audio track', () => {
-        it('the generated SDP should contain an audio m-line', (done) => {
+        it('the generated SDP should contain a sendrecv ' +
+           'audio m-line', (done) => {
           const audioTrack = new MediaStreamTrack();
           audioTrack.kind = 'audio';
           const stream = new MediaStream([audioTrack]);
@@ -716,7 +717,8 @@ describe('Edge shim', () => {
       });
 
       describe('with an audio track and offering to receive video', () => {
-        it('the generated SDP should contain a recvonly m-line', (done) => {
+        it('the generated SDP should contain a sendrecv audio m-line ' +
+           'and a recvonly video m-line', (done) => {
           const audioTrack = new MediaStreamTrack();
           audioTrack.kind = 'audio';
           const stream = new MediaStream([audioTrack]);
@@ -796,7 +798,7 @@ describe('Edge shim', () => {
 
       describe('with an audio track and two video tracks', () => {
         it('the generated SDP should contain an audio and ' +
-            'video m-line', (done) => {
+            'two video m-lines', (done) => {
           const audioTrack = new MediaStreamTrack();
           audioTrack.kind = 'audio';
           const videoTrack = new MediaStreamTrack();
