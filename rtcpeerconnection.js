@@ -1036,6 +1036,7 @@ module.exports = function(edgeVersion) {
       checking: 0,
       connected: 0,
       completed: 0,
+      disconnected: 0,
       failed: 0
     };
     this.transceivers.forEach(function(transceiver) {
