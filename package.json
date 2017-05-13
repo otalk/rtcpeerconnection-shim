@@ -1,0 +1,31 @@
+{
+  "name": "rtcpeerconnection-shim",
+  "version": "0.0.1",
+  "description": "An implementation of the RTCPeerConnection API ontop of ORTC",
+  "license": "BSD-3-Clause",
+  "main": "./rtcpeerconnection.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fippo/rtcpeerconnection-shim.git"
+  },
+  "authors": [
+    "Philipp Hancke",
+    "The WebRTC project authors (https://www.webrtc.org/)"
+  ],
+  "scripts": {
+    "test": "eslint *.js test/*.js && mocha test/"
+  },
+  "engines": {
+    "npm": ">=3.10.0",
+    "node": ">=6.0.0"
+  },
+  "dependencies": {
+    "sdp": "^1.5.2"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "eslint": "^1.10.3",
+    "eslint-config-webrtc": "^1.0.0",
+    "mocha": "^3.2.0"
+  }
+}
