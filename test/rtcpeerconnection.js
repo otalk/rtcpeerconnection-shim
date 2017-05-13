@@ -8,6 +8,9 @@
 /* eslint-env node */
 const chai = require('chai');
 const expect = chai.expect;
+const sinon = require('sinon');
+const sinonChai = require('sinon-chai');
+chai.use(sinonChai);
 
 const SDPUtils = require('sdp');
 
@@ -179,6 +182,23 @@ describe('Edge shim', () => {
           done();
         });
         pc.setRemoteDescription({type: 'offer', sdp: sdp});
+      });
+
+      it('triggers ontrack and track event before resolving', (done) => {
+        let clock = sinon.useFakeTimers();
+        var trackEvent = sinon.stub();
+        pc.addEventListener('track', trackEvent);
+        pc.ontrack = sinon.stub();
+        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          window.setTimeout(() => {
+            expect(trackEvent).to.have.been.calledWith();
+            expect(pc.ontrack).to.have.been.calledWith();
+            clock.restore();
+            done();
+          }, 0);
+          clock.tick(500);
+        });
       });
     });
 

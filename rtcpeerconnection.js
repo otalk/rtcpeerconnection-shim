@@ -926,12 +926,12 @@ module.exports = function(edgeVersion) {
           self.remoteStreams.push(stream);
           var event = new Event('addstream');
           event.stream = stream;
-          self.dispatchEvent(event);
-          if (self.onaddstream !== null) {
-            window.setTimeout(function() {
+          window.setTimeout(function() {
+            self.dispatchEvent(event);
+            if (self.onaddstream !== null) {
               self.onaddstream(event);
-            }, 0);
-          }
+            }
+          });
         }
 
         receiverList.forEach(function(item) {
@@ -944,12 +944,12 @@ module.exports = function(edgeVersion) {
           trackEvent.track = track;
           trackEvent.receiver = receiver;
           trackEvent.streams = [stream];
-          self.dispatchEvent(trackEvent);
-          if (self.ontrack !== null) {
-            window.setTimeout(function() {
+          window.setTimeout(function() {
+            self.dispatchEvent(trackEvent);
+            if (self.ontrack !== null) {
               self.ontrack(trackEvent);
-            }, 0);
-          }
+            }
+          });
         });
       }
     });
