@@ -13,7 +13,8 @@
     "The WebRTC project authors (https://www.webrtc.org/)"
   ],
   "scripts": {
-    "test": "eslint *.js test/*.js && mocha test/"
+    "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
+    "test": "eslint *.js test/*.js && nyc --reporter html mocha test/"
   },
   "engines": {
     "npm": ">=3.10.0",
@@ -24,8 +25,10 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
+    "codecov": "^2.2.0",
     "eslint": "^1.10.3",
     "eslint-config-webrtc": "^1.0.0",
-    "mocha": "^3.2.0"
+    "mocha": "^3.2.0",
+    "nyc": "^11.0.2"
   }
 }
