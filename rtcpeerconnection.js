@@ -1225,24 +1225,30 @@ module.exports = function(edgeVersion) {
   };
 
   RTCPeerConnection.prototype.addIceCandidate = function(candidate) {
+    var sections;
     if (!candidate) {
       for (var j = 0; j < this.transceivers.length; j++) {
         this.transceivers[j].iceTransport.addRemoteCandidate({});
+        sections = SDPUtils.splitSections(this.remoteDescription.sdp);
+        sections[j + 1] += 'a=end-of-candidates\r\n';
+        this.remoteDescription.sdp = sections.join('');
         if (this.usingBundle) {
-          return Promise.resolve();
+          break;
         }
       }
+    } else if (!(candidate.sdpMLineIndex || candidate.sdpMid)) {
+      throw new TypeError('sdpMLineIndex or sdpMid required');
     } else {
-      var mLineIndex = candidate.sdpMLineIndex;
+      var sdpMLineIndex = candidate.sdpMLineIndex;
       if (candidate.sdpMid) {
         for (var i = 0; i < this.transceivers.length; i++) {
           if (this.transceivers[i].mid === candidate.sdpMid) {
-            mLineIndex = i;
+            sdpMLineIndex = i;
             break;
           }
         }
       }
-      var transceiver = this.transceivers[mLineIndex];
+      var transceiver = this.transceivers[sdpMLineIndex];
       if (transceiver) {
         var cand = Object.keys(candidate.candidate).length > 0 ?
             SDPUtils.parseCandidate(candidate.candidate) : {};
@@ -1251,15 +1257,21 @@ module.exports = function(edgeVersion) {
           return Promise.resolve();
         }
         // Ignore RTCP candidates, we assume RTCP-MUX.
-        if (cand.component !== '1') {
+        if (cand.component &&
+            !(cand.component === '1' || cand.component === 1)) {
           return Promise.resolve();
         }
         transceiver.iceTransport.addRemoteCandidate(cand);
 
         // update the remoteDescription.
-        var sections = SDPUtils.splitSections(this.remoteDescription.sdp);
-        sections[mLineIndex + 1] += (cand.type ? candidate.candidate.trim()
-            : 'a=end-of-candidates') + '\r\n';
+        var candidateString = candidate.candidate.trim();
+        if (candidateString.indexOf('a=') === 0) {
+          candidateString = candidateString.substr(2);
+        }
+        sections = SDPUtils.splitSections(this.remoteDescription.sdp);
+        sections[sdpMLineIndex + 1] += 'a=' +
+            (cand.type ? candidateString : 'end-of-candidates')
+            + '\r\n';
         this.remoteDescription.sdp = sections.join('');
       }
     }

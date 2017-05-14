@@ -69,6 +69,7 @@ module.exports = function() {
   };
   global.RTCIceTransport = function() {
     this.start = function() {};
+    this.addRemoteCandidate = function() {};
   };
   global.RTCDtlsTransport = function() {
     this.start = function() {};

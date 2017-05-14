@@ -1133,6 +1133,84 @@ describe('Edge shim', () => {
     });
   });
 
+  describe('addIceCandidate', () => {
+    const sdp = 'v=0\r\no=- 166855176514521964 2 IN IP4 127.0.0.1\r\n' +
+        's=-\r\nt=0 0\r\na=msid-semantic: WMS\r\n' +
+        'm=audio 9 UDP/TLS/RTP/SAVPF 98\r\n' +
+        'c=IN IP4 0.0.0.0\r\n' +
+        'a=rtcp:9 IN IP4 0.0.0.0\r\na=ice-ufrag:foo\r\na=ice-pwd:bar\r\n' +
+        'a=fingerprint:sha-256 so:me:co:lo:ns\r\n' +
+        'a=setup:actpass\r\n' +
+        'a=mid:audio1\r\n' +
+        'a=sendrecv\r\na=rtcp-mux\r\n' +
+        'a=rtcp-rsize\r\n' +
+        'a=rtpmap:98 opus/48000\r\n' +
+        'a=ssrc:1001 msid:stream1 track1\r\n' +
+        'a=ssrc:1001 cname:some\r\n';
+    const candidateString = 'candidate:702786350 1 udp 41819902 8.8.8.8 ' +
+        '60769 typ host';
+    const sdpMid = 'audio1';
+
+    let pc;
+    beforeEach(() => {
+      pc = new RTCPeerConnection();
+      pc.setRemoteDescription({type: 'offer', sdp});
+    });
+
+    it('returns a promise', (done) => {
+      pc.addIceCandidate({sdpMid, candidate: candidateString})
+      .then(done);
+    });
+
+    it('calls the legacy success callback', (done) => {
+      pc.addIceCandidate({sdpMid, candidate: candidateString}, done);
+    });
+
+    it('throws a TypeError when called without sdpMid or ' +
+        'sdpMLineIndex', () => {
+      expect(() => pc.addIceCandidate({candidate: candidateString}))
+          .to.throw()
+          .that.has.property('name').that.equals('TypeError');
+    });
+
+    it('adds the candidate to the remote description', (done) => {
+      pc.addIceCandidate({sdpMid, candidate: candidateString})
+      .then(() => {
+        expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+            'a=candidate:')).to.have.length(1);
+        done();
+      });
+    });
+
+    it('adds the candidate to the remote description ' +
+       'with legacy a=candidate syntax', (done) => {
+      pc.addIceCandidate({sdpMid, candidate: 'a=' + candidateString})
+      .then(() => {
+        expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+            'a=candidate:')).to.have.length(1);
+        done();
+      });
+    });
+
+    it('adds end-of-candidates when receiving the null candidate', (done) => {
+      pc.addIceCandidate()
+      .then(() => {
+        expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+            'a=end-of-candidates')).to.have.length(1);
+        done();
+      });
+    });
+
+    it('adds end-of-candidates when receiving the \'\' candidate', (done) => {
+      pc.addIceCandidate({sdpMid, candidate: ''})
+      .then(() => {
+        expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+            'a=end-of-candidates')).to.have.length(1);
+        done();
+      });
+    });
+  });
+
   describe('full cycle', () => {
     let pc1;
     let pc2;
