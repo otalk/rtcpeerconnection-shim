@@ -31,6 +31,35 @@ module.exports = function() {
   };
 
   global.RTCIceGatherer = function() {
+    let candidates = [
+      {
+        foundation: '702786350',
+        priority: 41819902,
+        protocol: 'udp',
+        ip: '8.8.8.8',
+        port: 60769,
+        type: 'host'
+      },
+      {}
+    ];
+    let emittedCandidates = [];
+    let emitCandidate = () => {
+      let e = new Event('RTCIceGatherEvent');
+      e.candidate = candidates.shift();
+      emittedCandidates.push(e.candidate);
+      if (this.onlocalcandidate) {
+        this.onlocalcandidate(e);
+      }
+      if (candidates.length) {
+        setTimeout(emitCandidate, 50);
+      }
+    };
+    setTimeout(emitCandidate, 0);
+
+    this.getLocalCandidates = () => {
+      return emittedCandidates;
+    };
+
     this.getLocalParameters = function() {
       return {
         usernameFragment: 'someufrag',

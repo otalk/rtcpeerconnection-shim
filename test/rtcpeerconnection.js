@@ -96,6 +96,19 @@ describe('Edge shim', () => {
         });
       });
     });
+
+    it('starts emitting ICE candidates', (done) => {
+      let clock = sinon.useFakeTimers();
+      pc.onicecandidate = sinon.stub();
+      pc.createOffer({offerToReceiveAudio: 1})
+      .then(offer => pc.setLocalDescription(offer))
+      .then(() => {
+        clock.tick(500);
+        expect(pc.onicecandidate).to.have.been.calledWith();
+        clock.restore();
+        done();
+      });
+    });
   });
 
   describe('setRemoteDescription', () => {
@@ -375,6 +388,18 @@ describe('Edge shim', () => {
       pc.createOffer({offerToReceiveAudio: 1})
       .then(() => {
         expect(pc.signalingState).to.equal('stable');
+        done();
+      });
+    });
+
+    it('does not start emitting ICE candidates', (done) => {
+      let clock = sinon.useFakeTimers();
+      pc.onicecandidate = sinon.stub();
+      pc.createOffer({offerToReceiveAudio: 1})
+      .then(() => {
+        clock.tick(500);
+        expect(pc.onicecandidate).not.to.have.been.calledWith();
+        clock.restore();
         done();
       });
     });
