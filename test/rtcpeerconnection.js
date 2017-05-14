@@ -9,8 +9,8 @@
 const chai = require('chai');
 const expect = chai.expect;
 const sinon = require('sinon');
-const sinonChai = require('sinon-chai');
-chai.use(sinonChai);
+chai.use(require('dirty-chai'));
+chai.use(require('sinon-chai'));
 
 const SDPUtils = require('sdp');
 const mockORTC = require('./ortcmock');
@@ -37,6 +37,45 @@ describe('Edge shim', () => {
       };
       expect(constructor).to.throw(/rtcpMuxPolicy/)
           .that.has.property('name').that.equals('NotSupportedError');
+    });
+
+    describe('when RTCIceCandidatePoolSize is set', () => {
+      beforeEach(() => {
+        sinon.spy(window, 'RTCIceGatherer');
+      });
+
+      afterEach(() => {
+        window.RTCIceGatherer.restore();
+      });
+
+      it('creates an ICE Gatherer', () => {
+        new RTCPeerConnection({iceCandidatePoolSize: 1});
+        expect(window.RTCIceGatherer).to.have.been.calledOnce();
+      });
+
+      // TODO: those tests are convenient because they are sync and
+      //    dont require createOffer-SLD before creating the gatherer.
+      it('sets default ICETransportPolicy on RTCIceGatherer', () => {
+        new RTCPeerConnection({iceCandidatePoolSize: 1});
+        expect(window.RTCIceGatherer).to.have.been.calledWith(sinon.match({
+          gatherPolicy: 'all'
+        }));
+      });
+
+      it('sets ICETransportPolicy=all on RTCIceGatherer', () => {
+        new RTCPeerConnection({iceCandidatePoolSize: 1,
+            iceTransportPolicy: 'all'});
+        expect(window.RTCIceGatherer).to.have.been.calledWith(sinon.match({
+          gatherPolicy: 'all'
+        }));
+      });
+      it('sets ICETransportPolicy=relay on RTCIceGatherer', () => {
+        new RTCPeerConnection({iceCandidatePoolSize: 1,
+            iceTransportPolicy: 'relay'});
+        expect(window.RTCIceGatherer).to.have.been.calledWith(sinon.match({
+          gatherPolicy: 'relay'
+        }));
+      });
     });
   });
 

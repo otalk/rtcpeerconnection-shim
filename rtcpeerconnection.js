@@ -210,6 +210,14 @@ module.exports = function(edgeVersion) {
       this.iceOptions.iceServers = filterIceServers(config.iceServers,
           edgeVersion);
     }
+
+    this._iceGatherers = [];
+    if (config && config.iceCandidatePoolSize) {
+      for (var i = config.iceCandidatePoolSize; i > 0; i--) {
+        this._iceGatherers = new RTCIceGatherer(this.iceOptions);
+      }
+    }
+
     this._config = config || {};
 
     // per-track iceGathers, iceTransports, dtlsTransports, rtpSenders, ...
@@ -332,6 +340,16 @@ module.exports = function(edgeVersion) {
     });
   };
 
+
+  RTCPeerConnection.prototype._createIceGatherer = function(sdpMLineIndex,
+      usingBundle) {
+    if (usingBundle && sdpMLineIndex > 0) {
+      return this.transceivers[0].iceGatherer;
+    } else if (this._iceGatherers.length) {
+      return this._iceGatherers.shift();
+    }
+    return new RTCIceGatherer(this.iceOptions);
+  };
 
   // start gathering from an RTCIceGatherer.
   RTCPeerConnection.prototype._gather = function(mid, sdpMLineIndex) {
@@ -699,9 +717,8 @@ module.exports = function(edgeVersion) {
         transceiver.mid = mid;
 
         if (!transceiver.iceGatherer) {
-          transceiver.iceGatherer = usingBundle && sdpMLineIndex > 0 ?
-              self.transceivers[0].iceGatherer :
-              new RTCIceGatherer(self.iceOptions);
+          transceiver.iceGatherer = self._createIceGatherer(sdpMLineIndex,
+              usingBundle);
         }
 
         if (isComplete && (!usingBundle || sdpMLineIndex === 0)) {
@@ -1085,9 +1102,8 @@ module.exports = function(edgeVersion) {
       transceiver.mid = mid;
 
       if (!transceiver.iceGatherer) {
-        transceiver.iceGatherer = self.usingBundle && sdpMLineIndex > 0 ?
-            self.transceivers[0].iceGatherer :
-            new RTCIceGatherer(self.iceOptions);
+        transceiver.iceGatherer = self._createIceGatherer(sdpMLineIndex,
+            self.usingBundle);
       }
 
       var localCapabilities = RTCRtpSender.getCapabilities(kind);
