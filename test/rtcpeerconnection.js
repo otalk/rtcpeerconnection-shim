@@ -13,7 +13,6 @@ const sinonChai = require('sinon-chai');
 chai.use(sinonChai);
 
 const SDPUtils = require('sdp');
-
 const mockORTC = require('./ortcmock');
 
 describe('Edge shim', () => {
@@ -28,6 +27,17 @@ describe('Edge shim', () => {
 
   beforeEach(() => {
     mockORTC();
+  });
+
+  describe('RTCPeerConnection constructor', () => {
+    it('throws a NotSupportedError when called with ' +
+        'rtcpMuxPolicy negotiate', () => {
+      const constructor = () => {
+        return new RTCPeerConnection({rtcpMuxPolicy: 'negotiate'});
+      };
+      expect(constructor).to.throw(/rtcpMuxPolicy/)
+          .that.has.property('name').that.equals('NotSupportedError');
+    });
   });
 
   describe('setLocalDescription', () => {

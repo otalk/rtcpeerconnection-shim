@@ -183,6 +183,13 @@ module.exports = function(edgeVersion) {
     this.iceConnectionState = 'new';
     this.iceGatheringState = 'new';
 
+    this.usingBundle = config && config.bundlePolicy === 'max-bundle';
+    if (config && config.rtcpMuxPolicy === 'negotiate') {
+      var e = new Error('rtcpMuxPolicy \'negotiate\' is not supported');
+      e.name = 'NotSupportedError';
+      throw(e);
+    }
+
     this.iceOptions = {
       gatherPolicy: 'all',
       iceServers: []
@@ -198,7 +205,6 @@ module.exports = function(edgeVersion) {
           break;
       }
     }
-    this.usingBundle = config && config.bundlePolicy === 'max-bundle';
 
     if (config && config.iceServers) {
       this.iceOptions.iceServers = filterIceServers(config.iceServers,
