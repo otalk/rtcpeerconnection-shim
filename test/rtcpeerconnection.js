@@ -442,6 +442,59 @@ describe('Edge shim', () => {
         });
       });
     });
+
+    describe('when called with an subsequent offer containing a ' +
+        'new track', () => {
+      const sdp = 'v=0\r\no=- 166855176514521964 2 IN IP4 127.0.0.1\r\n' +
+          's=-\r\nt=0 0\r\na=msid-semantic: WMS\r\n' +
+          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
+          'c=IN IP4 0.0.0.0\r\n' +
+          'a=rtcp:9 IN IP4 0.0.0.0\r\na=ice-ufrag:foo\r\na=ice-pwd:bar\r\n' +
+          'a=fingerprint:sha-256 so:me:co:lo:ns\r\n' +
+          'a=setup:actpass\r\n' +
+          'a=mid:audio1\r\n' +
+          'a=sendonly\r\na=rtcp-mux\r\n' +
+          'a=rtcp-rsize\r\n' +
+          'a=rtpmap:111 opus/48000\r\n' +
+          'a=ssrc:1001 msid:stream1 track1\r\n' +
+          'a=ssrc:1001 cname:some\r\n';
+      const videoPart =
+          'm=video 9 UDP/TLS/RTP/SAVPF 102 103\r\n' +
+          'c=IN IP4 0.0.0.0\r\n' +
+          'a=rtcp:9 IN IP4 0.0.0.0\r\na=ice-ufrag:foo\r\na=ice-pwd:bar\r\n' +
+          'a=fingerprint:sha-256 so:me:co:lo:ns\r\n' +
+          'a=setup:actpass\r\n' +
+          'a=mid:video1\r\n' +
+          'a=sendrecv\r\na=rtcp-mux\r\n' +
+          'a=rtcp-rsize\r\n' +
+          'a=rtpmap:102 vp8/90000\r\n' +
+          'a=rtpmap:103 rtx/90000\r\n' +
+          'a=fmtp:103 apt=102\r\n' +
+          'a=ssrc-group:FID 1001 1002\r\n' +
+          'a=ssrc:1001 msid:stream1 track1\r\n' +
+          'a=ssrc:1001 cname:some\r\n' +
+          'a=ssrc:1002 msid:stream1 track1\r\n' +
+          'a=ssrc:1002 cname:some\r\n';
+      it('triggers ontrack', (done) => {
+        let clock = sinon.useFakeTimers();
+        pc.onaddstream = sinon.stub();
+        pc.ontrack = sinon.stub();
+        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          return pc.setRemoteDescription({type: 'offer',
+              sdp: sdp + videoPart});
+        })
+        .then(() => {
+          window.setTimeout(() => {
+            expect(pc.onaddstream).to.have.been.calledOnce();
+            expect(pc.ontrack).to.have.been.calledTwice();
+            clock.restore();
+            done();
+          });
+          clock.tick(500);
+        });
+      });
+    });
   });
 
   describe('createOffer', () => {
