@@ -10,27 +10,6 @@
 
 var SDPUtils = require('sdp');
 
-// sort tracks such that they follow an a-v-a-v...
-// pattern.
-function sortTracks(tracks) {
-  var audioTracks = tracks.filter(function(track) {
-    return track.kind === 'audio';
-  });
-  var videoTracks = tracks.filter(function(track) {
-    return track.kind === 'video';
-  });
-  tracks = [];
-  while (audioTracks.length || videoTracks.length) {
-    if (audioTracks.length) {
-      tracks.push(audioTracks.shift());
-    }
-    if (videoTracks.length) {
-      tracks.push(videoTracks.shift());
-    }
-  }
-  return tracks;
-}
-
 // Edge does not like
 // 1) stun:
 // 2) turn: that does not have all of turn:host:port?transport=udp
@@ -1140,11 +1119,9 @@ module.exports = function(edgeVersion) {
         numVideoTracks--;
       }
     }
-    // reorder tracks
-    var transceivers = sortTracks(this.transceivers);
 
     var sdp = SDPUtils.writeSessionBoilerplate();
-    transceivers.forEach(function(transceiver, sdpMLineIndex) {
+    this.transceivers.forEach(function(transceiver, sdpMLineIndex) {
       // For each track, create an ice gatherer, ice transport,
       // dtls transport, potentially rtpsender and rtpreceiver.
       var track = transceiver.track;
@@ -1154,7 +1131,7 @@ module.exports = function(edgeVersion) {
 
       if (!transceiver.iceGatherer) {
         transceiver.iceGatherer = self.usingBundle && sdpMLineIndex > 0 ?
-            transceivers[0].iceGatherer :
+            self.transceivers[0].iceGatherer :
             self._createIceGatherer(mid, sdpMLineIndex);
       }
 
@@ -1200,19 +1177,19 @@ module.exports = function(edgeVersion) {
 
     // always offer BUNDLE and dispose on return if not supported.
     if (this._config.bundlePolicy !== 'max-compat') {
-      sdp += 'a=group:BUNDLE ' + transceivers.map(function(t) {
+      sdp += 'a=group:BUNDLE ' + this.transceivers.map(function(t) {
         return t.mid;
       }).join(' ') + '\r\n';
     }
     sdp += 'a=ice-options:trickle\r\n';
 
-    transceivers.forEach(function(transceiver, sdpMLineIndex) {
+    this.transceivers.forEach(function(transceiver, sdpMLineIndex) {
       sdp += SDPUtils.writeMediaSection(transceiver,
           transceiver.localCapabilities, 'offer', transceiver.stream);
       sdp += 'a=rtcp-rsize\r\n';
     });
 
-    this._pendingOffer = transceivers;
+    this._pendingOffer = this.transceivers;
     var desc = new RTCSessionDescription({
       type: 'offer',
       sdp: sdp

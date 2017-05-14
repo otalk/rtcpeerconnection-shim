@@ -528,8 +528,8 @@ describe('Edge shim', () => {
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(3);
-            expect(SDPUtils.getKind(sections[1])).to.equal('audio');
-            expect(SDPUtils.getKind(sections[2])).to.equal('video');
+            expect(SDPUtils.getKind(sections[1])).to.equal('video');
+            expect(SDPUtils.getKind(sections[2])).to.equal('audio');
             done();
           });
         });
@@ -671,8 +671,8 @@ describe('Edge shim', () => {
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(3);
-            expect(SDPUtils.getKind(sections[1])).to.equal('audio');
-            expect(SDPUtils.getKind(sections[2])).to.equal('video');
+            expect(SDPUtils.getKind(sections[1])).to.equal('video');
+            expect(SDPUtils.getKind(sections[2])).to.equal('audio');
             done();
           });
         });
