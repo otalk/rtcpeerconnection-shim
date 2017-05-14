@@ -97,36 +97,55 @@ describe('Edge shim', () => {
       });
     });
 
-    it('starts emitting ICE candidates', (done) => {
-      let clock = sinon.useFakeTimers();
-      pc.onicecandidate = sinon.stub();
-      pc.createOffer({offerToReceiveAudio: 1})
-      .then(offer => pc.setLocalDescription(offer))
-      .then(() => {
-        clock.tick(500);
-        expect(pc.onicecandidate).to.have.been.calledWith();
-        clock.restore();
-        done();
+    describe('starts emitting ICE candidates', () => {
+      let clock;
+      beforeEach(() => {
+        clock = sinon.useFakeTimers();
       });
-    });
+      afterEach(() => {
+        clock.restore();
+      });
 
-    it('changes iceGatheringState and emits icegatheringstatechange ' +
-        'event', (done) => {
-      let clock = sinon.useFakeTimers();
-      let states = [];
-      pc.addEventListener('icegatheringstatechange', () => {
-        states.push(pc.iceGatheringState);
+      it('calls onicecandidate', (done) => {
+        pc.onicecandidate = sinon.stub();
+        pc.createOffer({offerToReceiveAudio: 1})
+        .then(offer => pc.setLocalDescription(offer))
+        .then(() => {
+          clock.tick(500);
+          expect(pc.onicecandidate).to.have.been.calledWith();
+          done();
+        });
       });
-      pc.createOffer({offerToReceiveAudio: 1})
-      .then(offer => pc.setLocalDescription(offer))
-      .then(() => {
-        expect(pc.iceGatheringState).to.equal('new');
-        clock.tick(500);
-        expect(states.length).to.equal(2);
-        expect(states).to.contain('gathering');
-        expect(states).to.contain('complete');
-        clock.restore();
-        done();
+
+      it('updates localDescription.sdp with candidates', (done) => {
+        pc.createOffer({offerToReceiveAudio: 1})
+        .then(offer => pc.setLocalDescription(offer))
+        .then(() => {
+          clock.tick(500);
+          expect(SDPUtils.matchPrefix(pc.localDescription.sdp,
+              'a=candidate:')).to.have.length(1);
+          expect(SDPUtils.matchPrefix(pc.localDescription.sdp,
+              'a=end-of-candidates')).to.have.length(1);
+          done();
+        });
+      });
+
+      it('changes iceGatheringState and emits icegatheringstatechange ' +
+          'event', (done) => {
+        let states = [];
+        pc.addEventListener('icegatheringstatechange', () => {
+          states.push(pc.iceGatheringState);
+        });
+        pc.createOffer({offerToReceiveAudio: 1})
+        .then(offer => pc.setLocalDescription(offer))
+        .then(() => {
+          expect(pc.iceGatheringState).to.equal('new');
+          clock.tick(500);
+          expect(states.length).to.equal(2);
+          expect(states).to.contain('gathering');
+          expect(states).to.contain('complete');
+          done();
+        });
       });
     });
   });

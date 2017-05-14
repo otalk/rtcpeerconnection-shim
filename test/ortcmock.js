@@ -54,7 +54,7 @@ module.exports = function() {
         setTimeout(emitCandidate, 50);
       }
     };
-    setTimeout(emitCandidate, 0);
+    setTimeout(emitCandidate, 50);
 
     this.getLocalCandidates = () => {
       return emittedCandidates;
