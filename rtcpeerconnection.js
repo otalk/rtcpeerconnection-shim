@@ -215,11 +215,6 @@ module.exports = function(edgeVersion) {
     // per-track iceGathers, iceTransports, dtlsTransports, rtpSenders, ...
     // everything that is needed to describe a SDP m-line.
     this.transceivers = [];
-
-    // since the iceGatherer is currently created in createOffer but we
-    // must not emit candidates until after setLocalDescription we buffer
-    // them in this array.
-    this._localIceCandidatesBuffer = [];
   };
 
   RTCPeerConnection.prototype._emitGatheringStateChange = function() {
@@ -228,42 +223,6 @@ module.exports = function(edgeVersion) {
     if (this.onicegatheringstatechange !== null) {
       this.onicegatheringstatechange(event);
     }
-  };
-
-  RTCPeerConnection.prototype._emitBufferedCandidates = function() {
-    var self = this;
-    var sections = SDPUtils.splitSections(self.localDescription.sdp);
-    // FIXME: need to apply ice candidates in a way which is async but
-    // in-order
-    this._localIceCandidatesBuffer.forEach(function(event) {
-      var end = !event.candidate || Object.keys(event.candidate).length === 0;
-      if (end) {
-        for (var j = 1; j < sections.length; j++) {
-          if (sections[j].indexOf('\r\na=end-of-candidates\r\n') === -1) {
-            sections[j] += 'a=end-of-candidates\r\n';
-          }
-        }
-      } else {
-        sections[event.candidate.sdpMLineIndex + 1] +=
-            'a=' + event.candidate.candidate + '\r\n';
-      }
-      self.localDescription.sdp = sections.join('');
-      self.dispatchEvent(event);
-      if (self.onicecandidate !== null) {
-        self.onicecandidate(event);
-      }
-      if (!event.candidate && self.iceGatheringState !== 'complete') {
-        var complete = self.transceivers.every(function(transceiver) {
-          return transceiver.iceGatherer &&
-              transceiver.iceGatherer.state === 'completed';
-        });
-        if (complete && self.iceGatheringStateChange !== 'complete') {
-          self.iceGatheringState = 'complete';
-          self._emitGatheringStateChange();
-        }
-      }
-    });
-    this._localIceCandidatesBuffer = [];
   };
 
   RTCPeerConnection.prototype.getConfiguration = function() {
@@ -373,11 +332,11 @@ module.exports = function(edgeVersion) {
     });
   };
 
-  // Create ICE gatherer and hook it up.
-  RTCPeerConnection.prototype._createIceGatherer = function(mid,
-      sdpMLineIndex) {
+
+  // start gathering from an RTCIceGatherer.
+  RTCPeerConnection.prototype._gather = function(mid, sdpMLineIndex) {
     var self = this;
-    var iceGatherer = new RTCIceGatherer(self.iceOptions);
+    var iceGatherer = this.transceivers[sdpMLineIndex].iceGatherer;
     iceGatherer.onlocalcandidate = function(evt) {
       var event = new Event('icecandidate');
       event.candidate = {sdpMid: mid, sdpMLineIndex: sdpMLineIndex};
@@ -407,50 +366,42 @@ module.exports = function(edgeVersion) {
             'a=end-of-candidates\r\n';
       }
       self.localDescription.sdp = sections.join('');
-      var transceivers = self._pendingOffer ? self._pendingOffer :
-          self.transceivers;
-      var complete = transceivers.every(function(transceiver) {
+      var complete = self.transceivers.every(function(transceiver) {
         return transceiver.iceGatherer &&
             transceiver.iceGatherer.state === 'completed';
       });
 
-      // Emit candidate if localDescription is set.
-      // Also emits null candidate when all gatherers are complete.
-      switch (self.iceGatheringState) {
-        case 'new':
-          if (!end) {
-            self._localIceCandidatesBuffer.push(event);
-          }
-          if (end && complete) {
-            self._localIceCandidatesBuffer.push(
-                new Event('icecandidate'));
-          }
-          break;
-        case 'gathering':
-          self._emitBufferedCandidates();
-          if (!end) {
-            self.dispatchEvent(event);
-            if (self.onicecandidate !== null) {
-              self.onicecandidate(event);
-            }
-          }
-          if (complete) {
-            self.dispatchEvent(new Event('icecandidate'));
-            if (self.onicecandidate !== null) {
-              self.onicecandidate(new Event('icecandidate'));
-            }
-            self.iceGatheringState = 'complete';
-            self._emitGatheringStateChange();
-          }
-          break;
-        case 'complete':
-          // should not happen... currently!
-          break;
-        default: // no-op.
-          break;
+      if (self.iceGatheringState !== 'gathering') {
+        self.iceGatheringState = 'gathering';
+        self._emitGatheringStateChange();
+      }
+
+      // Emit candidate. Also emit null candidate when all gatherers are
+      // complete.
+      if (!end) {
+        self.dispatchEvent(event);
+        if (self.onicecandidate !== null) {
+          self.onicecandidate(event);
+        }
+      }
+      if (complete) {
+        self.dispatchEvent(new Event('icecandidate'));
+        if (self.onicecandidate !== null) {
+          self.onicecandidate(new Event('icecandidate'));
+        }
+        self.iceGatheringState = 'complete';
+        self._emitGatheringStateChange();
       }
     };
-    return iceGatherer;
+
+    // emit already gathered candidates.
+    window.setTimeout(function() {
+      iceGatherer.getLocalCandidates().forEach(function(candidate) {
+        let e = new Event('RTCIceGatherEvent');
+        e.candidate = candidate;
+        iceGatherer.onlocalcandidate(e);
+      });
+    }, 0);
   };
 
   // Create ICE transport and DTLS transport.
@@ -571,6 +522,10 @@ module.exports = function(edgeVersion) {
         });
         this.transceivers = this._pendingOffer;
         delete this._pendingOffer;
+
+        this.transceivers.forEach(function(transceiver, sdpMLineIndex) {
+          self._gather(transceiver.mid, sdpMLineIndex);
+        });
       }
     } else if (description.type === 'answer') {
       sections = SDPUtils.splitSections(self.remoteDescription.sdp);
@@ -597,6 +552,7 @@ module.exports = function(edgeVersion) {
           }
 
           if (!self.usingBundle || sdpMLineIndex === 0) {
+            self._gather(transceiver.mid, sdpMLineIndex);
             iceTransport.start(iceGatherer, remoteIceParameters,
                 isIceLite ? 'controlling' : 'controlled');
             dtlsTransport.start(remoteDtlsParameters);
@@ -640,13 +596,6 @@ module.exports = function(edgeVersion) {
       if (cb) {
         cb.apply(null);
       }
-      if (self.iceGatheringState === 'new') {
-        self.iceGatheringState = 'gathering';
-        self._emitGatheringStateChange();
-      }
-      // Usually candidates will be emitted earlier.
-      window.setTimeout(self._emitBufferedCandidates.bind(self), 500);
-
       resolve();
     });
   };
@@ -752,7 +701,7 @@ module.exports = function(edgeVersion) {
         if (!transceiver.iceGatherer) {
           transceiver.iceGatherer = usingBundle && sdpMLineIndex > 0 ?
               self.transceivers[0].iceGatherer :
-              self._createIceGatherer(mid, sdpMLineIndex);
+              new RTCIceGatherer(self.iceOptions);
         }
 
         if (isComplete && (!usingBundle || sdpMLineIndex === 0)) {
@@ -1138,7 +1087,7 @@ module.exports = function(edgeVersion) {
       if (!transceiver.iceGatherer) {
         transceiver.iceGatherer = self.usingBundle && sdpMLineIndex > 0 ?
             self.transceivers[0].iceGatherer :
-            self._createIceGatherer(mid, sdpMLineIndex);
+            new RTCIceGatherer(self.iceOptions);
       }
 
       var localCapabilities = RTCRtpSender.getCapabilities(kind);

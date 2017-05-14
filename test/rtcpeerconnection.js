@@ -109,6 +109,26 @@ describe('Edge shim', () => {
         done();
       });
     });
+
+    it('changes iceGatheringState and emits icegatheringstatechange ' +
+        'event', (done) => {
+      let clock = sinon.useFakeTimers();
+      let states = [];
+      pc.addEventListener('icegatheringstatechange', () => {
+        states.push(pc.iceGatheringState);
+      });
+      pc.createOffer({offerToReceiveAudio: 1})
+      .then(offer => pc.setLocalDescription(offer))
+      .then(() => {
+        expect(pc.iceGatheringState).to.equal('new');
+        clock.tick(500);
+        expect(states.length).to.equal(2);
+        expect(states).to.contain('gathering');
+        expect(states).to.contain('complete');
+        clock.restore();
+        done();
+      });
+    });
   });
 
   describe('setRemoteDescription', () => {
