@@ -526,25 +526,18 @@ module.exports = function(edgeVersion) {
     var sections;
     var sessionpart;
     if (description.type === 'offer') {
-      // FIXME: What was the purpose of this empty if statement?
-      // if (!this._pendingOffer) {
-      // } else {
-      if (this._pendingOffer) {
-        // VERY limited support for SDP munging. Limited to:
-        // * changing the order of codecs
-        sections = SDPUtils.splitSections(description.sdp);
-        sessionpart = sections.shift();
-        sections.forEach(function(mediaSection, sdpMLineIndex) {
-          var caps = SDPUtils.parseRtpParameters(mediaSection);
-          self._pendingOffer[sdpMLineIndex].localCapabilities = caps;
-        });
-        this.transceivers = this._pendingOffer;
-        delete this._pendingOffer;
+      // VERY limited support for SDP munging. Limited to:
+      // * changing the order of codecs
+      sections = SDPUtils.splitSections(description.sdp);
+      sessionpart = sections.shift();
+      sections.forEach(function(mediaSection, sdpMLineIndex) {
+        var caps = SDPUtils.parseRtpParameters(mediaSection);
+        self.transceivers[sdpMLineIndex].localCapabilities = caps;
+      });
 
-        this.transceivers.forEach(function(transceiver, sdpMLineIndex) {
-          self._gather(transceiver.mid, sdpMLineIndex);
-        });
-      }
+      this.transceivers.forEach(function(transceiver, sdpMLineIndex) {
+        self._gather(transceiver.mid, sdpMLineIndex);
+      });
     } else if (description.type === 'answer') {
       sections = SDPUtils.splitSections(self.remoteDescription.sdp);
       sessionpart = sections.shift();
@@ -1022,9 +1015,6 @@ module.exports = function(edgeVersion) {
     var self = this;
     var args = arguments;
 
-    if (this._pendingOffer) {
-      throw new Error('createOffer called while there is a pending offer.');
-    }
     var offerOptions;
     if (arguments.length === 1 && typeof arguments[0] !== 'function') {
       offerOptions = arguments[0];
@@ -1160,7 +1150,6 @@ module.exports = function(edgeVersion) {
       sdp += 'a=rtcp-rsize\r\n';
     });
 
-    this._pendingOffer = this.transceivers;
     var desc = new RTCSessionDescription({
       type: 'offer',
       sdp: sdp
