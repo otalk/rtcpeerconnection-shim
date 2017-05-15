@@ -12,20 +12,13 @@ const sinon = require('sinon');
 chai.use(require('dirty-chai'));
 chai.use(require('sinon-chai'));
 
-const SDPUtils = require('sdp');
 const mockORTC = require('./ortcmock');
+const SDPUtils = require('sdp');
+const RTCPeerConnection = require('../rtcpeerconnection')(15025);
 
 describe('Edge shim', () => {
-  global.navigator = {
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
-        '(KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36 Edge/15.15031',
-    mediaDevices: function() {}
-  };
-  global.window = global;
-
-  const RTCPeerConnection = require('../rtcpeerconnection')(15025);
-
   beforeEach(() => {
+    global.window = {setTimeout};
     mockORTC();
   });
 
@@ -41,11 +34,11 @@ describe('Edge shim', () => {
 
     describe('when RTCIceCandidatePoolSize is set', () => {
       beforeEach(() => {
-        sinon.spy(window, 'RTCIceGatherer');
+        RTCIceGatherer = sinon.spy(RTCIceGatherer);
+        window.RTCIceGatherer = RTCIceGatherer;
       });
 
       afterEach(() => {
-        window.RTCIceGatherer.restore();
       });
 
       it('creates an ICE Gatherer', () => {
