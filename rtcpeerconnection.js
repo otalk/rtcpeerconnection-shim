@@ -141,6 +141,23 @@ function isActionAllowedInSignalingState(action, type, signalingState) {
   }[type][action].indexOf(signalingState) !== -1;
 }
 
+function maybeAddCandidate(iceTransport, candidate) {
+  // Edge's internal representation adds some fields therefore
+  // not all fieldѕ are taken into account.
+  var alreadyAdded = iceTransport.getRemoteCandidates()
+      .find(function(remoteCandidate) {
+        return candidate.foundation === remoteCandidate.foundation &&
+            candidate.ip === remoteCandidate.ip &&
+            candidate.port === remoteCandidate.port &&
+            candidate.priority === remoteCandidate.priority &&
+            candidate.protocol === remoteCandidate.protocol &&
+            candidate.type === remoteCandidate.type;
+      });
+  if (!alreadyAdded) {
+    iceTransport.addRemoteCandidate(candidate);
+  }
+}
+
 module.exports = function(edgeVersion) {
   var RTCPeerConnection = function(config) {
     var self = this;
@@ -716,6 +733,10 @@ module.exports = function(edgeVersion) {
 
         if (isComplete && (!usingBundle || sdpMLineIndex === 0)) {
           transceiver.iceTransport.setRemoteCandidates(cands);
+        } else if (cands.length) {
+          cands.forEach(function(candidate) {
+            maybeAddCandidate(transceiver.iceTransport, candidate);
+          });
         }
 
         localCapabilities = RTCRtpReceiver.getCapabilities(kind);
@@ -812,8 +833,12 @@ module.exports = function(edgeVersion) {
             remoteCapabilities;
         self.transceivers[sdpMLineIndex].rtcpParameters = rtcpParameters;
 
-        if ((isIceLite || isComplete) && cands.length) {
+        if ((isIceLite || isComplete)) {
           iceTransport.setRemoteCandidates(cands);
+        } else if (cands.length) {
+          cands.forEach(function(candidate) {
+            maybeAddCandidate(transceiver.iceTransport, candidate);
+          });
         }
         if (!usingBundle || sdpMLineIndex === 0) {
           iceTransport.start(iceGatherer, remoteIceParameters,
