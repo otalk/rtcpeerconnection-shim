@@ -30,7 +30,9 @@ module.exports = function() {
     return init;
   };
 
-  global.RTCIceGatherer = function() {
+  const RTCIceGatherer = function(options) {
+    this.component = 'rtp';
+
     let candidates = [
       {
         foundation: '702786350',
@@ -42,11 +44,13 @@ module.exports = function() {
       },
       {}
     ];
-    let emittedCandidates = [];
+    this._emittedCandidates = [];
     let emitCandidate = () => {
       let e = new Event('RTCIceGatherEvent');
       e.candidate = candidates.shift();
-      emittedCandidates.push(e.candidate);
+      if (Object.keys(e.candidate).length) {
+        this._emittedCandidates.push(e.candidate);
+      }
       if (this.onlocalcandidate) {
         this.onlocalcandidate(e);
       }
@@ -55,44 +59,61 @@ module.exports = function() {
       }
     };
     setTimeout(emitCandidate, 50);
-
-    this.getLocalCandidates = () => {
-      return emittedCandidates;
-    };
-
-    this.getLocalParameters = function() {
-      return {
-        usernameFragment: 'someufrag',
-        password: 'somepass'
-      };
-    };
-  };
-  global.RTCIceTransport = function() {
-    this.start = function() {};
-    this.addRemoteCandidate = function() {};
-  };
-  global.RTCDtlsTransport = function() {
-    this.start = function() {};
-    this.getLocalParameters = function() {
-      return {
-        role: 'auto',
-        fingerprints: [
-          {
-            algorithm: 'alg',
-            value: 'fi:ng:ger:pr:in:t1'
-          }
-        ]
-      };
-    };
   };
 
-  global.RTCRtpReceiver = function(transport, kind) {
-    this.track = new MediaStreamTrack();
-    this.track.kind = kind;
+  RTCIceGatherer.prototype.getLocalCandidates = function() {
+    return this._emittedCandidates;
+  };
+
+  RTCIceGatherer.prototype.getLocalParameters = function() {
+    return {
+      usernameFragment: 'someufrag',
+      password: 'somepass'
+    };
+  };
+  global.RTCIceGatherer = RTCIceGatherer;
+
+  const RTCIceTransport = function() {
+    this._remoteCandidates = [];
+  };
+  RTCIceTransport.prototype.start = function(gatherer, parameters, role) {
+    this._gatherer = gatherer;
+    this._remoteParameters = parameters;
+    this._role = role || 'controlled';
+  };
+  RTCIceTransport.prototype.addRemoteCandidate = function(remoteCandidate) {
+    if (Object.keys(remoteCandidate).length) {
+      this._remoteCandidates.push(remoteCandidate);
+    }
+  };
+  RTCIceTransport.prototype.setRemoteCandidates = function(remoteCandidates) {
+    this._remoteCandidates = remoteCandidates;
+  };
+  RTCIceTransport.prototype.getRemoteCandidates = function() {
+    return this._remoteCandidates;
+  };
+  RTCIceTransport.prototype.getRemoteParameters = function() {
+    return this._remoteParameters;
+  };
+  global.RTCIceTransport = RTCIceTransport;
+
+  const RTCDtlsTransport = function(transport) {
     this.transport = transport;
-
-    this.receive = function() {};
   };
+  RTCDtlsTransport.prototype.start = function() {};
+  RTCDtlsTransport.prototype.getLocalParameters = function() {
+    return {
+      role: 'auto',
+      fingerprints: [
+        {
+          algorithm: 'alg',
+          value: 'fi:ng:ger:pr:in:t1'
+        }
+      ]
+    };
+  };
+  global.RTCDtlsTransport = RTCDtlsTransport;
+
   function getCapabilities(kind) {
     var opus = {
       name: 'opus',
@@ -133,14 +154,31 @@ module.exports = function() {
       headerExtensions: []
     };
   }
-  RTCRtpReceiver.getCapabilities = getCapabilities;
 
-  global.RTCRtpSender = function(track, transport) {
+  const RTCRtpReceiver = function(transport, kind) {
+    this.track = new MediaStreamTrack();
+    this.track.kind = kind;
+    this.transport = transport;
+  };
+  RTCRtpReceiver.prototype.receive = function() {};
+  RTCRtpReceiver.prototype.setTransport = function(transport) {
+    this.transport = transport;
+  };
+
+  RTCRtpReceiver.getCapabilities = getCapabilities;
+  global.RTCRtpReceiver = RTCRtpReceiver;
+
+  const RTCRtpSender = function(track, transport) {
     this.track = track;
     this.transport = transport;
-    this.send = function() {};
   };
+  RTCRtpSender.prototype.send = function() {};
+  RTCRtpSender.prototype.setTransport = function(transport) {
+    this.transport = transport;
+  };
+
   RTCRtpSender.getCapabilities = getCapabilities;
+  global.RTCRtpSender = RTCRtpSender;
 
   global.MediaStream = function(tracks) {
     this.id = SDPUtils.generateIdentifier();
