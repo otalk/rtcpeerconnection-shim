@@ -180,6 +180,77 @@ describe('Edge shim', () => {
         });
       });
     });
+
+    describe('after setRemoteDescription', () => {
+      beforeEach(() => {
+        sinon.spy(RTCIceTransport.prototype, 'start');
+        sinon.spy(RTCDtlsTransport.prototype, 'start');
+      });
+      afterEach(() => {
+        RTCIceTransport.prototype.start.restore();
+        RTCDtlsTransport.prototype.start.restore();
+      });
+
+      const sdp = 'v=0\r\no=- 166855176514521964 2 IN IP4 127.0.0.1\r\n' +
+          's=-\r\nt=0 0\r\n' +
+          'a=msid-semantic: WMS\r\n' +
+          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
+          'c=IN IP4 0.0.0.0\r\n' +
+          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+          'a=ice-ufrag:foo\r\n' +
+          'a=ice-pwd:bar\r\n' +
+          'a=fingerprint:sha-256 so:me:co:lo:ns\r\n' +
+          'a=setup:actpass\r\n' +
+          'a=mid:audio1\r\n' +
+          'a=sendonly\r\na=rtcp-mux\r\n' +
+          'a=rtcp-rsize\r\n' +
+          'a=rtpmap:111 opus/48000\r\n';
+      it('starts the ice transport', (done) => {
+        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          return pc.setLocalDescription(answer);
+        })
+        .then(() => {
+          const receiver = pc.getReceivers()[0];
+          const iceTransport = receiver.transport.transport;
+          expect(iceTransport.start).to.have.been.calledOnce();
+          expect(iceTransport.start).to.have.been.calledWith(
+            sinon.match.any,
+            sinon.match({usernameFragment: 'foo', password: 'bar'})
+          );
+          done();
+        });
+      });
+      it('starts the dtls transport', (done) => {
+        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          return pc.setLocalDescription(answer);
+        })
+        .then(() => {
+          const receiver = pc.getReceivers()[0];
+          const dtlsTransport = receiver.transport;
+          expect(dtlsTransport.start).to.have.been.calledOnce();
+          expect(dtlsTransport.start).to.have.been.calledWith(
+            sinon.match({
+              role: 'auto',
+              fingerprints: sinon.match([
+                sinon.match({
+                  algorithm: 'sha-256',
+                  value: 'so:me:co:lo:ns'
+                })
+              ])
+            })
+          );
+          done();
+        });
+      });
+    });
   });
 
   describe('setRemoteDescription', () => {
