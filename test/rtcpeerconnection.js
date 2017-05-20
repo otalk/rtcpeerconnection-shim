@@ -549,6 +549,50 @@ describe('Edge shim', () => {
         });
       });
     });
+
+    describe('when rtcp-rsize is', () => {
+      const sdp = 'v=0\r\no=- 166855176514521964 2 IN IP4 127.0.0.1\r\n' +
+          's=-\r\nt=0 0\r\na=msid-semantic: WMS\r\n' +
+          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
+          'c=IN IP4 0.0.0.0\r\n' +
+          'a=rtcp:9 IN IP4 0.0.0.0\r\na=ice-ufrag:foo\r\na=ice-pwd:bar\r\n' +
+          'a=fingerprint:sha-256 so:me:co:lo:ns\r\n' +
+          'a=setup:actpass\r\n' +
+          'a=mid:audio1\r\n' +
+          'a=sendonly\r\na=rtcp-mux\r\n' +
+          'a=rtcp-rsize\r\n' +
+          'a=rtpmap:111 opus/48000\r\n' +
+          'a=ssrc:1001 msid:stream1 track1\r\n' +
+          'a=ssrc:1001 cname:some\r\n';
+      beforeEach(() => {
+        sinon.spy(RTCRtpReceiver.prototype, 'receive');
+      });
+      afterEach(() => {
+        RTCRtpReceiver.prototype.receive.restore();
+      });
+
+      it('set RtpReceiver is called with compound set to false', (done) => {
+        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          const receiver = pc.getReceivers()[0];
+          expect(receiver.receive).to.have.been.calledWith(
+            sinon.match({rtcp: sinon.match({compound: false})})
+          );
+          done();
+        });
+      });
+      it('not set RtpReceiver is called with compound set to true', (done) => {
+        pc.setRemoteDescription({type: 'offer',
+            sdp: sdp.replace('a=rtcp-rsize\r\n', '')})
+        .then(() => {
+          const receiver = pc.getReceivers()[0];
+          expect(receiver.receive).to.have.been.calledWith(
+            sinon.match({rtcp: sinon.match({compound: true})})
+          );
+          done();
+        });
+      });
+    });
   });
 
   describe('createOffer', () => {
