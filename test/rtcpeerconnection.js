@@ -1489,6 +1489,33 @@ describe('Edge shim', () => {
           .that.has.property('name').that.equals('TypeError');
     });
 
+    describe('rejects with an OperationError when called with an', () => {
+      it('invalid sdpMid', (done) => {
+        pc.addIceCandidate({sdpMid: 'invalid', candidate: candidateString})
+        .catch((e) => {
+          expect(e.name).to.equal('OperationError');
+          done();
+        });
+      });
+
+      it('invalid sdpMLineIndex', (done) => {
+        pc.addIceCandidate({sdpMLineIndex: 99, candidate: candidateString})
+        .catch((e) => {
+          expect(e.name).to.equal('OperationError');
+          done();
+        });
+      });
+    });
+    it('rejects with an InvalidStateError when called before ' +
+       'setRemoteDescription', (done) => {
+      pc = new RTCPeerConnection(); // recreate pc.
+      pc.addIceCandidate({sdpMid, candidate: candidateString})
+      .catch((e) => {
+        expect(e.name).to.equal('InvalidStateError');
+        done();
+      });
+    });
+
     it('adds the candidate to the remote description', (done) => {
       pc.addIceCandidate({sdpMid, candidate: candidateString})
       .then(() => {

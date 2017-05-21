@@ -188,14 +188,9 @@ module.exports = function(edgeVersion) {
       return self.remoteStreams;
     };
 
-    this.localDescription = new RTCSessionDescription({
-      type: '',
-      sdp: ''
-    });
-    this.remoteDescription = new RTCSessionDescription({
-      type: '',
-      sdp: ''
-    });
+    this.localDescription = null;
+    this.remoteDescription = null;
+
     this.signalingState = 'stable';
     this.iceConnectionState = 'new';
     this.iceGatheringState = 'new';
@@ -1267,8 +1262,9 @@ module.exports = function(edgeVersion) {
   };
 
   RTCPeerConnection.prototype.addIceCandidate = function(candidate) {
+    var err;
     var sections;
-    if (!candidate) {
+    if (!candidate || candidate.candidate === '') {
       for (var j = 0; j < this.transceivers.length; j++) {
         this.transceivers[j].iceTransport.addRemoteCandidate({});
         sections = SDPUtils.splitSections(this.remoteDescription.sdp);
@@ -1280,6 +1276,10 @@ module.exports = function(edgeVersion) {
       }
     } else if (!(candidate.sdpMLineIndex || candidate.sdpMid)) {
       throw new TypeError('sdpMLineIndex or sdpMid required');
+    } else if (!this.remoteDescription) {
+      err = new Error('Can not add ICE candidate without ' +
+          'a remote description');
+      err.name = 'InvalidStateError';
     } else {
       var sdpMLineIndex = candidate.sdpMLineIndex;
       if (candidate.sdpMid) {
@@ -1315,14 +1315,24 @@ module.exports = function(edgeVersion) {
             (cand.type ? candidateString : 'end-of-candidates')
             + '\r\n';
         this.remoteDescription.sdp = sections.join('');
+      } else {
+        err = new Error('Can not add ICE candidate');
+        err.name = 'OperationError';
       }
     }
     var args = arguments;
-    return new Promise(function(resolve) {
-      if (args.length > 1 && typeof args[1] === 'function') {
-        args[1].apply(null);
+    return new Promise(function(resolve, reject) {
+      if (err) {
+        if (args.length > 2 && typeof args[2] === 'function') {
+          args[2].apply(null, [err]);
+        }
+        reject(err);
+      } else {
+        if (args.length > 1 && typeof args[1] === 'function') {
+          args[1].apply(null);
+        }
+        resolve();
       }
-      resolve();
     });
   };
 
