@@ -6,7 +6,6 @@
  *  tree.
  */
 /* eslint-env node */
-const SDPUtils = require('sdp');
 const EventEmitter = require('events');
 
 module.exports = function() {
@@ -179,16 +178,4 @@ module.exports = function() {
 
   RTCRtpSender.getCapabilities = getCapabilities;
   global.RTCRtpSender = RTCRtpSender;
-
-  global.MediaStream = function(tracks) {
-    this.id = SDPUtils.generateIdentifier();
-    this._tracks = tracks || [];
-    this.getTracks = () => this._tracks;
-    this.getAudioTracks = () => this._tracks.filter(t => t.kind === 'audio');
-    this.getVideoTracks = () => this._tracks.filter(t => t.kind === 'video');
-    this.addTrack = (t) => this._tracks.push(t);
-  };
-  global.MediaStreamTrack = function() {
-    this.id = SDPUtils.generateIdentifier();
-  };
 };

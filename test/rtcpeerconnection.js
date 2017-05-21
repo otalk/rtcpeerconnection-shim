@@ -13,6 +13,7 @@ chai.use(require('dirty-chai'));
 chai.use(require('sinon-chai'));
 
 const mockORTC = require('./ortcmock');
+const mockGetUserMedia = require('./gummock');
 const SDPUtils = require('sdp');
 const RTCPeerConnection = require('../rtcpeerconnection')(15025);
 
@@ -30,6 +31,7 @@ describe('Edge shim', () => {
   beforeEach(() => {
     global.window = {setTimeout};
     mockORTC();
+    mockGetUserMedia();
   });
 
   describe('RTCPeerConnection constructor', () => {
@@ -759,12 +761,11 @@ describe('Edge shim', () => {
       });
       it('= false the generated SDP should not offer to receive ' +
           'audio', (done) => {
-        const audioTrack = new MediaStreamTrack();
-        audioTrack.kind = 'audio';
-        const stream = new MediaStream([audioTrack]);
-
-        pc.addStream(stream);
-        pc.createOffer({offerToReceiveAudio: false})
+        navigator.mediaDevices.getUserMedia({audio: true})
+        .then((stream) => {
+          pc.addStream(stream);
+          return pc.createOffer({offerToReceiveAudio: false});
+        })
         .then((offer) => {
           const sections = SDPUtils.splitSections(offer.sdp);
           expect(sections.length).to.equal(2);
@@ -805,12 +806,11 @@ describe('Edge shim', () => {
     describe('when called after adding a stream', () => {
       describe('with an audio track', () => {
         it('the generated SDP should contain an audio m-line', (done) => {
-          const audioTrack = new MediaStreamTrack();
-          audioTrack.kind = 'audio';
-          const stream = new MediaStream([audioTrack]);
-
-          pc.addStream(stream);
-          pc.createOffer()
+          navigator.mediaDevices.getUserMedia({audio: true})
+          .then((stream) => {
+            pc.addStream(stream);
+            return pc.createOffer();
+          })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(2);
@@ -823,12 +823,11 @@ describe('Edge shim', () => {
       describe('with an audio track not offering to receive audio', () => {
         it('the generated SDP should contain a sendonly audio ' +
             'm-line', (done) => {
-          const audioTrack = new MediaStreamTrack();
-          audioTrack.kind = 'audio';
-          const stream = new MediaStream([audioTrack]);
-
-          pc.addStream(stream);
-          pc.createOffer({offerToReceiveAudio: 0})
+          navigator.mediaDevices.getUserMedia({audio: true})
+          .then((stream) => {
+            pc.addStream(stream);
+            return pc.createOffer({offerToReceiveAudio: 0});
+          })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(2);
@@ -840,12 +839,11 @@ describe('Edge shim', () => {
 
       describe('with an audio track and offering to receive video', () => {
         it('the generated SDP should contain a recvonly m-line', (done) => {
-          const audioTrack = new MediaStreamTrack();
-          audioTrack.kind = 'audio';
-          const stream = new MediaStream([audioTrack]);
-
-          pc.addStream(stream);
-          pc.createOffer({offerToReceiveVideo: 1})
+          navigator.mediaDevices.getUserMedia({audio: true})
+          .then((stream) => {
+            pc.addStream(stream);
+            return pc.createOffer({offerToReceiveVideo: 1});
+          })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(3);
@@ -860,12 +858,11 @@ describe('Edge shim', () => {
 
       describe('with a video track', () => {
         it('the generated SDP should contain an video m-line', (done) => {
-          const videoTrack = new MediaStreamTrack();
-          videoTrack.kind = 'video';
-          const stream = new MediaStream([videoTrack]);
-
-          pc.addStream(stream);
-          pc.createOffer()
+          navigator.mediaDevices.getUserMedia({video: true})
+          .then((stream) => {
+            pc.addStream(stream);
+            return pc.createOffer();
+          })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(2);
@@ -878,12 +875,11 @@ describe('Edge shim', () => {
       describe('with a video track and offerToReceiveAudio', () => {
         it('the generated SDP should contain an audio and a ' +
             'video m-line', (done) => {
-          const videoTrack = new MediaStreamTrack();
-          videoTrack.kind = 'video';
-          const stream = new MediaStream([videoTrack]);
-
-          pc.addStream(stream);
-          pc.createOffer({offerToReceiveAudio: 1})
+          navigator.mediaDevices.getUserMedia({video: true})
+          .then((stream) => {
+            pc.addStream(stream);
+            return pc.createOffer({offerToReceiveAudio: 1});
+          })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(3);
@@ -898,14 +894,11 @@ describe('Edge shim', () => {
       describe('with an audio track and a video track', () => {
         it('the generated SDP should contain an audio and video ' +
             'm-line', (done) => {
-          const audioTrack = new MediaStreamTrack();
-          audioTrack.kind = 'audio';
-          const videoTrack = new MediaStreamTrack();
-          videoTrack.kind = 'video';
-          const stream = new MediaStream([audioTrack, videoTrack]);
-
-          pc.addStream(stream);
-          pc.createOffer()
+          navigator.mediaDevices.getUserMedia({audio: true, video: true})
+          .then((stream) => {
+            pc.addStream(stream);
+            return pc.createOffer();
+          })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(3);
@@ -919,18 +912,15 @@ describe('Edge shim', () => {
       describe('with an audio track and two video tracks', () => {
         it('the generated SDP should contain an audio and ' +
             'video m-line', (done) => {
-          const audioTrack = new MediaStreamTrack();
-          audioTrack.kind = 'audio';
-          const videoTrack = new MediaStreamTrack();
-          videoTrack.kind = 'video';
-          const videoTrack2 = new MediaStreamTrack();
-          videoTrack2.kind = 'video';
-          const stream = new MediaStream([audioTrack, videoTrack]);
-          const stream2 = new MediaStream([videoTrack2]);
-
-          pc.addStream(stream);
-          pc.addStream(stream2);
-          pc.createOffer()
+          navigator.mediaDevices.getUserMedia({audio: true, video: true})
+          .then((stream) => {
+            pc.addStream(stream);
+            return navigator.mediaDevices.getUserMedia({video: true});
+          })
+          .then((stream) => {
+            pc.addStream(stream);
+            return pc.createOffer();
+          })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(4);
@@ -947,12 +937,11 @@ describe('Edge shim', () => {
       describe('with an audio track', () => {
         it('the generated SDP should contain a sendrecv ' +
            'audio m-line', (done) => {
-          const audioTrack = new MediaStreamTrack();
-          audioTrack.kind = 'audio';
-          const stream = new MediaStream([audioTrack]);
-
-          pc.addTrack(audioTrack, stream);
-          pc.createOffer()
+          navigator.mediaDevices.getUserMedia({audio: true})
+          .then((stream) => {
+            pc.addTrack(stream.getAudioTracks()[0], stream);
+            return pc.createOffer();
+          })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(2);
@@ -965,12 +954,11 @@ describe('Edge shim', () => {
       describe('with an audio track not offering to receive audio', () => {
         it('the generated SDP should contain a sendonly audio ' +
             'm-line', (done) => {
-          const audioTrack = new MediaStreamTrack();
-          audioTrack.kind = 'audio';
-          const stream = new MediaStream([audioTrack]);
-
-          pc.addTrack(audioTrack, stream);
-          pc.createOffer({offerToReceiveAudio: 0})
+          navigator.mediaDevices.getUserMedia({audio: true})
+          .then((stream) => {
+            pc.addTrack(stream.getAudioTracks()[0], stream);
+            return pc.createOffer({offerToReceiveAudio: 0});
+          })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(2);
@@ -983,12 +971,11 @@ describe('Edge shim', () => {
       describe('with an audio track and offering to receive video', () => {
         it('the generated SDP should contain a sendrecv audio m-line ' +
            'and a recvonly video m-line', (done) => {
-          const audioTrack = new MediaStreamTrack();
-          audioTrack.kind = 'audio';
-          const stream = new MediaStream([audioTrack]);
-
-          pc.addTrack(audioTrack, stream);
-          pc.createOffer({offerToReceiveVideo: 1})
+          navigator.mediaDevices.getUserMedia({audio: true})
+          .then((stream) => {
+            pc.addTrack(stream.getAudioTracks()[0], stream);
+            return pc.createOffer({offerToReceiveVideo: 1});
+          })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(3);
@@ -1003,12 +990,11 @@ describe('Edge shim', () => {
 
       describe('with a video track', () => {
         it('the generated SDP should contain an video m-line', (done) => {
-          const videoTrack = new MediaStreamTrack();
-          videoTrack.kind = 'video';
-          const stream = new MediaStream([videoTrack]);
-
-          pc.addTrack(videoTrack, stream);
-          pc.createOffer()
+          navigator.mediaDevices.getUserMedia({video: true})
+          .then((stream) => {
+            pc.addTrack(stream.getVideoTracks()[0], stream);
+            return pc.createOffer();
+          })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(2);
@@ -1021,12 +1007,11 @@ describe('Edge shim', () => {
       describe('with a video track and offerToReceiveAudio', () => {
         it('the generated SDP should contain an audio and a ' +
             'video m-line', (done) => {
-          const videoTrack = new MediaStreamTrack();
-          videoTrack.kind = 'video';
-          const stream = new MediaStream([videoTrack]);
-
-          pc.addTrack(videoTrack, stream);
-          pc.createOffer({offerToReceiveAudio: 1})
+          navigator.mediaDevices.getUserMedia({video: true})
+          .then((stream) => {
+            pc.addTrack(stream.getVideoTracks()[0], stream);
+            return pc.createOffer({offerToReceiveAudio: 1});
+          })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(3);
@@ -1041,15 +1026,13 @@ describe('Edge shim', () => {
       describe('with an audio track and a video track', () => {
         it('the generated SDP should contain an audio and video ' +
             'm-line', (done) => {
-          const audioTrack = new MediaStreamTrack();
-          audioTrack.kind = 'audio';
-          const videoTrack = new MediaStreamTrack();
-          videoTrack.kind = 'video';
-          const stream = new MediaStream([audioTrack, videoTrack]);
-
-          pc.addTrack(audioTrack, stream);
-          pc.addTrack(videoTrack, stream);
-          pc.createOffer()
+          navigator.mediaDevices.getUserMedia({audio: true, video: true})
+          .then((stream) => {
+            stream.getTracks().forEach((track) => {
+              pc.addTrack(track, stream);
+            });
+            return pc.createOffer();
+          })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(3);
@@ -1063,19 +1046,19 @@ describe('Edge shim', () => {
       describe('with an audio track and two video tracks', () => {
         it('the generated SDP should contain an audio and ' +
             'two video m-lines', (done) => {
-          const audioTrack = new MediaStreamTrack();
-          audioTrack.kind = 'audio';
-          const videoTrack = new MediaStreamTrack();
-          videoTrack.kind = 'video';
-          const videoTrack2 = new MediaStreamTrack();
-          videoTrack2.kind = 'video';
-          const stream = new MediaStream([audioTrack, videoTrack]);
-          const stream2 = new MediaStream([videoTrack2]);
-
-          pc.addTrack(audioTrack, stream);
-          pc.addTrack(videoTrack, stream);
-          pc.addTrack(videoTrack2, stream2);
-          pc.createOffer()
+          navigator.mediaDevices.getUserMedia({audio: true, video: true})
+          .then((stream) => {
+            stream.getTracks().forEach((track) => {
+              pc.addTrack(track, stream);
+            });
+            return navigator.mediaDevices.getUserMedia({video: true});
+          })
+          .then((stream) => {
+            stream.getTracks().forEach((track) => {
+              pc.addTrack(track, stream);
+            });
+            return pc.createOffer();
+          })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
             expect(sections.length).to.equal(4);
@@ -1216,16 +1199,12 @@ describe('Edge shim', () => {
       });
 
       describe('with a local track', () => {
-        beforeEach(() => {
-          const audioTrack = new MediaStreamTrack();
-          audioTrack.kind = 'audio';
-          const stream = new MediaStream([audioTrack]);
-
-          pc.addStream(stream);
-        });
-
         it('responds with a sendrecv answer to sendrecv', (done) => {
-          pc.setRemoteDescription({type: 'offer', sdp: sdp})
+          navigator.mediaDevices.getUserMedia({audio: true})
+          .then((stream) => {
+            pc.addStream(stream);
+            return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+          })
           .then(() => {
             return pc.createAnswer();
           })
@@ -1237,8 +1216,13 @@ describe('Edge shim', () => {
         });
 
         it('responds with a sendonly answer to recvonly', (done) => {
-          pc.setRemoteDescription({type: 'offer', sdp: sdp.replace('sendrecv',
-              'recvonly')})
+          navigator.mediaDevices.getUserMedia({audio: true})
+          .then((stream) => {
+            pc.addStream(stream);
+            return pc.setRemoteDescription({type: 'offer',
+                sdp: sdp.replace('sendrecv', 'recvonly')
+            });
+          })
           .then(() => {
             return pc.createAnswer();
           })
@@ -1255,10 +1239,9 @@ describe('Edge shim', () => {
         it('responds with a sendrecv answer to sendrecv', (done) => {
           pc.setRemoteDescription({type: 'offer', sdp: sdp})
           .then(() => {
-            const audioTrack = new MediaStreamTrack();
-            audioTrack.kind = 'audio';
-            const stream = new MediaStream([audioTrack]);
-
+            return navigator.mediaDevices.getUserMedia({audio: true});
+          })
+          .then((stream) => {
             pc.addStream(stream);
             return pc.createAnswer();
           })
@@ -1273,10 +1256,9 @@ describe('Edge shim', () => {
           pc.setRemoteDescription({type: 'offer', sdp: sdp.replace('sendrecv',
               'recvonly')})
           .then(() => {
-            const audioTrack = new MediaStreamTrack();
-            audioTrack.kind = 'audio';
-            const stream = new MediaStream([audioTrack]);
-
+            return navigator.mediaDevices.getUserMedia({audio: true});
+          })
+          .then((stream) => {
             pc.addStream(stream);
             return pc.createAnswer();
           })
@@ -1355,15 +1337,12 @@ describe('Edge shim', () => {
       });
 
       describe('with a local track', () => {
-        beforeEach(() => {
-          const videoTrack = new MediaStreamTrack();
-          videoTrack.kind = 'video';
-          const stream = new MediaStream([videoTrack]);
-
-          pc.addStream(stream);
-        });
         it('creates an answer with RTX', (done) => {
-          pc.setRemoteDescription({type: 'offer', sdp: sdp})
+          navigator.mediaDevices.getUserMedia({video: true})
+          .then((stream) => {
+            pc.addStream(stream);
+            return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+          })
           .then(() => {
             return pc.createAnswer();
           })
@@ -1395,13 +1374,11 @@ describe('Edge shim', () => {
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
       it('there is no ssrc-group in the answer', (done) => {
-        const videoTrack = new MediaStreamTrack();
-        videoTrack.kind = 'video';
-        const stream = new MediaStream([videoTrack]);
-
-        pc.addStream(stream);
-
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        navigator.mediaDevices.getUserMedia({video: true})
+        .then((stream) => {
+          pc.addStream(stream);
+          return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+        })
         .then(() => {
           return pc.createAnswer();
         })
@@ -1414,18 +1391,18 @@ describe('Edge shim', () => {
 
     describe('rtcp-rsize is', () => {
       const sdp = SDP_BOILERPLATE +
-          'm=audio 9 UDP/TLS/RTP/SAVPF 98\r\n' +
+          'm=video 9 UDP/TLS/RTP/SAVPF 102\r\n' +
           'c=IN IP4 0.0.0.0\r\n' +
           'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
           'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
           'a=ice-pwd:' + ICEPWD + '\r\n' +
           'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
           'a=setup:actpass\r\n' +
-          'a=mid:audio1\r\n' +
+          'a=mid:video1\r\n' +
           'a=sendrecv\r\n' +
           'a=rtcp-mux\r\n' +
           'a=rtcp-rsize\r\n' +
-          'a=rtpmap:98 opus/48000/2\r\n' +
+          'a=rtpmap:102 vp8/90000\r\n' +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
 
@@ -1543,14 +1520,12 @@ describe('Edge shim', () => {
     });
     it('completes a full createOffer-SLD-SRD-createAnswer-SLD-SRD ' +
        'cycle', (done) => {
-      const audioTrack = new MediaStreamTrack();
-      audioTrack.kind = 'audio';
-      const stream = new MediaStream([audioTrack]);
-
-      pc1.addStream(stream);
-      pc2.addStream(stream);
-
-      pc1.createOffer()
+      navigator.mediaDevices.getUserMedia({audio: true, video: true})
+      .then((stream) => {
+        pc1.addStream(stream);
+        pc2.addStream(stream);
+        return pc1.createOffer();
+      })
       .then((offer) => pc1.setLocalDescription(offer))
       .then(() => pc2.setRemoteDescription(pc1.localDescription))
       .then(() => pc2.createAnswer())
