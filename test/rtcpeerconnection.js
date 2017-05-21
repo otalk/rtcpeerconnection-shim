@@ -1349,7 +1349,7 @@ describe('Edge shim', () => {
             expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
             expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
             expect(answer.sdp).to.contain('a=fmtp:103 apt=102');
-            expect(answer.sdp).not.to.contain('a=ssrc-group:FID');
+            expect(answer.sdp).not.to.contain('a=ssrc-group:FID ');
             done();
           });
         });
@@ -1369,7 +1369,7 @@ describe('Edge shim', () => {
             expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
             expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
             expect(answer.sdp).to.contain('a=fmtp:103 apt=102');
-            expect(answer.sdp).to.contain('a=ssrc-group:FID 2002 2003');
+            expect(answer.sdp).to.contain('a=ssrc-group:FID ');
             done();
           });
         });
