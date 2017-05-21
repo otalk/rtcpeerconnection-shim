@@ -166,38 +166,59 @@ describe('Edge shim', () => {
 
       describe('calls', () => {
         it('the onicecandidate callback', (done) => {
+          pc.onicegatheringstatechange = () => {
+            if (pc.iceGatheringState === 'complete') {
+              expect(pc.onicecandidate).to.have.been.calledWith();
+              done();
+            }
+          };
           pc.onicecandidate = sinon.stub();
           pc.createOffer({offerToReceiveAudio: 1})
           .then(offer => pc.setLocalDescription(offer))
           .then(() => {
-            clock.tick(500);
-            expect(pc.onicecandidate).to.have.been.calledWith();
-            done();
+            window.setTimeout(() => {
+              clock.tick(500);
+            });
+            clock.tick(0);
           });
         });
         it('the icecandidate event listener', (done) => {
           const stub = sinon.stub();
+          pc.onicegatheringstatechange = () => {
+            if (pc.iceGatheringState === 'complete') {
+              expect(stub).to.have.been.calledWith();
+              done();
+            }
+          };
           pc.addEventListener('icecandidate', stub);
           pc.createOffer({offerToReceiveAudio: 1})
           .then(offer => pc.setLocalDescription(offer))
           .then(() => {
-            clock.tick(500);
-            expect(stub).to.have.been.calledWith();
-            done();
+            window.setTimeout(() => {
+              clock.tick(500);
+            });
+            clock.tick(0);
           });
         });
       });
 
       it('updates localDescription.sdp with candidates', (done) => {
+        pc.onicegatheringstatechange = () => {
+          if (pc.iceGatheringState === 'complete') {
+            expect(SDPUtils.matchPrefix(pc.localDescription.sdp,
+                'a=candidate:').length).to.be.above(0);
+            expect(SDPUtils.matchPrefix(pc.localDescription.sdp,
+                'a=end-of-candidates')).to.have.length(1);
+            done();
+          }
+        };
         pc.createOffer({offerToReceiveAudio: 1})
         .then(offer => pc.setLocalDescription(offer))
         .then(() => {
-          clock.tick(500);
-          expect(SDPUtils.matchPrefix(pc.localDescription.sdp,
-              'a=candidate:')).to.have.length(1);
-          expect(SDPUtils.matchPrefix(pc.localDescription.sdp,
-              'a=end-of-candidates')).to.have.length(1);
-          done();
+          window.setTimeout(() => {
+            clock.tick(500);
+          });
+          clock.tick(0);
         });
       });
 
@@ -206,16 +227,18 @@ describe('Edge shim', () => {
         let states = [];
         pc.addEventListener('icegatheringstatechange', () => {
           states.push(pc.iceGatheringState);
+          if (pc.iceGatheringState === 'complete') {
+            expect(states.length).to.equal(2);
+            expect(states).to.contain('gathering');
+            expect(states).to.contain('complete');
+            done();
+          }
         });
         pc.createOffer({offerToReceiveAudio: 1})
         .then(offer => pc.setLocalDescription(offer))
         .then(() => {
           expect(pc.iceGatheringState).to.equal('new');
           clock.tick(500);
-          expect(states.length).to.equal(2);
-          expect(states).to.contain('gathering');
-          expect(states).to.contain('complete');
-          done();
         });
       });
     });
@@ -1113,21 +1136,31 @@ describe('Edge shim', () => {
       });
 
       it('contains the candidates already emitted', (done) => {
+        pc.onicegatheringstatechange = () => {
+          if (pc.iceGatheringState !== 'complete') {
+            return;
+          }
+          pc.createOffer()
+          .then((offer) => {
+            const sections = SDPUtils.splitSections(offer.sdp);
+            const candidates = SDPUtils.matchPrefix(sections[1],
+                'a=candidate:');
+            const end = SDPUtils.matchPrefix(sections[1],
+                'a=end-of-candidates');
+            expect(candidates.length).to.be.above(0);
+            expect(end.length).to.equal(1);
+            done();
+          });
+        };
         pc.createOffer({offerToReceiveAudio: true})
         .then((offer) => {
           return pc.setLocalDescription(offer);
         })
         .then(() => {
-          clock.tick(500);
-          return pc.createOffer();
-        })
-        .then((offer) => {
-          const sections = SDPUtils.splitSections(offer.sdp);
-          const candidates = SDPUtils.matchPrefix(sections[1], 'a=candidate:');
-          const end = SDPUtils.matchPrefix(sections[1], 'a=end-of-candidates');
-          expect(candidates.length).to.equal(1);
-          expect(end.length).to.equal(1);
-          done();
+          window.setTimeout(() => {
+            clock.tick(500);
+          });
+          clock.tick(0);
         });
       });
     });
