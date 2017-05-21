@@ -1063,6 +1063,35 @@ describe('Edge shim', () => {
         });
       });
     });
+
+    describe('when called subsequently', () => {
+      let clock;
+      beforeEach(() => {
+        clock = sinon.useFakeTimers();
+      });
+      afterEach(() => {
+        clock.restore();
+      });
+
+      it('contains the candidates already emitted', (done) => {
+        pc.createOffer({offerToReceiveAudio: true})
+        .then((offer) => {
+          return pc.setLocalDescription(offer);
+        })
+        .then(() => {
+          clock.tick(500);
+          return pc.createOffer();
+        })
+        .then((offer) => {
+          const sections = SDPUtils.splitSections(offer.sdp);
+          const candidates = SDPUtils.matchPrefix(sections[1], 'a=candidate:');
+          const end = SDPUtils.matchPrefix(sections[1], 'a=end-of-candidates');
+          expect(candidates.length).to.equal(1);
+          expect(end.length).to.equal(1);
+          done();
+        });
+      });
+    });
   });
 
   describe('createAnswer', () => {

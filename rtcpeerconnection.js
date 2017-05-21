@@ -1173,6 +1173,18 @@ module.exports = function(edgeVersion) {
       sdp += SDPUtils.writeMediaSection(transceiver,
           transceiver.localCapabilities, 'offer', transceiver.stream);
       sdp += 'a=rtcp-rsize\r\n';
+
+      if (transceiver.iceGatherer && self.iceGatheringState !== 'new' &&
+          (sdpMLineIndex === 0 || !self.usingBundle)) {
+        transceiver.iceGatherer.getLocalCandidates().forEach(function(cand) {
+          cand.component = 1;
+          sdp += 'a=' + SDPUtils.writeCandidate(cand) + '\r\n';
+        });
+
+        if (transceiver.iceGatherer.state === 'completed') {
+          sdp += 'a=end-of-candidates\r\n';
+        }
+      }
     });
 
     var desc = new RTCSessionDescription({
