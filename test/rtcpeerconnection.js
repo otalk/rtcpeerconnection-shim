@@ -905,8 +905,8 @@ describe('Edge shim', () => {
       });
 
       describe('with a video track and offerToReceiveAudio', () => {
-        it('the generated SDP should contain an audio and a ' +
-            'video m-line', (done) => {
+        it('the generated SDP should contain a video and an ' +
+            'audio m-line', (done) => {
           navigator.mediaDevices.getUserMedia({video: true})
           .then((stream) => {
             pc.addStream(stream);
@@ -1037,8 +1037,8 @@ describe('Edge shim', () => {
       });
 
       describe('with a video track and offerToReceiveAudio', () => {
-        it('the generated SDP should contain an audio and a ' +
-            'video m-line', (done) => {
+        it('the generated SDP should contain a video and an ' +
+            'audio m-line', (done) => {
           navigator.mediaDevices.getUserMedia({video: true})
           .then((stream) => {
             pc.addTrack(stream.getVideoTracks()[0], stream);
