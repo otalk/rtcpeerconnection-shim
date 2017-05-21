@@ -26,6 +26,20 @@ const SDP_BOILERPLATE = 'v=0\r\n' +
     's=-\r\n' +
     't=0 0\r\n' +
     'a=msid-semantic:WMS *\r\n';
+const MINIMAL_AUDIO_MLINE =
+    'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
+    'c=IN IP4 0.0.0.0\r\n' +
+    'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+    'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+    'a=ice-pwd:' + ICEPWD + '\r\n' +
+    'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+    'a=setup:actpass\r\n' +
+    'a=mid:audio1\r\n' +
+    'a=sendonly\r\n' +
+    'a=rtcp-mux\r\n' +
+    'a=rtcp-rsize\r\n' +
+    'a=rtpmap:111 opus/48000/2\r\n' +
+    'a=ssrc:1001 cname:some\r\n';
 
 describe('Edge shim', () => {
   beforeEach(() => {
@@ -289,17 +303,17 @@ describe('Edge shim', () => {
     });
 
     it('returns a promise', (done) => {
-      const sdp = SDP_BOILERPLATE;
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
       .then(done);
     });
     it('calls the legacy success callback', (done) => {
-      const sdp = SDP_BOILERPLATE;
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp}, done, () => {});
     });
 
     it('changes the signalingState to have-remote-offer', (done) => {
-      const sdp = SDP_BOILERPLATE;
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
       .then(() => {
         expect(pc.signalingState = 'have-remote-offer');
@@ -308,7 +322,7 @@ describe('Edge shim', () => {
     });
 
     it('sets the remoteDescription', (done) => {
-      const sdp = SDP_BOILERPLATE;
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp}, () => {
         expect(pc.remoteDescription.type).to.equal('offer');
         expect(pc.remoteDescription.sdp).to.equal(sdp);
@@ -507,7 +521,7 @@ describe('Edge shim', () => {
 
       it('to false when called with an offer that does not contain ' +
           'a=ice-options:trickle', (done) => {
-        const sdp = SDP_BOILERPLATE;
+        const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
           expect(pc.canTrickleIceCandidates).to.equal(false);
@@ -1126,7 +1140,7 @@ describe('Edge shim', () => {
     });
 
     it('returns a promise', (done) => {
-      const sdp = SDP_BOILERPLATE;
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
       .then(() => {
         return pc.createAnswer();
@@ -1136,7 +1150,7 @@ describe('Edge shim', () => {
       });
     });
     it('calls the legacy success callback', (done) => {
-      const sdp = SDP_BOILERPLATE;
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
       .then(() => {
         return pc.createAnswer((answer) => {
@@ -1147,7 +1161,7 @@ describe('Edge shim', () => {
     });
 
     it('does not change the signaling state', (done) => {
-      const sdp = SDP_BOILERPLATE;
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
       .then(() => {
         expect(pc.signalingState).to.equal('have-remote-offer');
