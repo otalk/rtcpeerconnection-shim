@@ -228,7 +228,8 @@ describe('Edge shim', () => {
           'a=sendonly\r\n' +
           'a=rtcp-mux\r\n' +
           'a=rtcp-rsize\r\n' +
-          'a=rtpmap:111 opus/48000/2\r\n';
+          'a=rtpmap:111 opus/48000/2\r\n' +
+          'a=ssrc:1001 cname:some\r\n';
       it('starts the ice transport', (done) => {
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
@@ -251,6 +252,7 @@ describe('Edge shim', () => {
           done();
         });
       });
+
       it('starts the dtls transport', (done) => {
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
@@ -405,7 +407,8 @@ describe('Edge shim', () => {
           'a=sendonly\r\n' +
           'a=rtcp-mux\r\n' +
           'a=rtcp-rsize\r\n' +
-          'a=rtpmap:111 opus/48000/2\r\n'
+          'a=rtpmap:111 opus/48000/2\r\n' +
+          'a=ssrc:1001 cname:some\r\n'
           .replace('a=msid-semantics:WMS *\r\n', '');
 
       it('triggers onaddstream', (done) => {
