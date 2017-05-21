@@ -360,27 +360,51 @@ module.exports = function(edgeVersion) {
     } else if (this._iceGatherers.length) {
       return this._iceGatherers.shift();
     }
-    return new RTCIceGatherer(this.iceOptions);
+    var iceGatherer = new RTCIceGatherer(this.iceOptions);
+    Object.defineProperty(iceGatherer, 'state',
+        {value: 'new', writable: true}
+    );
+
+    this.transceivers[sdpMLineIndex].candidates = [];
+    var self = this;
+    iceGatherer.addEventListener('onlocalcandidate', function(event) {
+      var end = !event.candidate || Object.keys(event.candidate).length === 0;
+      // polyfill since RTCIceGatherer.state is not implemented in
+      // Edge 10547 yet.
+      iceGatherer.state = end ? 'completed' : 'gathering';
+      if (self.transceivers.iceCandidates !== null) {
+        self.transceivers.iceCandidates.push(event.candidate);
+      }
+    });
+    return iceGatherer;
   };
 
   // start gathering from an RTCIceGatherer.
   RTCPeerConnection.prototype._gather = function(mid, sdpMLineIndex) {
     var self = this;
     var iceGatherer = this.transceivers[sdpMLineIndex].iceGatherer;
+    if (iceGatherer.onlocalcandidate) {
+      return;
+    }
+    var candidates = this.transceivers[sdpMLineIndex].candidates;
+    this.transceivers[sdpMLineIndex].candidates = null;
     iceGatherer.onlocalcandidate = function(evt) {
       var event = new Event('icecandidate');
       event.candidate = {sdpMid: mid, sdpMLineIndex: sdpMLineIndex};
 
       var cand = evt.candidate;
-      var end = !cand || Object.keys(cand).length === 0;
       // Edge emits an empty object for RTCIceCandidateComplete‥
+      var end = !cand || Object.keys(cand).length === 0;
       if (end) {
         // polyfill since RTCIceGatherer.state is not implemented in
         // Edge 10547 yet.
-        if (iceGatherer.state === undefined) {
+        if (iceGatherer.state === 'new' || iceGatherer.state === 'gathering') {
           iceGatherer.state = 'completed';
         }
       } else {
+        if (iceGatherer.state === 'new') {
+          iceGatherer.state = 'gathering';
+        }
         // RTCIceCandidate doesn't have a component, needs to be added
         cand.component = 1;
         event.candidate.candidate = SDPUtils.writeCandidate(cand);
@@ -426,8 +450,8 @@ module.exports = function(edgeVersion) {
 
     // emit already gathered candidates.
     window.setTimeout(function() {
-      iceGatherer.getLocalCandidates().forEach(function(candidate) {
-        let e = new Event('RTCIceGatherEvent');
+      candidates.forEach(function(candidate) {
+        var e = new Event('RTCIceGatherEvent');
         e.candidate = candidate;
         iceGatherer.onlocalcandidate(e);
       });

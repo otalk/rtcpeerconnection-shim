@@ -1536,6 +1536,8 @@ describe('Edge shim', () => {
     });
 
     it('adds end-of-candidates when receiving the null candidate', (done) => {
+      // add at least one valid candidate.
+      pc.addIceCandidate({sdpMid, candidate: candidateString});
       pc.addIceCandidate()
       .then(() => {
         expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
@@ -1545,6 +1547,8 @@ describe('Edge shim', () => {
     });
 
     it('adds end-of-candidates when receiving the \'\' candidate', (done) => {
+      // add at least one valid candidate.
+      pc.addIceCandidate({sdpMid, candidate: candidateString});
       pc.addIceCandidate({sdpMid, candidate: ''})
       .then(() => {
         expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,

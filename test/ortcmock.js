@@ -32,6 +32,13 @@ module.exports = function() {
   const RTCIceGatherer = function(options) {
     this.component = 'rtp';
 
+    this._emitter = new EventEmitter();
+    this.addEventListener = this._emitter.addListener.bind(this);
+    this.removeEventListener = this._emitter.removeListener.bind(this);
+    this.dispatchEvent = (ev) => {
+      this._emitter.emit(ev.type, ev);
+    };
+
     let candidates = [
       {
         foundation: '702786350',
