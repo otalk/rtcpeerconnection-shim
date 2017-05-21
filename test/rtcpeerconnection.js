@@ -101,7 +101,7 @@ describe('Edge shim', () => {
     it('calls the legacy success callback', (done) => {
       pc.createOffer({offerToReceiveAudio: 1})
       .then((offer) => {
-        return pc.setLocalDescription(offer, done);
+        return pc.setLocalDescription(offer, done, () => {});
       });
     });
 
@@ -280,7 +280,7 @@ describe('Edge shim', () => {
     });
     it('calls the legacy success callback', (done) => {
       const sdp = SDP_BOILERPLATE;
-      pc.setRemoteDescription({type: 'offer', sdp: sdp}, done);
+      pc.setRemoteDescription({type: 'offer', sdp: sdp}, done, () => {});
     });
 
     it('changes the signalingState to have-remote-offer', (done) => {
@@ -704,12 +704,14 @@ describe('Edge shim', () => {
         done();
       });
     });
+
     it('calls the legacy success callback', (done) => {
-      pc.createOffer({offerToReceiveAudio: 1})
-      .then(() => {
+      pc.createOffer((offer) => {
+        expect(offer.type).to.equal('offer');
         done();
-      });
+      }, () => {}, {offerToReceiveAudio: 1});
     });
+
     it('does not change the signalingState', (done) => {
       pc.createOffer({offerToReceiveAudio: 1})
       .then(() => {
@@ -1121,9 +1123,10 @@ describe('Edge shim', () => {
       const sdp = SDP_BOILERPLATE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
       .then(() => {
-        return pc.createAnswer(() => {
+        return pc.createAnswer((answer) => {
+          expect(answer.type).to.equal('answer');
           done();
-        });
+        }, () => {});
       });
     });
 
@@ -1463,7 +1466,7 @@ describe('Edge shim', () => {
     });
 
     it('calls the legacy success callback', (done) => {
-      pc.addIceCandidate({sdpMid, candidate: candidateString}, done);
+      pc.addIceCandidate({sdpMid, candidate: candidateString}, done, () => {});
     });
 
     it('throws a TypeError when called without sdpMid or ' +
