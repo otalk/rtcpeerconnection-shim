@@ -579,7 +579,7 @@ describe('Edge shim', () => {
       });
     });
 
-    describe('ІnvalidStateError is thrown when called with', () => {
+    describe('InvalidStateError is thrown when called with', () => {
       it('an answer in signalingState stable', (done) => {
         pc.setRemoteDescription({type: 'answer'})
         .catch((e) => {
