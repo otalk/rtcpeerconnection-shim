@@ -150,14 +150,27 @@ describe('Edge shim', () => {
         clock.restore();
       });
 
-      it('calls onicecandidate', (done) => {
-        pc.onicecandidate = sinon.stub();
-        pc.createOffer({offerToReceiveAudio: 1})
-        .then(offer => pc.setLocalDescription(offer))
-        .then(() => {
-          clock.tick(500);
-          expect(pc.onicecandidate).to.have.been.calledWith();
-          done();
+      describe('calls', () => {
+        it('the onicecandidate callback', (done) => {
+          pc.onicecandidate = sinon.stub();
+          pc.createOffer({offerToReceiveAudio: 1})
+          .then(offer => pc.setLocalDescription(offer))
+          .then(() => {
+            clock.tick(500);
+            expect(pc.onicecandidate).to.have.been.calledWith();
+            done();
+          });
+        });
+        it('the icecandidate event listener', (done) => {
+          const stub = sinon.stub();
+          pc.addEventListener('icecandidate', stub);
+          pc.createOffer({offerToReceiveAudio: 1})
+          .then(offer => pc.setLocalDescription(offer))
+          .then(() => {
+            clock.tick(500);
+            expect(stub).to.have.been.calledWith();
+            done();
+          });
         });
       });
 
