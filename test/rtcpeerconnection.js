@@ -1608,6 +1608,78 @@ describe('Edge shim', () => {
     });
   });
 
+  describe('negotiationneeded', () => {
+    let pc;
+    beforeEach(() => {
+      pc = new RTCPeerConnection();
+    });
+
+    it('fires as an event', (done) => {
+      const stub = sinon.stub();
+      pc.addEventListener('negotiationneeded', stub);
+
+      navigator.mediaDevices.getUserMedia({audio: true})
+      .then((stream) => {
+        pc.addTrack(stream.getAudioTracks()[0], stream);
+      })
+      .then(() => {
+        setTimeout(() => {
+          expect(stub).to.have.been.calledOnce();
+          done();
+        });
+      });
+    });
+
+    describe('triggers after', () => {
+      it('addTrack', (done) => {
+        pc.onnegotiationneeded = sinon.stub();
+
+        navigator.mediaDevices.getUserMedia({audio: true})
+        .then((stream) => {
+          pc.addTrack(stream.getAudioTracks()[0], stream);
+        })
+        .then(() => {
+          setTimeout(() => {
+            expect(pc.onnegotiationneeded).to.have.been.calledOnce();
+            done();
+          });
+        });
+      });
+
+      it('addStream', (done) => {
+        pc.onnegotiationneeded = sinon.stub();
+
+        navigator.mediaDevices.getUserMedia({audio: true, video: true})
+        .then((stream) => {
+          pc.addStream(stream);
+        })
+        .then(() => {
+          setTimeout(() => {
+            expect(pc.onnegotiationneeded).to.have.been.calledOnce();
+            done();
+          });
+        });
+      });
+    });
+
+    it('does not trigger when already needing negotiation', (done) => {
+      pc.onnegotiationneeded = sinon.stub();
+
+      navigator.mediaDevices.getUserMedia({audio: true, video: true})
+      .then((stream) => {
+        stream.getTracks().forEach((track) => {
+          pc.addTrack(track, stream);
+        });
+      })
+      .then(() => {
+        setTimeout(() => {
+          expect(pc.onnegotiationneeded).to.have.been.calledOnce();
+          done();
+        });
+      });
+    });
+  });
+
   describe('full cycle', () => {
     let pc1;
     let pc2;

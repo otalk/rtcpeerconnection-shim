@@ -179,6 +179,8 @@ module.exports = function(edgeVersion) {
     this.ondatachannel = null;
     this.canTrickleIceCandidates = null;
 
+    this.needNegotiation = false;
+
     this.localStreams = [];
     this.remoteStreams = [];
     this.getLocalStreams = function() {
@@ -293,6 +295,8 @@ module.exports = function(edgeVersion) {
       transceiver = this._createTransceiver(track.kind);
     }
 
+    this._maybeFireNegotiationNeeded();
+
     transceiver.track = track;
     transceiver.stream = stream;
     transceiver.rtpSender = new RTCRtpSender(track,
@@ -323,7 +327,6 @@ module.exports = function(edgeVersion) {
       });
       this.localStreams.push(clonedStream);
     }
-    this._maybeFireNegotiationNeeded();
   };
 
   RTCPeerConnection.prototype.removeStream = function(stream) {
@@ -1003,12 +1006,22 @@ module.exports = function(edgeVersion) {
 
   // Determine whether to fire the negotiationneeded event.
   RTCPeerConnection.prototype._maybeFireNegotiationNeeded = function() {
-    // Fire away (for now).
-    var event = new Event('negotiationneeded');
-    this.dispatchEvent(event);
-    if (this.onnegotiationneeded !== null) {
-      this.onnegotiationneeded(event);
+    var self = this;
+    if (this.signalingState !== 'stable' || this.needNegotiation === true) {
+      return;
     }
+    this.needNegotiation = true;
+    window.setTimeout(function() {
+      if (self.needNegotiation === false) {
+        return;
+      }
+      self.needNegotiation = false;
+      var event = new Event('negotiationneeded');
+      self.dispatchEvent(event);
+      if (self.onnegotiationneeded !== null) {
+        self.onnegotiationneeded(event);
+      }
+    }, 0);
   };
 
   // Update the connection state.
