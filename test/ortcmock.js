@@ -81,11 +81,13 @@ module.exports = function(window) {
 
   const RTCIceTransport = function() {
     this._remoteCandidates = [];
+    this.state = 'new';
   };
   RTCIceTransport.prototype.start = function(gatherer, parameters, role) {
     this._gatherer = gatherer;
     this._remoteParameters = parameters;
     this._role = role || 'controlled';
+    this.state = 'completed'; // TODO: not acccurate.
   };
   RTCIceTransport.prototype.addRemoteCandidate = function(remoteCandidate) {
     if (Object.keys(remoteCandidate).length) {
@@ -101,12 +103,17 @@ module.exports = function(window) {
   RTCIceTransport.prototype.getRemoteParameters = function() {
     return this._remoteParameters;
   };
+  RTCIceTransport.prototype.stop = function() {};
   window.RTCIceTransport = RTCIceTransport;
 
   const RTCDtlsTransport = function(transport) {
     this.transport = transport;
+    this.state = 'new';
   };
-  RTCDtlsTransport.prototype.start = function() {};
+  RTCDtlsTransport.prototype.start = function() {
+    this.state = 'connected'; // TODO: not accurate.
+  };
+  RTCDtlsTransport.prototype.stop = function() {};
   RTCDtlsTransport.prototype.getLocalParameters = function() {
     return {
       role: 'auto',
@@ -167,6 +174,7 @@ module.exports = function(window) {
     this.transport = transport;
   };
   RTCRtpReceiver.prototype.receive = function() {};
+  RTCRtpReceiver.prototype.stop = function() {};
   RTCRtpReceiver.prototype.setTransport = function(transport) {
     this.transport = transport;
   };
@@ -179,6 +187,7 @@ module.exports = function(window) {
     this.transport = transport;
   };
   RTCRtpSender.prototype.send = function() {};
+  RTCRtpSender.prototype.stop = function() {};
   RTCRtpSender.prototype.setTransport = function(transport) {
     this.transport = transport;
   };
