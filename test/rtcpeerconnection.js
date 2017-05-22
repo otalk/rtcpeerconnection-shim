@@ -533,6 +533,58 @@ describe('Edge shim', () => {
       });
     });
 
+    describe('when called with a bundle offer after adding ' +
+        'two tracks', () => {
+      const sdp = SDP_BOILERPLATE +
+          'a=group:BUNDLE audio1 video1\r\n' +
+          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
+          'c=IN IP4 0.0.0.0\r\n' +
+          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+          'a=ice-pwd:' + ICEPWD + '\r\n' +
+          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+          'a=setup:actpass\r\n' +
+          'a=mid:audio1\r\n' +
+          'a=sendonly\r\n' +
+          'a=rtcp-mux\r\n' +
+          'a=rtcp-rsize\r\n' +
+          'a=rtpmap:111 opus/48000/2\r\n' +
+          'a=ssrc:1001 msid:stream1 track1\r\n' +
+          'a=ssrc:1001 cname:some\r\n' +
+          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
+          'c=IN IP4 0.0.0.0\r\n' +
+          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+          'a=ice-pwd:' + ICEPWD + '\r\n' +
+          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+          'a=setup:actpass\r\n' +
+          'a=mid:audio1\r\n' +
+          'a=sendonly\r\n' +
+          'a=rtcp-mux\r\n' +
+          'a=rtcp-rsize\r\n' +
+          'a=rtpmap:111 opus/48000/2\r\n' +
+          'a=ssrc:2002 msid:stream2 track2\r\n' +
+          'a=ssrc:2002 cname:some\r\n';
+      it('disposes the second ice transport', (done) => {
+        navigator.mediaDevices.getUserMedia({audio: true, video: true})
+        .then((stream) => {
+          // this creates two transceivers with ice transports.
+          pc.addStream(stream);
+
+          // this has bundle so will set usingBundle. But two
+          // transceivers and their ice/dtls transports exist
+          // and the second one needs to be disposed.
+          return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+        })
+        .then(() => {
+          // the second ice transport should have been disposed.
+          expect(pc.transceivers[0].iceTransport)
+              .to.equal(pc.transceivers[1].iceTransport);
+          done();
+        });
+      });
+    });
+
     // TODO: add a test for recvonly to show it doesn't trigger the callback.
     //   probably easiest done using a sinon.stub
     //
