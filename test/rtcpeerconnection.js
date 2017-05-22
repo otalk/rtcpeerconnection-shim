@@ -1656,5 +1656,71 @@ describe('Edge shim', () => {
         done();
       });
     });
+
+    describe('emits candidates with sdpMLineIndex', () => {
+      let clock;
+      beforeEach(() => {
+        clock = sinon.useFakeTimers();
+      });
+      afterEach(() => {
+        clock.restore();
+      });
+
+      it('1 and 2 when using max-compat', (done) => {
+        const pc = new RTCPeerConnection({bundlePolicy: 'max-compat'});
+
+        pc.onicecandidate = sinon.stub();
+        pc.onicegatheringstatechange = () => {
+          if (pc.iceGatheringState === 'complete') {
+            expect(pc.onicecandidate).to.have.been.calledWith(sinon.match({
+              candidate: sinon.match({sdpMLineIndex: sinon.match(0)})
+            }));
+            expect(pc.onicecandidate).to.have.been.calledWith(sinon.match({
+              candidate: sinon.match({sdpMLineIndex: sinon.match(1)})
+            }));
+            done();
+          }
+        };
+
+        pc.createOffer({offerToReceiveAudio: 1, offerToReceiveVideo: 1})
+        .then((offer) => {
+          return pc.setLocalDescription(offer);
+        })
+        .then(() => {
+          window.setTimeout(() => {
+            clock.tick(500);
+          });
+          clock.tick(0);
+        });
+      });
+
+      it('1 when using max-bundle', (done) => {
+        const pc = new RTCPeerConnection({bundlePolicy: 'max-bundle'});
+
+        pc.onicecandidate = sinon.stub();
+        pc.onicegatheringstatechange = () => {
+          if (pc.iceGatheringState === 'complete') {
+            expect(pc.onicecandidate).to.have.been.calledWith(sinon.match({
+              candidate: sinon.match({sdpMLineIndex: sinon.match(0)})
+            }));
+            expect(pc.onicecandidate).not.to.have.been.calledWith(sinon.match({
+              candidate: sinon.match({sdpMLineIndex: sinon.match(1)})
+            }));
+            done();
+          }
+        };
+
+        pc.createOffer({offerToReceiveAudio: 1, offerToReceiveVideo: 1})
+        .then((offer) => {
+          return pc.setLocalDescription(offer);
+        })
+        .then(() => {
+          window.setTimeout(() => {
+            clock.tick(500);
+          });
+          clock.tick(0);
+        });
+      });
+    });
   });
 });
