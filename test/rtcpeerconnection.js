@@ -109,6 +109,9 @@ describe('Edge shim', () => {
     beforeEach(() => {
       pc = new RTCPeerConnection();
     });
+    afterEach(() => {
+      pc.close();
+    });
 
     it('returns a promise', (done) => {
       pc.createOffer({offerToReceiveAudio: 1})
@@ -329,6 +332,9 @@ describe('Edge shim', () => {
     let pc;
     beforeEach(() => {
       pc = new RTCPeerConnection();
+    });
+    afterEach(() => {
+      pc.close();
     });
 
     it('returns a promise', (done) => {
@@ -808,6 +814,9 @@ describe('Edge shim', () => {
     beforeEach(() => {
       pc = new RTCPeerConnection();
     });
+    afterEach(() => {
+      pc.close();
+    });
 
     it('returns a promise', (done) => {
       pc.createOffer({offerToReceiveAudio: 1})
@@ -1229,6 +1238,9 @@ describe('Edge shim', () => {
     beforeEach(() => {
       pc = new RTCPeerConnection();
     });
+    afterEach(() => {
+      pc.close();
+    });
 
     it('returns a promise', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
@@ -1576,9 +1588,13 @@ describe('Edge shim', () => {
     const sdpMid = 'audio1';
 
     let pc;
-    beforeEach(() => {
+    beforeEach((done) => {
       pc = new RTCPeerConnection();
-      pc.setRemoteDescription({type: 'offer', sdp});
+      pc.setRemoteDescription({type: 'offer', sdp})
+      .then(done);
+    });
+    afterEach(() => {
+      pc.close();
     });
 
     it('returns a promise', (done) => {
@@ -1671,6 +1687,9 @@ describe('Edge shim', () => {
     beforeEach(() => {
       pc = new RTCPeerConnection();
     });
+    afterEach(() => {
+      pc.close();
+    });
 
     it('fires as an event', (done) => {
       const stub = sinon.stub();
@@ -1745,6 +1764,11 @@ describe('Edge shim', () => {
       pc1 = new RTCPeerConnection();
       pc2 = new RTCPeerConnection();
     });
+    afterEach(() => {
+      pc1.close();
+      pc2.close();
+    });
+
     it('completes a full createOffer-SLD-SRD-createAnswer-SLD-SRD ' +
        'cycle', (done) => {
       navigator.mediaDevices.getUserMedia({audio: true, video: true})
