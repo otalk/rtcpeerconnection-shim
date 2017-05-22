@@ -14,8 +14,8 @@ chai.use(require('sinon-chai'));
 
 const mockORTC = require('./ortcmock');
 const mockGetUserMedia = require('./gummock');
+const shimPeerConnection = require('../rtcpeerconnection');
 const SDPUtils = require('sdp');
-const RTCPeerConnection = require('../rtcpeerconnection')(15025);
 
 const FINGERPRINT_SHA256 = '8C:71:B3:8D:A5:38:FD:8F:A4:2E:A2:65:6C' +
     ':86:52:BC:E0:6E:94:F2:9F:7C:4D:B5:DF:AF:AA:6F:44:90:8D:F4';
@@ -42,10 +42,16 @@ const MINIMAL_AUDIO_MLINE =
     'a=ssrc:1001 cname:some\r\n';
 
 describe('Edge shim', () => {
+  let window;
+  let RTCPeerConnection;
+  let navigator;
+
   beforeEach(() => {
-    global.window = {setTimeout};
-    mockORTC();
-    mockGetUserMedia();
+    window = {setTimeout};
+    mockGetUserMedia(window);
+    mockORTC(window);
+    RTCPeerConnection = shimPeerConnection(window, 15025);
+    navigator = window.navigator;
   });
 
   describe('RTCPeerConnection constructor', () => {
@@ -60,11 +66,11 @@ describe('Edge shim', () => {
 
     describe('when RTCIceCandidatePoolSize is set', () => {
       beforeEach(() => {
-        RTCIceGatherer = sinon.spy(RTCIceGatherer);
-        window.RTCIceGatherer = RTCIceGatherer;
+        sinon.spy(window, 'RTCIceGatherer');
       });
 
       afterEach(() => {
+        window.RTCIceGatherer.restore();
       });
 
       it('creates an ICE Gatherer', () => {
@@ -245,12 +251,12 @@ describe('Edge shim', () => {
 
     describe('after setRemoteDescription', () => {
       beforeEach(() => {
-        sinon.spy(RTCIceTransport.prototype, 'start');
-        sinon.spy(RTCDtlsTransport.prototype, 'start');
+        sinon.spy(window.RTCIceTransport.prototype, 'start');
+        sinon.spy(window.RTCDtlsTransport.prototype, 'start');
       });
       afterEach(() => {
-        RTCIceTransport.prototype.start.restore();
-        RTCDtlsTransport.prototype.start.restore();
+        window.RTCIceTransport.prototype.start.restore();
+        window.RTCDtlsTransport.prototype.start.restore();
       });
 
       const sdp = SDP_BOILERPLATE +
@@ -555,12 +561,12 @@ describe('Edge shim', () => {
 
     describe('when called with an offer containing candidates', () => {
       beforeEach(() => {
-        sinon.spy(RTCIceTransport.prototype, 'addRemoteCandidate');
-        sinon.spy(RTCIceTransport.prototype, 'setRemoteCandidates');
+        sinon.spy(window.RTCIceTransport.prototype, 'addRemoteCandidate');
+        sinon.spy(window.RTCIceTransport.prototype, 'setRemoteCandidates');
       });
       afterEach(() => {
-        RTCIceTransport.prototype.addRemoteCandidate.restore();
-        RTCIceTransport.prototype.setRemoteCandidates.restore();
+        window.RTCIceTransport.prototype.addRemoteCandidate.restore();
+        window.RTCIceTransport.prototype.setRemoteCandidates.restore();
       });
       const sdp = SDP_BOILERPLATE +
           'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
@@ -715,10 +721,10 @@ describe('Edge shim', () => {
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
       beforeEach(() => {
-        sinon.spy(RTCRtpReceiver.prototype, 'receive');
+        sinon.spy(window.RTCRtpReceiver.prototype, 'receive');
       });
       afterEach(() => {
-        RTCRtpReceiver.prototype.receive.restore();
+        window.RTCRtpReceiver.prototype.receive.restore();
       });
 
       it('set RtpReceiver is called with compound set to false', (done) => {

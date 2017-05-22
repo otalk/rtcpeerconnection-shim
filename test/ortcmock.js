@@ -8,7 +8,7 @@
 /* eslint-env node */
 const EventEmitter = require('events');
 
-module.exports = function() {
+module.exports = function(window) {
   // required by the shim to mock an EventEmitter.
   global.document = {
     createDocumentFragment: () => {
@@ -25,7 +25,7 @@ module.exports = function() {
     this.type = type;
   };
 
-  global.RTCSessionDescription = function(init) {
+  window.RTCSessionDescription = function(init) {
     return init;
   };
 
@@ -77,7 +77,7 @@ module.exports = function() {
       password: 'somepass'
     };
   };
-  global.RTCIceGatherer = RTCIceGatherer;
+  window.RTCIceGatherer = RTCIceGatherer;
 
   const RTCIceTransport = function() {
     this._remoteCandidates = [];
@@ -101,7 +101,7 @@ module.exports = function() {
   RTCIceTransport.prototype.getRemoteParameters = function() {
     return this._remoteParameters;
   };
-  global.RTCIceTransport = RTCIceTransport;
+  window.RTCIceTransport = RTCIceTransport;
 
   const RTCDtlsTransport = function(transport) {
     this.transport = transport;
@@ -118,7 +118,7 @@ module.exports = function() {
       ]
     };
   };
-  global.RTCDtlsTransport = RTCDtlsTransport;
+  window.RTCDtlsTransport = RTCDtlsTransport;
 
   function getCapabilities(kind) {
     var opus = {
@@ -162,7 +162,7 @@ module.exports = function() {
   }
 
   const RTCRtpReceiver = function(transport, kind) {
-    this.track = new MediaStreamTrack();
+    this.track = new window.MediaStreamTrack();
     this.track.kind = kind;
     this.transport = transport;
   };
@@ -172,7 +172,7 @@ module.exports = function() {
   };
 
   RTCRtpReceiver.getCapabilities = getCapabilities;
-  global.RTCRtpReceiver = RTCRtpReceiver;
+  window.RTCRtpReceiver = RTCRtpReceiver;
 
   const RTCRtpSender = function(track, transport) {
     this.track = track;
@@ -184,5 +184,5 @@ module.exports = function() {
   };
 
   RTCRtpSender.getCapabilities = getCapabilities;
-  global.RTCRtpSender = RTCRtpSender;
+  window.RTCRtpSender = RTCRtpSender;
 };

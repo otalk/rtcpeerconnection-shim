@@ -8,7 +8,7 @@
 /* eslint-env node */
 const SDPUtils = require('sdp');
 
-module.exports = function() {
+module.exports = function(window) {
   const MediaStream = function(tracks) {
     this.id = SDPUtils.generateIdentifier();
     this._tracks = tracks || [];
@@ -27,13 +27,13 @@ module.exports = function() {
     this._tracks.push(t);
   };
 
-  global.MediaStream = MediaStream;
+  window.MediaStream = MediaStream;
 
   const MediaStreamTrack = function() {
     this.id = SDPUtils.generateIdentifier();
   };
   MediaStreamTrack.prototype.stop = function() {};
-  global.MediaStreamTrack = MediaStreamTrack;
+  window.MediaStreamTrack = MediaStreamTrack;
 
 
   const getUserMedia = (constraints) => {
@@ -53,7 +53,7 @@ module.exports = function() {
       resolve(stream);
     });
   };
-  global.navigator = {
+  window.navigator = {
     mediaDevices: {
       getUserMedia
     }
