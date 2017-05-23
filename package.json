@@ -21,7 +21,7 @@
     "node": ">=6.0.0"
   },
   "dependencies": {
-    "sdp": "^1.5.2"
+    "sdp": "^2.0.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",

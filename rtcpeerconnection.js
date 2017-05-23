@@ -741,7 +741,7 @@ module.exports = function(window, edgeVersion) {
             return SDPUtils.parseCandidate(cand);
           })
           .filter(function(cand) {
-            return cand.component === '1' || cand.component === 1;
+            return cand.component === 1;
           });
 
       // Check if we can use BUNDLE and dispose transports.
@@ -1340,8 +1340,7 @@ module.exports = function(window, edgeVersion) {
           return Promise.resolve();
         }
         // Ignore RTCP candidates, we assume RTCP-MUX.
-        if (cand.component &&
-            !(cand.component === '1' || cand.component === 1)) {
+        if (cand.component && cand.component !== 1) {
           return Promise.resolve();
         }
         transceiver.iceTransport.addRemoteCandidate(cand);

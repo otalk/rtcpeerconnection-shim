@@ -1680,6 +1680,20 @@ describe('Edge shim', () => {
         done();
       });
     });
+
+    it('ignores candidates with component=2 and does not add them ' +
+       'to the sdp', (done) => {
+      const iceTransport = pc.getReceivers()[0].transport.transport;
+      sinon.spy(iceTransport, 'addRemoteCandidate');
+      pc.addIceCandidate({sdpMid, candidate:
+        candidateString.replace('1 udp', '2 udp')})
+      .then(() => {
+        expect(iceTransport.addRemoteCandidate).not.to.have.been.calledWith();
+        expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+            'a=candidate:')).to.have.length(0);
+        done();
+      });
+    });
   });
 
   describe('negotiationneeded', () => {
