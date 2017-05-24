@@ -1343,7 +1343,12 @@ module.exports = function(window, edgeVersion) {
         if (cand.component && cand.component !== 1) {
           return Promise.resolve();
         }
-        transceiver.iceTransport.addRemoteCandidate(cand);
+        // when using bundle, avoid adding candidates to the wrong
+        // ice transport.
+        if (sdpMLineIndex === 0 || (sdpMLineIndex > 0 &&
+            transceiver.iceTransport !== this.transceivers[0].iceTransport)) {
+          transceiver.iceTransport.addRemoteCandidate(cand);
+        }
 
         // update the remoteDescription.
         var candidateString = candidate.candidate.trim();

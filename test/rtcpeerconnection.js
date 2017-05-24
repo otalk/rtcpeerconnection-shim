@@ -1569,6 +1569,7 @@ describe('Edge shim', () => {
 
   describe('addIceCandidate', () => {
     const sdp = SDP_BOILERPLATE +
+        'a=group:BUNDLE audio1 video1\r\n' +
         'm=audio 9 UDP/TLS/RTP/SAVPF 98\r\n' +
         'c=IN IP4 0.0.0.0\r\n' +
         'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
@@ -1582,7 +1583,26 @@ describe('Edge shim', () => {
         'a=rtcp-rsize\r\n' +
         'a=rtpmap:98 opus/48000/2\r\n' +
         'a=ssrc:1001 msid:stream1 track1\r\n' +
-        'a=ssrc:1001 cname:some\r\n';
+        'a=ssrc:1001 cname:some\r\n' +
+        'm=video 9 UDP/TLS/RTP/SAVPF 102 103\r\n' +
+        'c=IN IP4 0.0.0.0\r\n' +
+        'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+        'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+        'a=ice-pwd:' + ICEPWD + '\r\n' +
+        'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+        'a=setup:actpass\r\n' +
+        'a=mid:video1\r\n' +
+        'a=sendrecv\r\n' +
+        'a=rtcp-mux\r\n' +
+        'a=rtcp-rsize\r\n' +
+        'a=rtpmap:102 vp8/90000\r\n' +
+        'a=rtpmap:103 rtx/90000\r\n' +
+        'a=fmtp:103 apt=102\r\n' +
+        'a=ssrc-group:FID 1001 1002\r\n' +
+        'a=ssrc:1001 msid:stream1 track1\r\n' +
+        'a=ssrc:1001 cname:some\r\n' +
+        'a=ssrc:1002 msid:stream1 track1\r\n' +
+        'a=ssrc:1002 cname:some\r\n';
     const candidateString = 'candidate:702786350 1 udp 41819902 8.8.8.8 ' +
         '60769 typ host';
     const sdpMid = 'audio1';
@@ -1691,6 +1711,19 @@ describe('Edge shim', () => {
         expect(iceTransport.addRemoteCandidate).not.to.have.been.calledWith();
         expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
             'a=candidate:')).to.have.length(0);
+        done();
+      });
+    });
+
+    it('ignores candidates with non-master mid but does add them ' +
+       'to the sdp', (done) => {
+      const iceTransport = pc.getReceivers()[0].transport.transport;
+      sinon.spy(iceTransport, 'addRemoteCandidate');
+      pc.addIceCandidate({sdpMid: 'video1', candidate: candidateString})
+      .then(() => {
+        expect(iceTransport.addRemoteCandidate).not.to.have.been.calledWith();
+        expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+            'a=candidate:')).to.have.length(1);
         done();
       });
     });
