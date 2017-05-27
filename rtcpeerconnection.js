@@ -603,9 +603,13 @@ module.exports = function(window, edgeVersion) {
 
           if (!self.usingBundle || sdpMLineIndex === 0) {
             self._gather(transceiver.mid, sdpMLineIndex);
-            iceTransport.start(iceGatherer, remoteIceParameters,
-                isIceLite ? 'controlling' : 'controlled');
-            dtlsTransport.start(remoteDtlsParameters);
+            if (iceTransport.state === 'new') {
+              iceTransport.start(iceGatherer, remoteIceParameters,
+                  isIceLite ? 'controlling' : 'controlled');
+            }
+            if (dtlsTransport.state === 'new') {
+              dtlsTransport.start(remoteDtlsParameters);
+            }
           }
 
           // Calculate intersection of capabilities.
@@ -774,7 +778,8 @@ module.exports = function(window, edgeVersion) {
               usingBundle);
         }
 
-        if (isComplete && (!usingBundle || sdpMLineIndex === 0)) {
+        if (isComplete && (!usingBundle || sdpMLineIndex === 0)
+            && transceiver.iceTransport.state === 'new') {
           transceiver.iceTransport.setRemoteCandidates(cands);
         } else if (cands.length) {
           cands.forEach(function(candidate) {
@@ -859,17 +864,22 @@ module.exports = function(window, edgeVersion) {
             remoteCapabilities;
         self.transceivers[sdpMLineIndex].rtcpParameters = rtcpParameters;
 
-        if ((isIceLite || isComplete)) {
+        if ((isIceLite || isComplete) && iceTransport.state === 'new') {
           iceTransport.setRemoteCandidates(cands);
         } else if (cands.length) {
           cands.forEach(function(candidate) {
             maybeAddCandidate(transceiver.iceTransport, candidate);
           });
         }
+
         if (!usingBundle || sdpMLineIndex === 0) {
-          iceTransport.start(iceGatherer, remoteIceParameters,
-              'controlling');
-          dtlsTransport.start(remoteDtlsParameters);
+          if (iceTransport.state === 'new') {
+            iceTransport.start(iceGatherer, remoteIceParameters,
+                'controlling');
+          }
+          if (dtlsTransport.state === 'new') {
+            dtlsTransport.start(remoteDtlsParameters);
+          }
         }
 
         self._transceive(transceiver,
