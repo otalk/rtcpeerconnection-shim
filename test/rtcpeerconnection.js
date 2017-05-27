@@ -852,6 +852,20 @@ describe('Edge shim', () => {
       });
     });
 
+    describe('throws a TypeError when called with legacy constraints', () => {
+      it('(optional)', () => {
+        expect(() => pc.createOffer({optional: {OfferToReceiveAudio: true}}))
+            .to.throw()
+            .that.has.property('name').that.equals('TypeError');
+      });
+
+      it('(mandatory)', () => {
+        expect(() => pc.createOffer({mandatory: {OfferToReceiveAudio: true}}))
+            .to.throw()
+            .that.has.property('name').that.equals('TypeError');
+      });
+    });
+
     describe('when called with offerToReceiveAudio', () => {
       it('= 1 the generated SDP should contain one audio m-line', (done) => {
         pc.createOffer({offerToReceiveAudio: 1})
