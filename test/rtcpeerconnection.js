@@ -1940,4 +1940,57 @@ describe('Edge shim', () => {
       });
     });
   });
+
+  describe('getSenders', () => {
+    let pc;
+    beforeEach(() => {
+      pc = new RTCPeerConnection();
+    });
+    afterEach(() => {
+      pc.close();
+    });
+
+    it('returns an empty array initially', () => {
+      expect(pc.getSenders().length).to.equal(0);
+    });
+
+    it('returns a single element after addTrack', (done) => {
+      navigator.mediaDevices.getUserMedia({audio: true})
+      .then((stream) => {
+        const track = stream.getTracks()[0];
+        pc.addTrack(track, stream);
+        const senders = pc.getSenders();
+        expect(senders.length).to.equal(1);
+        expect(senders[0].track).to.equal(track);
+        done();
+      });
+    });
+  });
+
+  describe('getReceivers', () => {
+    let pc;
+    beforeEach(() => {
+      pc = new RTCPeerConnection();
+    });
+    afterEach(() => {
+      pc.close();
+    });
+
+    it('returns an empty array initially', () => {
+      expect(pc.getReceivers().length).to.equal(0);
+    });
+
+    it('returns a single element after SRD with a track', (done) => {
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
+          'a=ssrc:1001 msid:stream1 track1\r\n' +
+          'a=ssrc:1001 cname:some\r\n';
+      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      .then(() => {
+        const receivers = pc.getReceivers();
+        expect(receivers.length).to.equal(1);
+        expect(receivers[0].track.kind).to.equal('audio');
+        done();
+      });
+    });
+  });
 });
