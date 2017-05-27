@@ -1302,6 +1302,22 @@ describe('Edge shim', () => {
       });
     });
 
+    it('rejects a m-line when there are no compatible codecs', (done) => {
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+      pc.setRemoteDescription({type: 'offer',
+          sdp: sdp.replace('opus', 'nosuchcodec')
+      })
+      .then(() => {
+        return pc.createAnswer();
+      })
+      .then((answer) => {
+        const sections = SDPUtils.splitSections(answer.sdp);
+        const rejected = SDPUtils.isRejected(sections[1]);
+        expect(rejected).to.equal(true);
+        done();
+      });
+    });
+
     // test https://tools.ietf.org/html/draft-ietf-rtcweb-jsep-15#section-5.3.4
     describe('direction attribute', () => {
       const sdp = SDP_BOILERPLATE +
