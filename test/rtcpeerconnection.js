@@ -1318,6 +1318,28 @@ describe('Edge shim', () => {
       });
     });
 
+    it('rejects a data channel', (done) => {
+      const sdp = SDP_BOILERPLATE +
+          'm=application 9 DTLS/SCTP 5000\r\n' +
+          'c=IN IP4 0.0.0.0\r\n' +
+          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+          'a=ice-pwd:' + ICEPWD + '\r\n' +
+          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+          'a=setup:actpass\r\n' +
+          'a=mid:data\r\n' +
+          'a=sctpmap:5000 webrtc-datachannel 1024\r\n';
+      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      .then(() => {
+        return pc.createAnswer();
+      })
+      .then((answer) => {
+        const sections = SDPUtils.splitSections(answer.sdp);
+        const rejected = SDPUtils.isRejected(sections[1]);
+        expect(rejected).to.equal(true);
+        done();
+      });
+    });
+
     // test https://tools.ietf.org/html/draft-ietf-rtcweb-jsep-15#section-5.3.4
     describe('direction attribute', () => {
       const sdp = SDP_BOILERPLATE +
