@@ -1702,6 +1702,18 @@ describe('Edge shim', () => {
         });
       });
     });
+
+    it('calls the legacy error callback when called with an ' +
+        'invalid sdpMLineIndex', (done) => {
+      pc.addIceCandidate({sdpMLineIndex: 99, candidate: candidateString},
+        () => {},
+        (e) => {
+          expect(e.name).to.equal('OperationError');
+          done();
+        }
+      );
+    });
+
     it('rejects with an InvalidStateError when called before ' +
        'setRemoteDescription', (done) => {
       pc = new RTCPeerConnection(); // recreate pc.
@@ -1753,30 +1765,56 @@ describe('Edge shim', () => {
       });
     });
 
-    it('ignores candidates with component=2 and does not add them ' +
-       'to the sdp', (done) => {
-      const iceTransport = pc.getReceivers()[0].transport.transport;
-      sinon.spy(iceTransport, 'addRemoteCandidate');
-      pc.addIceCandidate({sdpMid, candidate:
-        candidateString.replace('1 udp', '2 udp')})
-      .then(() => {
-        expect(iceTransport.addRemoteCandidate).not.to.have.been.calledWith();
-        expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
-            'a=candidate:')).to.have.length(0);
-        done();
+    describe('ignores candidates with', () => {
+      it('component=2 and does not add them to the sdp', (done) => {
+        const iceTransport = pc.getReceivers()[0].transport.transport;
+        sinon.spy(iceTransport, 'addRemoteCandidate');
+        pc.addIceCandidate({sdpMid, candidate:
+          candidateString.replace('1 udp', '2 udp')})
+        .then(() => {
+          expect(iceTransport.addRemoteCandidate).not.to.have.been.calledWith();
+          expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+              'a=candidate:')).to.have.length(0);
+          done();
+        });
       });
-    });
 
-    it('ignores candidates with non-master mid but does add them ' +
-       'to the sdp', (done) => {
-      const iceTransport = pc.getReceivers()[0].transport.transport;
-      sinon.spy(iceTransport, 'addRemoteCandidate');
-      pc.addIceCandidate({sdpMid: 'video1', candidate: candidateString})
-      .then(() => {
-        expect(iceTransport.addRemoteCandidate).not.to.have.been.calledWith();
-        expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
-            'a=candidate:')).to.have.length(1);
-        done();
+      it('non-master mid but does add them to the sdp', (done) => {
+        const iceTransport = pc.getReceivers()[0].transport.transport;
+        sinon.spy(iceTransport, 'addRemoteCandidate');
+        pc.addIceCandidate({sdpMid: 'video1', candidate: candidateString})
+        .then(() => {
+          expect(iceTransport.addRemoteCandidate).not.to.have.been.calledWith();
+          expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+              'a=candidate:')).to.have.length(1);
+          done();
+        });
+      });
+
+      it('port 0 and does not add them to the sdp', (done) => {
+        const iceTransport = pc.getReceivers()[0].transport.transport;
+        sinon.spy(iceTransport, 'addRemoteCandidate');
+        pc.addIceCandidate({sdpMid, candidate:
+          candidateString.replace('60769', '0').replace('udp', 'tcp')})
+        .then(() => {
+          expect(iceTransport.addRemoteCandidate).not.to.have.been.calledWith();
+          expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+              'a=candidate:')).to.have.length(0);
+          done();
+        });
+      });
+
+      it('port 9 and does not add them to the sdp', (done) => {
+        const iceTransport = pc.getReceivers()[0].transport.transport;
+        sinon.spy(iceTransport, 'addRemoteCandidate');
+        pc.addIceCandidate({sdpMid, candidate:
+          candidateString.replace('60769', '9').replace('udp', 'tcp')})
+        .then(() => {
+          expect(iceTransport.addRemoteCandidate).not.to.have.been.calledWith();
+          expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+              'a=candidate:')).to.have.length(0);
+          done();
+        });
       });
     });
   });
