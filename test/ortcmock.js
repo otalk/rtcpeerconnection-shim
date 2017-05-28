@@ -140,7 +140,11 @@ module.exports = function(window) {
       kind: 'video',
       clockRate: 90000,
       preferredPayloadType: 100,
-      numChannels: 1
+      numChannels: 1,
+      rtcpFeedback: [
+          {type: 'nack', parameter: ''},
+          {type: 'nack', parameter: 'pli'}
+      ]
     };
     var rtx = {
       name: 'rtx',
