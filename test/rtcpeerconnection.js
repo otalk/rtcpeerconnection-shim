@@ -1316,6 +1316,36 @@ describe('Edge shim', () => {
       });
     });
 
+    it('uses the extmap ids of the offerer', (done) => {
+      const extmapUri = 'http://www.webrtc.org/experiments/' +
+          'rtp-hdrext/abs-send-time';
+      const sdp = SDP_BOILERPLATE +
+          MINIMAL_AUDIO_MLINE +
+          'm=video 9 UDP/TLS/RTP/SAVPF 102\r\n' +
+          'c=IN IP4 0.0.0.0\r\n' +
+          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+          'a=ice-pwd:' + ICEPWD + '\r\n' +
+          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+          'a=setup:actpass\r\n' +
+          'a=mid:video1\r\n' +
+          'a=sendrecv\r\n' +
+          'a=rtcp-mux\r\n' +
+          'a=rtcp-rsize\r\n' +
+          'a=rtpmap:102 vp8/90000\r\n' +
+          'a=ssrc:1001 msid:stream1 track1\r\n' +
+          'a=ssrc:1001 cname:some\r\n' +
+          'a=extmap:5 ' + extmapUri + '\r\n';
+      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      .then(() => {
+        return pc.createAnswer();
+      })
+      .then((answer) => {
+        expect(answer.sdp).to.contain('a=extmap:5 ' + extmapUri + '\r\n');
+        done();
+      });
+    });
+
     it('rejects a m-line when there are no compatible codecs', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer',

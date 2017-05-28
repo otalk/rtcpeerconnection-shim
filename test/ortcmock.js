@@ -162,9 +162,22 @@ module.exports = function(window) {
         codecs = [opus, vp8, rtx];
         break;
     }
+    var headerExtensions;
+    switch (kind) {
+      case 'audio':
+        headerExtensions = [];
+        break;
+      default:
+      case 'video':
+        headerExtensions = [{
+          id: 3,
+          uri: 'http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time'
+        }];
+        break;
+    }
     return {
       codecs: codecs,
-      headerExtensions: []
+      headerExtensions: headerExtensions
     };
   }
 
