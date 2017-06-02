@@ -183,12 +183,6 @@ module.exports = function(window, edgeVersion) {
 
     this.localStreams = [];
     this.remoteStreams = [];
-    this.getLocalStreams = function() {
-      return self.localStreams;
-    };
-    this.getRemoteStreams = function() {
-      return self.remoteStreams;
-    };
 
     this.localDescription = null;
     this.remoteDescription = null;
@@ -251,6 +245,14 @@ module.exports = function(window, edgeVersion) {
     return this._config;
   };
 
+  RTCPeerConnection.prototype.getLocalStreams = function() {
+    return this.localStreams;
+  };
+
+  RTCPeerConnection.prototype.getRemoteStreams = function() {
+    return this.remoteStreams;
+  };
+
   // internal helper to create a transceiver object.
   // (whih is not yet the same as the WebRTC 1.0 transceiver)
   RTCPeerConnection.prototype._createTransceiver = function(kind) {
@@ -297,6 +299,10 @@ module.exports = function(window, edgeVersion) {
 
     this._maybeFireNegotiationNeeded();
 
+    if (this.localStreams.indexOf(stream) === -1) {
+      this.localStreams.push(stream);
+    }
+
     transceiver.track = track;
     transceiver.stream = stream;
     transceiver.rtpSender = new window.RTCRtpSender(track,
@@ -307,7 +313,6 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.addStream = function(stream) {
     var self = this;
     if (edgeVersion >= 15025) {
-      this.localStreams.push(stream);
       stream.getTracks().forEach(function(track) {
         self.addTrack(track, stream);
       });
@@ -325,7 +330,6 @@ module.exports = function(window, edgeVersion) {
       clonedStream.getTracks().forEach(function(track) {
         self.addTrack(track, clonedStream);
       });
-      this.localStreams.push(clonedStream);
     }
   };
 

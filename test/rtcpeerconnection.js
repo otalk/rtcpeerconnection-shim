@@ -2128,4 +2128,159 @@ describe('Edge shim', () => {
       });
     });
   });
+
+  describe('getLocalStreams', () => {
+    let pc;
+    beforeEach(() => {
+      pc = new RTCPeerConnection();
+    });
+    afterEach(() => {
+      pc.close();
+    });
+
+    it('returns an empty array initially', () => {
+      expect(pc.getLocalStreams().length).to.equal(0);
+    });
+
+    describe('returns a single element after', () => {
+      it('addTrack was called once', (done) => {
+        navigator.mediaDevices.getUserMedia({audio: true})
+        .then((stream) => {
+          const track = stream.getTracks()[0];
+          pc.addTrack(track, stream);
+        })
+        .then(() => {
+          const localStreams = pc.getLocalStreams();
+          expect(localStreams.length).to.equal(1);
+          done();
+        });
+      });
+
+      it('addTrack was called twice with tracks from the ' +
+         'same stream', (done) => {
+        navigator.mediaDevices.getUserMedia({audio: true, video: true})
+        .then((stream) => {
+          stream.getTracks().forEach(track => {
+            pc.addTrack(track, stream);
+          });
+        })
+        .then(() => {
+          const localStreams = pc.getLocalStreams();
+          expect(localStreams.length).to.equal(1);
+          done();
+        });
+      });
+
+      it('addStream was called', (done) => {
+        navigator.mediaDevices.getUserMedia({audio: true, video: true})
+        .then((stream) => {
+          pc.addStream(stream);
+        })
+        .then(() => {
+          const localStreams = pc.getLocalStreams();
+          expect(localStreams.length).to.equal(1);
+          done();
+        });
+      });
+    });
+
+    describe('returns two streams after', () => {
+      it('addTrack was called twice with tracks from two ' +
+         'streams', (done) => {
+        navigator.mediaDevices.getUserMedia({audio: true})
+        .then((stream) => {
+          stream.getTracks().forEach(track => {
+            pc.addTrack(track, stream);
+          });
+          return navigator.mediaDevices.getUserMedia({video: true});
+        })
+        .then((stream) => {
+          stream.getTracks().forEach(track => {
+            pc.addTrack(track, stream);
+          });
+        })
+        .then(() => {
+          const localStreams = pc.getLocalStreams();
+          expect(localStreams.length).to.equal(2);
+          done();
+        });
+      });
+
+      it('addStream was called twice', (done) => {
+        navigator.mediaDevices.getUserMedia({audio: true})
+        .then((stream) => {
+          pc.addStream(stream);
+          return navigator.mediaDevices.getUserMedia({video: true});
+        })
+        .then((stream) => {
+          pc.addStream(stream);
+        })
+        .then(() => {
+          const localStreams = pc.getLocalStreams();
+          expect(localStreams.length).to.equal(2);
+          done();
+        });
+      });
+    });
+  });
+
+  describe('getRemoteStreams', () => {
+    let pc;
+    beforeEach(() => {
+      pc = new RTCPeerConnection();
+    });
+    afterEach(() => {
+      pc.close();
+    });
+
+    it('returns an empty array initially', () => {
+      expect(pc.getRemoteStreams().length).to.equal(0);
+    });
+
+    describe('returns a single element after SRD', () => {
+      it('with a single track', (done) => {
+        const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
+            'a=ssrc:1001 msid:stream1 track1\r\n' +
+            'a=ssrc:1001 cname:some\r\n';
+        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          const remoteStreams = pc.getRemoteStreams();
+          expect(remoteStreams.length).to.equal(1);
+          done();
+        });
+      });
+
+      it('with two tracks in a single stream', (done) => {
+        const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
+            'a=ssrc:1001 msid:stream1 track1\r\n' +
+            'a=ssrc:1001 cname:some\r\n' +
+            MINIMAL_AUDIO_MLINE +
+            'a=ssrc:1001 msid:stream1 track2\r\n' +
+            'a=ssrc:1001 cname:some\r\n';
+        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          const remoteStreams = pc.getRemoteStreams();
+          expect(remoteStreams.length).to.equal(1);
+          done();
+        });
+      });
+    });
+
+    describe('returns two streams after SRD', () => {
+      it('with two tracks in two streams', (done) => {
+        const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
+            'a=ssrc:1001 msid:stream1 track1\r\n' +
+            'a=ssrc:1001 cname:some\r\n' +
+            MINIMAL_AUDIO_MLINE +
+            'a=ssrc:1001 msid:stream2 track1\r\n' +
+            'a=ssrc:1001 cname:some\r\n';
+        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          const remoteStreams = pc.getRemoteStreams();
+          expect(remoteStreams.length).to.equal(2);
+          done();
+        });
+      });
+    });
+  });
 });
