@@ -807,6 +807,64 @@ describe('Edge shim', () => {
         });
       });
     });
+
+    describe('with an ice-lite offer', () => {
+      beforeEach(() => {
+        sinon.spy(window.RTCDtlsTransport.prototype, 'start');
+        sinon.spy(window.RTCIceTransport.prototype, 'start');
+      });
+      afterEach(() => {
+        window.RTCDtlsTransport.prototype.start.restore();
+        window.RTCIceTransport.prototype.start.restore();
+      });
+
+      const sdp = SDP_BOILERPLATE +
+          'a=ice-lite\r\n' +
+          MINIMAL_AUDIO_MLINE;
+
+      it('set the ice role to controlling', (done) => {
+        pc.setRemoteDescription({type: 'offer', sdp})
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          return pc.setLocalDescription(answer);
+        })
+        .then(() => {
+          const receiver = pc.getReceivers()[0];
+          const dtlsTransport = receiver.transport;
+          const iceTransport = dtlsTransport.transport;
+          expect(iceTransport.start).to.have.been.calledOnce();
+          expect(iceTransport.start).to.have.been.calledWith(
+            sinon.match.any,
+            sinon.match.any,
+            sinon.match('controlling')
+          );
+          done();
+        });
+      });
+
+      it('sets the dtls role to server', (done) => {
+        pc.setRemoteDescription({type: 'offer', sdp})
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          return pc.setLocalDescription(answer);
+        })
+        .then(() => {
+          const receiver = pc.getReceivers()[0];
+          const dtlsTransport = receiver.transport;
+          expect(dtlsTransport.start).to.have.been.calledOnce();
+          expect(dtlsTransport.start).to.have.been.calledWith(
+            sinon.match({
+              role: 'server'
+            })
+          );
+          done();
+        });
+      });
+    });
   });
 
   describe('createOffer', () => {
