@@ -2283,4 +2283,21 @@ describe('Edge shim', () => {
       });
     });
   });
+
+  describe('getConfiguration', () => {
+    let pc;
+    it('fills in default values when no configuration is passed', () => {
+      // do as jan-ivar says in
+      // https://github.com/w3c/webrtc-pc/issues/1322#issuecomment-305878881
+      pc = new RTCPeerConnection();
+      const config = pc.getConfiguration();
+      expect(config).to.be.an('Object');
+      expect(config.bundlePolicy).to.equal('balanced');
+      expect(config.iceCandidatePoolSize).to.equal(0);
+      expect(config.iceServers).to.be.an('Array');
+      expect(config.iceServers.length).equal(0);
+      expect(config.iceTransportPolicy).to.equal('all');
+      expect(config.rtcpMuxPolicy).to.equal('require');
+    });
+  });
 });

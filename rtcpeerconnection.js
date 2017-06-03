@@ -191,42 +191,51 @@ module.exports = function(window, edgeVersion) {
     this.iceConnectionState = 'new';
     this.iceGatheringState = 'new';
 
-    this.usingBundle = config && config.bundlePolicy === 'max-bundle';
-    if (config && config.rtcpMuxPolicy === 'negotiate') {
+    config = JSON.parse(JSON.stringify(config || {}));
+
+    this.usingBundle = config.bundlePolicy === 'max-bundle';
+    if (config.rtcpMuxPolicy === 'negotiate') {
       var e = new Error('rtcpMuxPolicy \'negotiate\' is not supported');
       e.name = 'NotSupportedError';
       throw(e);
+    } else if (!config.rtcpMuxPolicy) {
+      config.rtcpMuxPolicy = 'require';
     }
 
-    this.iceOptions = {
-      gatherPolicy: 'all',
-      iceServers: []
-    };
-    if (config && config.iceTransportPolicy) {
-      switch (config.iceTransportPolicy) {
-        case 'all':
-        case 'relay':
-          this.iceOptions.gatherPolicy = config.iceTransportPolicy;
-          break;
-        default:
-          // don't set iceTransportPolicy.
-          break;
-      }
+    switch (config.iceTransportPolicy) {
+      case 'all':
+      case 'relay':
+        break;
+      default:
+        config.iceTransportPolicy = 'all';
+        break;
     }
 
-    if (config && config.iceServers) {
-      this.iceOptions.iceServers = filterIceServers(config.iceServers,
-          edgeVersion);
+    switch (config.bundlePolicy) {
+      case 'balanced':
+      case 'max-compat':
+      case 'max-bundle':
+        break;
+      default:
+        config.bundlePolicy = 'balanced';
+        break;
     }
+
+    config.iceServers = filterIceServers(config.iceServers || [], edgeVersion);
 
     this._iceGatherers = [];
-    if (config && config.iceCandidatePoolSize) {
+    if (config.iceCandidatePoolSize) {
       for (var i = config.iceCandidatePoolSize; i > 0; i--) {
-        this._iceGatherers = new window.RTCIceGatherer(this.iceOptions);
+        this._iceGatherers = new window.RTCIceGatherer({
+          iceServers: config.iceServers,
+          gatherPolicy: config.iceTransportPolicy
+        });
       }
+    } else {
+      config.iceCandidatePoolSize = 0;
     }
 
-    this._config = config || {};
+    this._config = config;
 
     // per-track iceGathers, iceTransports, dtlsTransports, rtpSenders, ...
     // everything that is needed to describe a SDP m-line.
@@ -367,7 +376,10 @@ module.exports = function(window, edgeVersion) {
     } else if (this._iceGatherers.length) {
       return this._iceGatherers.shift();
     }
-    var iceGatherer = new window.RTCIceGatherer(this.iceOptions);
+    var iceGatherer = new window.RTCIceGatherer({
+      iceServers: this._config.iceServers,
+      gatherPolicy: this._config.iceTransportPolicy
+    });
     Object.defineProperty(iceGatherer, 'state',
         {value: 'new', writable: true}
     );
