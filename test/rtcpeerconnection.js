@@ -1563,15 +1563,15 @@ describe('Edge shim', () => {
           'a=rtcp-rsize\r\n' +
           'a=rtpmap:102 vp8/90000\r\n' +
           'a=rtpmap:103 rtx/90000\r\n' +
-          'a=fmtp:103 apt=102\r\n' +
-          'a=ssrc-group:FID 1001 1002\r\n' +
+          'a=fmtp:103 apt=102\r\n';
+      const remoteRTX = 'a=ssrc-group:FID 1001 1002\r\n' +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n' +
           'a=ssrc:1002 msid:stream1 track1\r\n' +
           'a=ssrc:1002 cname:some\r\n';
       describe('with no local track', () => {
         it('creates an answer with RTX but no FID group', (done) => {
-          pc.setRemoteDescription({type: 'offer', sdp: sdp})
+          pc.setRemoteDescription({type: 'offer', sdp: sdp + remoteRTX})
           .then(() => {
             return pc.createAnswer();
           })
@@ -1590,7 +1590,8 @@ describe('Edge shim', () => {
           navigator.mediaDevices.getUserMedia({video: true})
           .then((stream) => {
             pc.addStream(stream);
-            return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+            return pc.setRemoteDescription({type: 'offer',
+                sdp: sdp + remoteRTX});
           })
           .then(() => {
             return pc.createAnswer();
@@ -1600,6 +1601,59 @@ describe('Edge shim', () => {
             expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
             expect(answer.sdp).to.contain('a=fmtp:103 apt=102');
             expect(answer.sdp).to.contain('a=ssrc-group:FID ');
+            done();
+          });
+        });
+      });
+
+      describe('with no remote track', () => {
+        it('creates an answer with RTX', (done) => {
+          navigator.mediaDevices.getUserMedia({video: true})
+          .then((stream) => {
+            pc.addStream(stream);
+            return pc.setRemoteDescription({type: 'offer',
+                sdp: sdp.replace('sendrecv', 'recvonly')});
+          })
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
+            expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
+            expect(answer.sdp).to.contain('a=fmtp:103 apt=102');
+            expect(answer.sdp).to.contain('a=ssrc-group:FID ');
+            done();
+          });
+        });
+      });
+
+      describe('but mismatching video codec', () => {
+        it('creates an answer without RTX', (done) => {
+          const modifiedSDP = SDP_BOILERPLATE +
+              'm=video 9 UDP/TLS/RTP/SAVPF 101 102 103\r\n' +
+              'c=IN IP4 0.0.0.0\r\n' +
+              'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+              'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+              'a=ice-pwd:' + ICEPWD + '\r\n' +
+              'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+              'a=setup:actpass\r\n' +
+              'a=mid:video1\r\n' +
+              'a=sendrecv\r\n' +
+              'a=rtcp-mux\r\n' +
+              'a=rtcp-rsize\r\n' +
+              'a=rtpmap:101 vp8/90000\r\n' +
+              'a=rtpmap:102 H264/90000\r\n' +
+              'a=rtpmap:103 rtx/90000\r\n' +
+              'a=fmtp:103 apt=102\r\n';
+          pc.setRemoteDescription({type: 'offer', sdp: modifiedSDP})
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            expect(answer.sdp).to.contain('a=rtpmap:101 vp8');
+            expect(answer.sdp).not.to.contain('a=rtpmap:102 H264');
+            expect(answer.sdp).not.to.contain('a=rtpmap:103 rtx');
+            expect(answer.sdp).not.to.contain('a=fmtp:103 apt=102');
             done();
           });
         });
