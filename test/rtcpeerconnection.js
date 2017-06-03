@@ -2420,4 +2420,81 @@ describe('Edge shim', () => {
       expect(config.rtcpMuxPolicy).to.equal('require');
     });
   });
+
+  describe('filtering of STUN and TURN servers', () => {
+    let pc;
+    it('filters STUN before r14393', () => {
+      RTCPeerConnection = shimPeerConnection(window, 14392);
+      pc = new RTCPeerConnection({
+        iceServers: [{urls: 'stun:stun.l.google.com'}]
+      });
+      const config = pc.getConfiguration();
+      expect(config.iceServers).to.deep.equal([]);
+    });
+
+    it('does not filter STUN after r14393', () => {
+      pc = new RTCPeerConnection({
+        iceServers: [{urls: 'stun:stun.l.google.com'}]
+      });
+      const config = pc.getConfiguration();
+      expect(config.iceServers).to.deep.equal([
+        {urls: 'stun:stun.l.google.com'}
+      ]);
+    });
+
+    it('filters incomplete TURN urls', () => {
+      pc = new RTCPeerConnection({
+        iceServers: [
+          {urls: 'turn:stun.l.google.com'},
+          {urls: 'turn:stun.l.google.com:19302'}
+        ]
+      });
+      const config = pc.getConfiguration();
+      expect(config.iceServers).to.deep.equal([]);
+    });
+
+    it('filters TURN TCP', () => {
+      pc = new RTCPeerConnection({
+        iceServers: [
+          {urls: 'turn:stun.l.google.com:19302?transport=tcp'}
+        ]
+      });
+      const config = pc.getConfiguration();
+      expect(config.iceServers).to.deep.equal([]);
+    });
+
+    describe('removes all but the first server of a type', () => {
+      it('in separate entries', () => {
+        pc = new RTCPeerConnection({
+          iceServers: [
+            {urls: 'stun:stun.l.google.com'},
+            {urls: 'turn:stun.l.google.com:19301?transport=udp'},
+            {urls: 'turn:stun.l.google.com:19302?transport=udp'}
+          ]
+        });
+        const config = pc.getConfiguration();
+        expect(config.iceServers).to.deep.equal([
+          {urls: 'stun:stun.l.google.com'},
+          {urls: 'turn:stun.l.google.com:19301?transport=udp'}
+        ]);
+      });
+
+      it('in urls entries', () => {
+        pc = new RTCPeerConnection({
+          iceServers: [
+            {urls: 'stun:stun.l.google.com'},
+            {urls: [
+              'turn:stun.l.google.com:19301?transport=udp',
+              'turn:stun.l.google.com:19302?transport=udp'
+            ]}
+          ]
+        });
+        const config = pc.getConfiguration();
+        expect(config.iceServers).to.deep.equal([
+          {urls: 'stun:stun.l.google.com'},
+          {urls: ['turn:stun.l.google.com:19301?transport=udp']}
+        ]);
+      });
+    });
+  });
 });
