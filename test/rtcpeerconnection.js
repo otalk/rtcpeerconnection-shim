@@ -912,12 +912,45 @@ describe('Edge shim', () => {
     });
 
     describe('when called with offerToReceiveVideo', () => {
-      it('the generated SDP should contain a video m-line', (done) => {
+      it('= 1 the generated SDP should contain one video m-line', (done) => {
         pc.createOffer({offerToReceiveVideo: 1})
         .then((offer) => {
           const sections = SDPUtils.splitSections(offer.sdp);
           expect(sections.length).to.equal(2);
           expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+          done();
+        });
+      });
+      it('= 2 the generated SDP should contain two video m-lines', (done) => {
+        pc.createOffer({offerToReceiveVideo: 2})
+        .then((offer) => {
+          const sections = SDPUtils.splitSections(offer.sdp);
+          expect(sections.length).to.equal(3);
+          expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+          expect(SDPUtils.getDirection(sections[2])).to.equal('recvonly');
+          done();
+        });
+      });
+      it('= true the generated SDP should contain one video m-line', (done) => {
+        pc.createOffer({offerToReceiveVideo: true})
+        .then((offer) => {
+          const sections = SDPUtils.splitSections(offer.sdp);
+          expect(sections.length).to.equal(2);
+          expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+          done();
+        });
+      });
+      it('= false the generated SDP should not offer to receive ' +
+          'video', (done) => {
+        navigator.mediaDevices.getUserMedia({video: true})
+        .then((stream) => {
+          pc.addStream(stream);
+          return pc.createOffer({offerToReceiveVideo: false});
+        })
+        .then((offer) => {
+          const sections = SDPUtils.splitSections(offer.sdp);
+          expect(sections.length).to.equal(2);
+          expect(SDPUtils.getDirection(sections[1])).to.equal('sendonly');
           done();
         });
       });
