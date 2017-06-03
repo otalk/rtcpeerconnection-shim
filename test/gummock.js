@@ -6,6 +6,7 @@
  *  tree.
  */
 /* eslint-env node */
+const EventEmitter = require('events');
 const SDPUtils = require('sdp');
 
 module.exports = function(window) {
@@ -31,6 +32,13 @@ module.exports = function(window) {
 
   const MediaStreamTrack = function() {
     this.id = SDPUtils.generateIdentifier();
+
+    this._emitter = new EventEmitter();
+    this.addEventListener = this._emitter.addListener.bind(this);
+    this.removeEventListener = this._emitter.removeListener.bind(this);
+    this.dispatchEvent = (ev) => {
+      this._emitter.emit(ev.type, ev);
+    };
   };
   MediaStreamTrack.prototype.stop = function() {};
   window.MediaStreamTrack = MediaStreamTrack;

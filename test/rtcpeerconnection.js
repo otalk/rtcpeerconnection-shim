@@ -2581,4 +2581,21 @@ describe('Edge shim', () => {
       });
     });
   });
+
+  describe('edge clonestream issue', () => {
+    let pc;
+    beforeEach(() => {
+      RTCPeerConnection = shimPeerConnection(window, 15000); // must be < 15025
+      pc = new RTCPeerConnection();
+    });
+
+    it('clones the stream before addStream', () => {
+      navigator.mediaDevices.getUserMedia({video: true})
+      .then((stream) => {
+        stream.clone = sinon.stub().returns(stream);
+        pc.addStream(stream);
+        expect(stream.clone).to.have.been.calledOnce();
+      });
+    });
+  });
 });
