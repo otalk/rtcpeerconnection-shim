@@ -1732,6 +1732,72 @@ describe('Edge shim', () => {
         });
       });
     });
+
+    describe('with the remote offering BUNDLE', () => {
+      let clock;
+      beforeEach(() => {
+        clock = sinon.useFakeTimers();
+      });
+      afterEach(() => {
+        clock.restore();
+      });
+
+      const sdp = SDP_BOILERPLATE +
+          'a=group:BUNDLE audio1 video1\r\n' +
+          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
+          'c=IN IP4 0.0.0.0\r\n' +
+          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+          'a=ice-pwd:' + ICEPWD + '\r\n' +
+          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+          'a=setup:actpass\r\n' +
+          'a=mid:audio1\r\n' +
+          'a=sendonly\r\n' +
+          'a=rtcp-mux\r\n' +
+          'a=rtcp-rsize\r\n' +
+          'a=rtpmap:111 opus/48000/2\r\n' +
+          'a=ssrc:1001 cname:some\r\n' +
+          'm=video 9 UDP/TLS/RTP/SAVPF 102\r\n' +
+          'c=IN IP4 0.0.0.0\r\n' +
+          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+          'a=ice-pwd:' + ICEPWD + '\r\n' +
+          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+          'a=setup:actpass\r\n' +
+          'a=mid:video1\r\n' +
+          'a=sendrecv\r\n' +
+          'a=rtcp-mux\r\n' +
+          'a=rtcp-rsize\r\n' +
+          'a=rtpmap:102 vp8/90000\r\n' +
+          'a=ssrc:1002 cname:some\r\n';
+      it('does not send candidates with sdpMLineIndex=1', (done) => {
+        pc.onicecandidate = sinon.stub();
+        pc.onicegatheringstatechange = () => {
+          if (pc.iceGatheringState === 'complete') {
+            expect(pc.onicecandidate).to.have.been.calledWith(sinon.match({
+              candidate: sinon.match({sdpMLineIndex: sinon.match(0)})
+            }));
+            expect(pc.onicecandidate).not.to.have.been.calledWith(sinon.match({
+              candidate: sinon.match({sdpMLineIndex: sinon.match(1)})
+            }));
+            done();
+          }
+        };
+        pc.setRemoteDescription({type: 'offer', sdp})
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          return pc.setLocalDescription(answer);
+        })
+        .then(() => {
+          window.setTimeout(() => {
+            clock.tick(500);
+          });
+          clock.tick(0);
+        });
+      });
+    });
   });
 
   describe('addIceCandidate', () => {
