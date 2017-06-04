@@ -141,21 +141,25 @@ describe('Edge shim', () => {
     });
 
     describe('InvalidStateError is thrown when called with', () => {
-      it('an answer in signalingState stable', (done) => {
-        pc.setRemoteDescription({type: 'answer'})
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+      it('an offer in signalingState have-remote-offer', (done) => {
+        pc.setRemoteDescription({type: 'offer', sdp})
+        .then(() => {
+          return pc.setLocalDescription({type: 'offer'});
+        })
         .catch((e) => {
           expect(e.name).to.equal('InvalidStateError');
           done();
         });
       });
 
-      it('an offer in signalingState have-local-offer', (done) => {
+      it('an answer in signalingState have-local-offer', (done) => {
         pc.createOffer({offerToReceiveAudio: 1})
         .then((offer) => {
           return pc.setLocalDescription(offer);
         })
         .then(() => {
-          return pc.setRemoteDescription({type: 'offer'});
+          return pc.setLocalDescription({type: 'answer'});
         })
         .catch((e) => {
           expect(e.name).to.equal('InvalidStateError');
