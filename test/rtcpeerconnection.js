@@ -2593,11 +2593,42 @@ describe('Edge shim', () => {
     });
   });
 
+  describe('getStats', () => {
+    let pc;
+    beforeEach((done) => {
+      pc = new RTCPeerConnection();
+      navigator.mediaDevices.getUserMedia({audio: true})
+      .then((stream) => {
+        pc.addTrack(stream.getAudioTracks()[0], stream);
+        done();
+      });
+    });
+    afterEach(() => {
+      pc.close();
+    });
+
+    it('returns a promise', (done) => {
+      pc.getStats()
+      .then(() => {
+        done();
+      });
+    });
+
+    it('calls the legacy success callback', (done) => {
+      pc.getStats(null, function() {
+        done();
+      });
+    });
+  });
+
   describe('edge pre-rtx behaviour', () => {
     let pc;
     beforeEach(() => {
       RTCPeerConnection = shimPeerConnection(window, 15000); // must be < 15019
       pc = new RTCPeerConnection();
+    });
+    afterEach(() => {
+      pc.close();
     });
 
     it('does not create an offer with RTX', (done) => {
@@ -2649,6 +2680,9 @@ describe('Edge shim', () => {
     beforeEach(() => {
       RTCPeerConnection = shimPeerConnection(window, 15000); // must be < 15025
       pc = new RTCPeerConnection();
+    });
+    afterEach(() => {
+      pc.close();
     });
 
     it('clones the stream before addStream', () => {

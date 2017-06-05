@@ -77,6 +77,9 @@ module.exports = function(window) {
       password: 'somepass'
     };
   };
+  RTCIceGatherer.prototype.getStats = function() {
+    return Promise.resolve({});
+  };
   window.RTCIceGatherer = RTCIceGatherer;
 
   const RTCIceTransport = function() {
@@ -104,6 +107,9 @@ module.exports = function(window) {
     return this._remoteParameters;
   };
   RTCIceTransport.prototype.stop = function() {};
+  RTCIceTransport.prototype.getStats = function() {
+    return Promise.resolve({});
+  };
   window.RTCIceTransport = RTCIceTransport;
 
   const RTCDtlsTransport = function(transport) {
@@ -124,6 +130,9 @@ module.exports = function(window) {
         }
       ]
     };
+  };
+  RTCDtlsTransport.prototype.getStats = function() {
+    return Promise.resolve({});
   };
   window.RTCDtlsTransport = RTCDtlsTransport;
 
@@ -197,6 +206,9 @@ module.exports = function(window) {
   };
 
   RTCRtpReceiver.getCapabilities = getCapabilities;
+  RTCRtpReceiver.prototype.getStats = function() {
+    return Promise.resolve({});
+  };
   window.RTCRtpReceiver = RTCRtpReceiver;
 
   const RTCRtpSender = function(track, transport) {
@@ -210,5 +222,8 @@ module.exports = function(window) {
   };
 
   RTCRtpSender.getCapabilities = getCapabilities;
+  RTCRtpSender.prototype.getStats = function() {
+    return Promise.resolve({});
+  };
   window.RTCRtpSender = RTCRtpSender;
 };
