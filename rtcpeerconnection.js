@@ -242,6 +242,7 @@ module.exports = function(window, edgeVersion) {
     this.transceivers = [];
 
     this._sdpSessionId = SDPUtils.generateSessionId();
+    this._sdpSessionVersion = 0;
   };
 
   RTCPeerConnection.prototype._emitGatheringStateChange = function() {
@@ -1171,7 +1172,8 @@ module.exports = function(window, edgeVersion) {
       }
     }
 
-    var sdp = SDPUtils.writeSessionBoilerplate(this._sdpSessionId);
+    var sdp = SDPUtils.writeSessionBoilerplate(this._sdpSessionId,
+        this._sdpSessionVersion++);
     this.transceivers.forEach(function(transceiver, sdpMLineIndex) {
       // For each track, create an ice gatherer, ice transport,
       // dtls transport, potentially rtpsender and rtpreceiver.
@@ -1266,7 +1268,8 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.createAnswer = function() {
     var args = arguments;
 
-    var sdp = SDPUtils.writeSessionBoilerplate(this._sdpSessionId);
+    var sdp = SDPUtils.writeSessionBoilerplate(this._sdpSessionId,
+        this._sdpSessionVersion++);
     if (this.usingBundle) {
       sdp += 'a=group:BUNDLE ' + this.transceivers.map(function(t) {
         return t.mid;
