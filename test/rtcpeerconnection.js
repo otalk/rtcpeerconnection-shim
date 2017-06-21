@@ -1339,6 +1339,36 @@ describe('Edge shim', () => {
           clock.tick(0);
         });
       });
+
+      it('retains the session id', (done) => {
+        let sessionId;
+        pc.createOffer({offerToReceiveAudio: true})
+        .then((offer) => {
+          sessionId = SDPUtils.matchPrefix(offer.sdp, 'o=')[0].split(' ')[1];
+          return pc.createOffer({offerToReceiveAudio: true});
+        })
+        .then((offer) => {
+          let sid = SDPUtils.matchPrefix(offer.sdp, 'o=')[0].split(' ')[1];
+          expect(sid).to.equal(sessionId);
+          done();
+        });
+      });
+
+      it('increments the session version', (done) => {
+        let version;
+        pc.createOffer({offerToReceiveAudio: true})
+        .then((offer) => {
+          version = SDPUtils.matchPrefix(offer.sdp, 'o=')[0]
+              .split(' ')[2] >>> 0;
+          return pc.createOffer({offerToReceiveAudio: true});
+        })
+        .then((offer) => {
+          let ver = SDPUtils.matchPrefix(offer.sdp, 'o=')[0]
+             .split(' ')[2] >>> 0;
+          expect(ver).to.equal(version + 1);
+          done();
+        });
+      });
     });
   });
 
@@ -1890,6 +1920,39 @@ describe('Edge shim', () => {
             clock.tick(500);
           });
           clock.tick(0);
+        });
+      });
+    });
+
+    describe('session version handling', () => {
+      it('starts at version 0', (done) => {
+        const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          let ver = SDPUtils.matchPrefix(answer.sdp, 'o=')[0]
+             .split(' ')[2] >>> 0;
+          expect(ver).to.equal(0);
+          done();
+        });
+      });
+
+      it('subsequent calls increase the session version', (done) => {
+        const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          let ver = SDPUtils.matchPrefix(answer.sdp, 'o=')[0]
+             .split(' ')[2] >>> 0;
+          expect(ver).to.equal(1);
+          done();
         });
       });
     });
