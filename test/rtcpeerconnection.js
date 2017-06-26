@@ -41,17 +41,64 @@ const MINIMAL_AUDIO_MLINE =
     'a=rtpmap:111 opus/48000/2\r\n' +
     'a=ssrc:1001 cname:some\r\n';
 
+
+// this detects that we are not running in a browser.
+const mockWindow = typeof window === 'undefined';
+
 describe('Edge shim', () => {
-  let window;
   let RTCPeerConnection;
-  let navigator;
+  beforeEach(() => {
+    if (mockWindow) {
+      global.window = {setTimeout};
+      mockGetUserMedia(window);
+      mockORTC(window);
+      global.navigator = window.navigator;
+    }
+    RTCPeerConnection = shimPeerConnection(window, 15025);
+  });
 
   beforeEach(() => {
-    window = {setTimeout};
-    mockGetUserMedia(window);
-    mockORTC(window);
-    RTCPeerConnection = shimPeerConnection(window, 15025);
-    navigator = window.navigator;
+    let streams = [];
+    let release = () => {
+      streams.forEach((stream) => {
+        stream.getTracks().forEach((track) => {
+          track.stop();
+        });
+      });
+      streams = [];
+    };
+
+    let origGetUserMedia = navigator.getUserMedia.bind(navigator);
+    navigator.getUserMedia = (constraints, cb, eb) => {
+      origGetUserMedia(constraints, (stream) => {
+        streams.push(stream);
+        if (cb) {
+          cb.apply(null, [stream]);
+        }
+      }, eb);
+    };
+    navigator.getUserMedia.restore = () => {
+      navigator.getUserMedia = origGetUserMedia;
+      release();
+    };
+
+    let origMediaDevicesGetUserMedia =
+        navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    navigator.mediaDevices.getUserMedia = (constraints) => {
+      return origMediaDevicesGetUserMedia(constraints, (stream) => {
+        streams.push(stream);
+        return stream;
+      });
+    };
+    navigator.mediaDevices.getUserMedia.restore = () => {
+      navigator.mediaDevices.getUserMedia = origMediaDevicesGetUserMedia;
+      release();
+    };
+  });
+
+  afterEach(() => {
+    navigator.getUserMedia.restore();
+    navigator.mediaDevices.getUserMedia.restore();
   });
 
   describe('RTCPeerConnection constructor', () => {
