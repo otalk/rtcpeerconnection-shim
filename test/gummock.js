@@ -62,6 +62,9 @@ module.exports = function(window) {
     });
   };
   window.navigator = {
+    getUserMedia: (constraints, cb, eb) => {
+      getUserMedia(constraints).then(cb, eb);
+    },
     mediaDevices: {
       getUserMedia
     }
