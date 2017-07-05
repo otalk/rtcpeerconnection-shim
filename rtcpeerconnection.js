@@ -797,13 +797,15 @@ module.exports = function(window, edgeVersion) {
               usingBundle);
         }
 
-        if (isComplete && (!usingBundle || sdpMLineIndex === 0)
-            && transceiver.iceTransport.state === 'new') {
-          transceiver.iceTransport.setRemoteCandidates(cands);
-        } else if (cands.length) {
-          cands.forEach(function(candidate) {
-            maybeAddCandidate(transceiver.iceTransport, candidate);
-          });
+        if (cands.length) {
+          if (isComplete && (!usingBundle || sdpMLineIndex === 0)
+              && transceiver.iceTransport.state === 'new') {
+            transceiver.iceTransport.setRemoteCandidates(cands);
+          } else {
+            cands.forEach(function(candidate) {
+              maybeAddCandidate(transceiver.iceTransport, candidate);
+            });
+          }
         }
 
         localCapabilities = window.RTCRtpReceiver.getCapabilities(kind);
@@ -883,12 +885,16 @@ module.exports = function(window, edgeVersion) {
             remoteCapabilities;
         self.transceivers[sdpMLineIndex].rtcpParameters = rtcpParameters;
 
-        if ((isIceLite || isComplete) && iceTransport.state === 'new') {
-          iceTransport.setRemoteCandidates(cands);
-        } else if (cands.length) {
-          cands.forEach(function(candidate) {
-            maybeAddCandidate(transceiver.iceTransport, candidate);
-          });
+        if (cands.length) {
+          if ((isIceLite || isComplete) &&
+              (!usingBundle || sdpMLineIndex === 0) &&
+              iceTransport.state === 'new') {
+            iceTransport.setRemoteCandidates(cands);
+          } else {
+            cands.forEach(function(candidate) {
+              maybeAddCandidate(transceiver.iceTransport, candidate);
+            });
+          }
         }
 
         if (!usingBundle || sdpMLineIndex === 0) {

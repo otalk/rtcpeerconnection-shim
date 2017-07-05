@@ -916,6 +916,60 @@ describe('Edge shim', () => {
         });
       });
     });
+
+    describe('with type=answer', () => {
+      beforeEach(() => {
+        sinon.spy(window.RTCIceTransport.prototype, 'setRemoteCandidates');
+        return pc.createOffer({offerToReceiveAudio: true,
+            offerToReceiveVideo: true})
+          .then(offer => pc.setLocalDescription(offer));
+      });
+      afterEach(() => {
+        window.RTCIceTransport.prototype.setRemoteCandidates.restore();
+      });
+
+      it('ignores extra candidates in a bundle answer', (done) => {
+        const sdp = SDP_BOILERPLATE +
+            'a=group:BUNDLE audio1 video1\r\n' +
+            'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
+            'c=IN IP4 0.0.0.0\r\n' +
+            'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+            'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+            'a=ice-pwd:' + ICEPWD + '\r\n' +
+            'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+            'a=setup:actpass\r\n' +
+            'a=mid:audio1\r\n' +
+            'a=sendrecv\r\n' +
+            'a=rtcp-mux\r\n' +
+            'a=rtcp-rsize\r\n' +
+            'a=rtpmap:111 opus/48000/2\r\n' +
+            'a=ssrc:1001 cname:some\r\n' +
+            'a=candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host\r\n' +
+            'a=end-of-candidates\r\n' +
+            'm=video 9 UDP/TLS/RTP/SAVPF 102\r\n' +
+            'c=IN IP4 0.0.0.0\r\n' +
+            'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+            'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+            'a=ice-pwd:' + ICEPWD + '\r\n' +
+            'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+            'a=setup:actpass\r\n' +
+            'a=mid:video1\r\n' +
+            'a=sendrecv\r\n' +
+            'a=rtcp-mux\r\n' +
+            'a=rtcp-rsize\r\n' +
+            'a=rtpmap:102 vp8/90000\r\n' +
+            'a=ssrc:1002 cname:some\r\n' +
+            'a=candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host\r\n' +
+            'a=end-of-candidates\r\n';
+        pc.setRemoteDescription({type: 'answer', sdp})
+        .then(() => {
+          const receiver = pc.getReceivers()[0];
+          const iceTransport = receiver.transport.transport;
+          expect(iceTransport.setRemoteCandidates).to.have.been.calledOnce();
+          done();
+        });
+      });
+    });
   });
 
   describe('createOffer', () => {
