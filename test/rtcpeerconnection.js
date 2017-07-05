@@ -1488,7 +1488,7 @@ describe('Edge shim', () => {
       });
     });
 
-    it('rejects a data channel', (done) => {
+    describe('rejects a data channel', () => {
       const sdp = SDP_BOILERPLATE +
           'm=application 9 DTLS/SCTP 5000\r\n' +
           'c=IN IP4 0.0.0.0\r\n' +
@@ -1498,15 +1498,25 @@ describe('Edge shim', () => {
           'a=setup:actpass\r\n' +
           'a=mid:data\r\n' +
           'a=sctpmap:5000 webrtc-datachannel 1024\r\n';
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .then(() => {
-        return pc.createAnswer();
-      })
-      .then((answer) => {
-        const sections = SDPUtils.splitSections(answer.sdp);
-        const rejected = SDPUtils.isRejected(sections[1]);
-        expect(rejected).to.equal(true);
-        done();
+      it('in setRemoteDescription', (done) => {
+        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          const sections = SDPUtils.splitSections(answer.sdp);
+          const rejected = SDPUtils.isRejected(sections[1]);
+          expect(rejected).to.equal(true);
+          done();
+        });
+      });
+
+      it('and ignores candidates', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          return pc.addIceCandidate({sdpMid: 'data', candidate:
+              'candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host'});
+        });
       });
     });
 

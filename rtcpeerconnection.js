@@ -1333,6 +1333,9 @@ module.exports = function(window, edgeVersion) {
     var sections;
     if (!candidate || candidate.candidate === '') {
       for (var j = 0; j < this.transceivers.length; j++) {
+        if (this.transceivers[j].isDatachannel) {
+          continue;
+        }
         this.transceivers[j].iceTransport.addRemoteCandidate({});
         sections = SDPUtils.splitSections(this.remoteDescription.sdp);
         sections[j + 1] += 'a=end-of-candidates\r\n';
@@ -1359,6 +1362,9 @@ module.exports = function(window, edgeVersion) {
       }
       var transceiver = this.transceivers[sdpMLineIndex];
       if (transceiver) {
+        if (transceiver.isDatachannel) {
+          return Promise.resolve();
+        }
         var cand = Object.keys(candidate.candidate).length > 0 ?
             SDPUtils.parseCandidate(candidate.candidate) : {};
         // Ignore Chrome's invalid candidates since Edge does not like them.
