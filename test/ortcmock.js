@@ -90,11 +90,16 @@ module.exports = function(window) {
     this._gatherer = gatherer;
     this._remoteParameters = parameters;
     this._role = role || 'controlled';
-    this.state = 'completed'; // TODO: not acccurate.
+    if (this._remoteCandidates.length > 0) {
+      this.state = 'completed'; // TODO: not accurate, should go to checking.
+    }
   };
   RTCIceTransport.prototype.addRemoteCandidate = function(remoteCandidate) {
     if (Object.keys(remoteCandidate).length) {
       this._remoteCandidates.push(remoteCandidate);
+    }
+    if (this.state === 'new') {
+      this.state = 'completed'; // TODO: not accurate, should go to checking.
     }
   };
   RTCIceTransport.prototype.setRemoteCandidates = function(remoteCandidates) {
