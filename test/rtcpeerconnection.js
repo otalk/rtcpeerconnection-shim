@@ -634,9 +634,10 @@ describe('Edge shim', () => {
           return pc.setRemoteDescription({type: 'offer', sdp: sdp});
         })
         .then(() => {
+          const senders = pc.getSenders();
           // the second ice transport should have been disposed.
-          expect(pc.transceivers[0].iceTransport)
-              .to.equal(pc.transceivers[1].iceTransport);
+          expect(senders[0].transport.transport).to
+              .equal(senders[1].transport.transport);
           done();
         });
       });
