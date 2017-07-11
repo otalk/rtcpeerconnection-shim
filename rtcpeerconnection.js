@@ -411,6 +411,12 @@ module.exports = function(window, edgeVersion) {
     var candidates = this.transceivers[sdpMLineIndex].candidates;
     this.transceivers[sdpMLineIndex].candidates = null;
     iceGatherer.onlocalcandidate = function(evt) {
+      if (self.usingBundle && sdpMLineIndex > 0) {
+        // if we know that we use bundle we can drop candidates with
+        // ѕdpMLineIndex > 0. If we don't do this then our state gets
+        // confused since we dispose the extra ice gatherer.
+        return;
+      }
       var event = new Event('icecandidate');
       event.candidate = {sdpMid: mid, sdpMLineIndex: sdpMLineIndex};
 
