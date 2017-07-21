@@ -10,6 +10,60 @@
 
 var SDPUtils = require('sdp');
 
+function writeMediaSection(transceiver, caps, type, stream) {
+  var sdp = SDPUtils.writeRtpDescription(transceiver.kind, caps);
+
+  // Map ICE parameters (ufrag, pwd) to SDP.
+  sdp += SDPUtils.writeIceParameters(
+      transceiver.iceGatherer.getLocalParameters());
+
+  // Map DTLS parameters to SDP.
+  sdp += SDPUtils.writeDtlsParameters(
+      transceiver.dtlsTransport.getLocalParameters(),
+      type === 'offer' ? 'actpass' : 'active');
+
+  sdp += 'a=mid:' + transceiver.mid + '\r\n';
+
+  if (transceiver.direction) {
+    sdp += 'a=' + transceiver.direction + '\r\n';
+  } else if (transceiver.rtpSender && transceiver.rtpReceiver) {
+    sdp += 'a=sendrecv\r\n';
+  } else if (transceiver.rtpSender) {
+    sdp += 'a=sendonly\r\n';
+  } else if (transceiver.rtpReceiver) {
+    sdp += 'a=recvonly\r\n';
+  } else {
+    sdp += 'a=inactive\r\n';
+  }
+
+  if (transceiver.rtpSender) {
+    // spec.
+    var msid = 'msid:' + stream.id + ' ' +
+        transceiver.rtpSender.track.id + '\r\n';
+    sdp += 'a=' + msid;
+
+    // for Chrome.
+    sdp += 'a=ssrc:' + transceiver.sendEncodingParameters[0].ssrc +
+        ' ' + msid;
+    if (transceiver.sendEncodingParameters[0].rtx) {
+      sdp += 'a=ssrc:' + transceiver.sendEncodingParameters[0].rtx.ssrc +
+          ' ' + msid;
+      sdp += 'a=ssrc-group:FID ' +
+          transceiver.sendEncodingParameters[0].ssrc + ' ' +
+          transceiver.sendEncodingParameters[0].rtx.ssrc +
+          '\r\n';
+    }
+  }
+  // FIXME: this should be written by writeRtpDescription.
+  sdp += 'a=ssrc:' + transceiver.sendEncodingParameters[0].ssrc +
+      ' cname:' + SDPUtils.localCName + '\r\n';
+  if (transceiver.rtpSender && transceiver.sendEncodingParameters[0].rtx) {
+    sdp += 'a=ssrc:' + transceiver.sendEncodingParameters[0].rtx.ssrc +
+        ' cname:' + SDPUtils.localCName + '\r\n';
+  }
+  return sdp;
+}
+
 // Edge does not like
 // 1) stun:
 // 2) turn: that does not have all of turn:host:port?transport=udp
@@ -1248,7 +1302,7 @@ module.exports = function(window, edgeVersion) {
     sdp += 'a=ice-options:trickle\r\n';
 
     this.transceivers.forEach(function(transceiver, sdpMLineIndex) {
-      sdp += SDPUtils.writeMediaSection(transceiver,
+      sdp += writeMediaSection(transceiver,
           transceiver.localCapabilities, 'offer', transceiver.stream);
       sdp += 'a=rtcp-rsize\r\n';
 
@@ -1325,7 +1379,7 @@ module.exports = function(window, edgeVersion) {
         delete transceiver.sendEncodingParameters[0].rtx;
       }
 
-      sdp += SDPUtils.writeMediaSection(transceiver, commonCapabilities,
+      sdp += writeMediaSection(transceiver, commonCapabilities,
           'answer', transceiver.stream);
       if (transceiver.rtcpParameters &&
           transceiver.rtcpParameters.reducedSize) {
