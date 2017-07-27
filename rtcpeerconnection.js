@@ -1341,7 +1341,12 @@ module.exports = function(window, edgeVersion) {
         return t.mid;
       }).join(' ') + '\r\n';
     }
+    var mediaSectionsInOffer = SDPUtils.splitSections(
+        this.remoteDescription.sdp).length - 1;
     this.transceivers.forEach(function(transceiver, sdpMLineIndex) {
+      if (sdpMLineIndex + 1 > mediaSectionsInOffer) {
+        return;
+      }
       if (transceiver.isDatachannel) {
         sdp += 'm=application 0 DTLS/SCTP 5000\r\n' +
             'c=IN IP4 0.0.0.0\r\n' +
