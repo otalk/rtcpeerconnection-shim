@@ -2068,6 +2068,28 @@ describe('Edge shim', () => {
         });
       });
     });
+
+    describe('with an audio-only offer adding an ' +
+        'audio/video stream', () => {
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+      it('does not try to add a video m-line', (done) => {
+        // https://github.com/webrtc/adapter/issues/638
+        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          return navigator.mediaDevices.getUserMedia({audio: true,
+              video: true});
+        })
+        .then((stream) => {
+          pc.addStream(stream);
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          const sections = SDPUtils.splitSections(answer.sdp);
+          expect(sections.length).to.equal(2);
+          done();
+        });
+      });
+    });
   });
 
   describe('addIceCandidate', () => {
