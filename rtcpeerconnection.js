@@ -1033,6 +1033,7 @@ module.exports = function(window, edgeVersion) {
           var trackEvent = new Event('track');
           trackEvent.track = track;
           trackEvent.receiver = receiver;
+          trackEvent.transceiver = {receiver: receiver};
           trackEvent.streams = [stream];
           window.setTimeout(function() {
             self.dispatchEvent(trackEvent);

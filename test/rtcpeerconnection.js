@@ -525,8 +525,9 @@ describe('Edge shim', () => {
       it('triggers ontrack', (done) => {
         pc.ontrack = function(event) {
           expect(event.track.kind).to.equal('audio');
-          expect(event.receiver);
-          expect(event.streams.length).to.equal(1);
+          expect(event).to.have.property('receiver');
+          expect(event).to.have.property('transceiver');
+          expect(event.streams).to.have.lengthOf(1);
           done();
         };
         pc.setRemoteDescription({type: 'offer', sdp: sdp});
