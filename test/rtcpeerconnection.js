@@ -2725,7 +2725,7 @@ describe('Edge shim', () => {
       expect(config.iceServers).to.deep.equal([]);
     });
 
-    it('does not filter STUN after r14393', () => {
+    it('does not filter STUN without protocol after r14393', () => {
       pc = new RTCPeerConnection({
         iceServers: [{urls: 'stun:stun.l.google.com'}]
       });
@@ -2733,6 +2733,14 @@ describe('Edge shim', () => {
       expect(config.iceServers).to.deep.equal([
         {urls: 'stun:stun.l.google.com'}
       ]);
+    });
+
+    it('does filter STUN with protocol even after r14393', () => {
+      pc = new RTCPeerConnection({
+        iceServers: [{urls: 'stun:stun.l.google.com:19302?transport=udp'}]
+      });
+      const config = pc.getConfiguration();
+      expect(config.iceServers).to.deep.equal([]);
     });
 
     it('filters incomplete TURN urls', () => {

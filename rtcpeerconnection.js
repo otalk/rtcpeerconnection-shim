@@ -65,7 +65,7 @@ function writeMediaSection(transceiver, caps, type, stream) {
 }
 
 // Edge does not like
-// 1) stun:
+// 1) stun: filtered after 14393 unless ?transport=udp is present
 // 2) turn: that does not have all of turn:host:port?transport=udp
 // 3) turn: with ipv6 addresses
 // 4) turn: occurring muliple times
@@ -92,7 +92,8 @@ function filterIceServers(iceServers, edgeVersion) {
           hasTurn = true;
           return true;
         }
-        return url.indexOf('stun:') === 0 && edgeVersion >= 14393;
+        return url.indexOf('stun:') === 0 && edgeVersion >= 14393 &&
+            url.indexOf('?transport=udp') === -1;
       });
 
       delete server.url;
