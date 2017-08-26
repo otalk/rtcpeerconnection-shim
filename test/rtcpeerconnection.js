@@ -997,6 +997,15 @@ describe('Edge shim', () => {
       }, () => {}, {offerToReceiveAudio: 1});
     });
 
+    it('calls the legacy success callback and resolves with ' +
+       'no arguments', (done) => {
+      pc.createOffer((offer) => {})
+      .then((shouldBeUndefined) => {
+        expect(shouldBeUndefined).to.equal(undefined);
+        done();
+      });
+    });
+
     it('does not change the signalingState', (done) => {
       pc.createOffer({offerToReceiveAudio: 1})
       .then(() => {
@@ -1494,6 +1503,7 @@ describe('Edge shim', () => {
         done();
       });
     });
+
     it('calls the legacy success callback', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
@@ -1502,6 +1512,19 @@ describe('Edge shim', () => {
           expect(answer.type).to.equal('answer');
           done();
         }, () => {});
+      });
+    });
+
+    it('calls the legacy success callback and resolves with ' +
+       'no arguments', (done) => {
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      .then(() => {
+        return pc.createAnswer((answer) => {});
+      })
+      .then((shouldBeUndefined) => {
+        expect(shouldBeUndefined).to.equal(undefined);
+        done();
       });
     });
 
