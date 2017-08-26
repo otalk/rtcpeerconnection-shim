@@ -429,6 +429,7 @@ module.exports = function(window, edgeVersion) {
 
   RTCPeerConnection.prototype._createIceGatherer = function(sdpMLineIndex,
       usingBundle) {
+    var self = this;
     if (usingBundle && sdpMLineIndex > 0) {
       return this.transceivers[0].iceGatherer;
     } else if (this._iceGatherers.length) {
@@ -443,16 +444,17 @@ module.exports = function(window, edgeVersion) {
     );
 
     this.transceivers[sdpMLineIndex].candidates = [];
-    var self = this;
-    iceGatherer.addEventListener('onlocalcandidate', function(event) {
+    this.transceivers[sdpMLineIndex].bufferCandidates = function(event) {
       var end = !event.candidate || Object.keys(event.candidate).length === 0;
       // polyfill since RTCIceGatherer.state is not implemented in
       // Edge 10547 yet.
       iceGatherer.state = end ? 'completed' : 'gathering';
-      if (self.transceivers.iceCandidates !== null) {
-        self.transceivers.iceCandidates.push(event.candidate);
+      if (self.transceivers[sdpMLineIndex].candidates !== null) {
+        self.transceivers[sdpMLineIndex].candidates.push(event.candidate);
       }
-    });
+    };
+    iceGatherer.addEventListener('localcandidate',
+      this.transceivers[sdpMLineIndex].bufferCandidates);
     return iceGatherer;
   };
 
@@ -465,6 +467,8 @@ module.exports = function(window, edgeVersion) {
     }
     var candidates = this.transceivers[sdpMLineIndex].candidates;
     this.transceivers[sdpMLineIndex].candidates = null;
+    iceGatherer.removeEventListener('localcandidate',
+      this.transceivers[sdpMLineIndex].bufferCandidates);
     iceGatherer.onlocalcandidate = function(evt) {
       if (self.usingBundle && sdpMLineIndex > 0) {
         // if we know that we use bundle we can drop candidates with
