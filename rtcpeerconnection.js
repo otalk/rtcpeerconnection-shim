@@ -1328,6 +1328,8 @@ module.exports = function(window, edgeVersion) {
     return new Promise(function(resolve) {
       if (args.length > 0 && typeof args[0] === 'function') {
         args[0].apply(null, [desc]);
+        resolve();
+        return;
       }
       resolve(desc);
     });
@@ -1401,6 +1403,8 @@ module.exports = function(window, edgeVersion) {
     return new Promise(function(resolve) {
       if (args.length > 0 && typeof args[0] === 'function') {
         args[0].apply(null, [desc]);
+        resolve();
+        return;
       }
       resolve(desc);
     });
