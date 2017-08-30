@@ -130,8 +130,9 @@ module.exports = function(window) {
       role: 'auto',
       fingerprints: [
         {
-          algorithm: 'alg',
-          value: 'fi:ng:ger:pr:in:t1'
+          algorithm: 'sha-256',
+          value: '00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00' +
+            ':00:00:00:00:00:00:00:00:00:00:00:00:00:00:00'
         }
       ]
     };

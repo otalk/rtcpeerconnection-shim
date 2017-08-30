@@ -17,8 +17,8 @@ const mockGetUserMedia = require('./gummock');
 const shimPeerConnection = require('../rtcpeerconnection');
 const SDPUtils = require('sdp');
 
-const FINGERPRINT_SHA256 = '8C:71:B3:8D:A5:38:FD:8F:A4:2E:A2:65:6C' +
-    ':86:52:BC:E0:6E:94:F2:9F:7C:4D:B5:DF:AF:AA:6F:44:90:8D:F4';
+const FINGERPRINT_SHA256 = '00:00:00:00:00:00:00:00:00:00:00:00:00' +
+    ':00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00';
 const ICEUFRAG = 'someufrag';
 const ICEPWD = 'somelongpwdwithenoughrandomness';
 const SDP_BOILERPLATE = 'v=0\r\n' +
