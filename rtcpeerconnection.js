@@ -211,6 +211,7 @@ function maybeAddCandidate(iceTransport, candidate) {
   if (!alreadyAdded) {
     iceTransport.addRemoteCandidate(candidate);
   }
+  return !alreadyAdded;
 }
 
 module.exports = function(window, edgeVersion) {
@@ -1462,22 +1463,27 @@ module.exports = function(window, edgeVersion) {
           return Promise.resolve();
         }
         // when using bundle, avoid adding candidates to the wrong
-        // ice transport.
+        // ice transport. And avoid adding candidates added in the SDP.
         if (sdpMLineIndex === 0 || (sdpMLineIndex > 0 &&
             transceiver.iceTransport !== this.transceivers[0].iceTransport)) {
-          transceiver.iceTransport.addRemoteCandidate(cand);
+          if (!maybeAddCandidate(transceiver.iceTransport, cand)) {
+            err = new Error('Can not add ICE candidate');
+            err.name = 'OperationError';
+          }
         }
 
-        // update the remoteDescription.
-        var candidateString = candidate.candidate.trim();
-        if (candidateString.indexOf('a=') === 0) {
-          candidateString = candidateString.substr(2);
+        if (!err) {
+          // update the remoteDescription.
+          var candidateString = candidate.candidate.trim();
+          if (candidateString.indexOf('a=') === 0) {
+            candidateString = candidateString.substr(2);
+          }
+          sections = SDPUtils.splitSections(this.remoteDescription.sdp);
+          sections[sdpMLineIndex + 1] += 'a=' +
+              (cand.type ? candidateString : 'end-of-candidates')
+              + '\r\n';
+          this.remoteDescription.sdp = sections.join('');
         }
-        sections = SDPUtils.splitSections(this.remoteDescription.sdp);
-        sections[sdpMLineIndex + 1] += 'a=' +
-            (cand.type ? candidateString : 'end-of-candidates')
-            + '\r\n';
-        this.remoteDescription.sdp = sections.join('');
       } else {
         err = new Error('Can not add ICE candidate');
         err.name = 'OperationError';
