@@ -679,6 +679,8 @@ describe('Edge shim', () => {
         window.RTCIceTransport.prototype.addRemoteCandidate.restore();
         window.RTCIceTransport.prototype.setRemoteCandidates.restore();
       });
+      const candidateString = 'a=candidate:702786350 1 udp 41819902 ' +
+          '8.8.8.8 60769 typ host';
       const sdp = SDP_BOILERPLATE +
           'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
           'c=IN IP4 0.0.0.0\r\n' +
@@ -694,7 +696,7 @@ describe('Edge shim', () => {
           'a=rtpmap:111 opus/48000/2\r\n' +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n' +
-          'a=candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host\r\n';
+          candidateString + '\r\n';
       it('adds the candidates to the ice transport', (done) => {
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
@@ -727,6 +729,20 @@ describe('Edge shim', () => {
         .then(() => {
           const receiver = pc.getReceivers()[0];
           const iceTransport = receiver.transport.transport;
+          expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
+          done();
+        });
+      });
+
+      it('does not add the candidates when they are also supplied ' +
+          'with addIceCandidate', (done) => {
+        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          const receiver = pc.getReceivers()[0];
+          const iceTransport = receiver.transport.transport;
+
+          pc.addIceCandidate({sdpMid: 'audio1', sdpMLineIndex: 0,
+            candidate: candidateString});
           expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
           done();
         });
