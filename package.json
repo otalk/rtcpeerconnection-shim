@@ -1,6 +1,6 @@
 {
   "name": "rtcpeerconnection-shim",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "An implementation of the RTCPeerConnection API ontop of ORTC",
   "license": "BSD-3-Clause",
   "main": "./rtcpeerconnection.js",
