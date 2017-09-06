@@ -304,7 +304,7 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype._emitGatheringStateChange = function() {
     var event = new Event('icegatheringstatechange');
     this.dispatchEvent(event);
-    if (this.onicegatheringstatechange !== null) {
+    if (typeof this.onicegatheringstatechange === 'function') {
       this.onicegatheringstatechange(event);
     }
   };
@@ -522,13 +522,13 @@ module.exports = function(window, edgeVersion) {
       // complete.
       if (!end) {
         self.dispatchEvent(event);
-        if (self.onicecandidate !== null) {
+        if (typeof self.onicecandidate === 'function') {
           self.onicecandidate(event);
         }
       }
       if (complete) {
         self.dispatchEvent(new Event('icecandidate'));
-        if (self.onicecandidate !== null) {
+        if (typeof self.onicecandidate === 'function') {
           self.onicecandidate(new Event('icecandidate'));
         }
         self.iceGatheringState = 'complete';
@@ -1024,7 +1024,7 @@ module.exports = function(window, edgeVersion) {
           event.stream = stream;
           window.setTimeout(function() {
             self.dispatchEvent(event);
-            if (self.onaddstream !== null) {
+            if (typeof self.onaddstream === 'function') {
               self.onaddstream(event);
             }
           });
@@ -1043,7 +1043,7 @@ module.exports = function(window, edgeVersion) {
           trackEvent.streams = [stream];
           window.setTimeout(function() {
             self.dispatchEvent(trackEvent);
-            if (self.ontrack !== null) {
+            if (typeof self.ontrack === 'function') {
               self.ontrack(trackEvent);
             }
           });
@@ -1105,7 +1105,7 @@ module.exports = function(window, edgeVersion) {
     this.signalingState = newState;
     var event = new Event('signalingstatechange');
     this.dispatchEvent(event);
-    if (this.onsignalingstatechange !== null) {
+    if (typeof this.onsignalingstatechange === 'function') {
       this.onsignalingstatechange(event);
     }
   };
@@ -1124,7 +1124,7 @@ module.exports = function(window, edgeVersion) {
       self.needNegotiation = false;
       var event = new Event('negotiationneeded');
       self.dispatchEvent(event);
-      if (self.onnegotiationneeded !== null) {
+      if (typeof self.onnegotiationneeded === 'function') {
         self.onnegotiationneeded(event);
       }
     }, 0);
@@ -1168,7 +1168,7 @@ module.exports = function(window, edgeVersion) {
       self.iceConnectionState = newState;
       var event = new Event('iceconnectionstatechange');
       this.dispatchEvent(event);
-      if (this.oniceconnectionstatechange !== null) {
+      if (typeof this.oniceconnectionstatechange === 'function') {
         this.oniceconnectionstatechange(event);
       }
     }
