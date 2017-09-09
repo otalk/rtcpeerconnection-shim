@@ -609,7 +609,7 @@ module.exports = function(window, edgeVersion) {
       }
       transceiver.rtpSender.send(params);
     }
-    if (recv && transceiver.rtpReceiver) {
+    if (recv && transceiver.rtpReceiver && params.codecs.length > 0) {
       // remove RTX field in Edge 14942
       if (transceiver.kind === 'video'
           && transceiver.recvEncodingParameters
