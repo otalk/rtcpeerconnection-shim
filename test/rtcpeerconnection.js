@@ -1099,6 +1099,17 @@ describe('Edge shim', () => {
           done();
         });
       });
+
+      it('= false and no local track the generated SDP should not ' +
+          'contain a m-line', (done) => {
+        // see https://github.com/rtcweb-wg/jsep/issues/832
+        pc.createOffer({offerToReceiveAudio: false})
+        .then((offer) => {
+          const sections = SDPUtils.splitSections(offer.sdp);
+          expect(sections).to.have.length(1);
+          done();
+        });
+      });
     });
 
     describe('when called with offerToReceiveVideo', () => {
@@ -1141,6 +1152,17 @@ describe('Edge shim', () => {
           const sections = SDPUtils.splitSections(offer.sdp);
           expect(sections.length).to.equal(2);
           expect(SDPUtils.getDirection(sections[1])).to.equal('sendonly');
+          done();
+        });
+      });
+
+      it('= false and no local track the generated SDP should not ' +
+          'contain a m-line', (done) => {
+        // see https://github.com/rtcweb-wg/jsep/issues/832
+        pc.createOffer({offerToReceiveVideo: false})
+        .then((offer) => {
+          const sections = SDPUtils.splitSections(offer.sdp);
+          expect(sections).to.have.length(1);
           done();
         });
       });
