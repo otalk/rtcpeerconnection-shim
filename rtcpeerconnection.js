@@ -863,9 +863,8 @@ module.exports = function(window, edgeVersion) {
               usingBundle);
         }
 
-        if (cands.length) {
-          if (isComplete && (!usingBundle || sdpMLineIndex === 0)
-              && transceiver.iceTransport.state === 'new') {
+        if (cands.length && transceiver.iceTransport.state === 'new') {
+          if (isComplete && (!usingBundle || sdpMLineIndex === 0)) {
             transceiver.iceTransport.setRemoteCandidates(cands);
           } else {
             cands.forEach(function(candidate) {
