@@ -988,6 +988,51 @@ describe('Edge shim', () => {
         });
       });
     });
+
+    it('treats bundle-only m-lines as not rejected', (done) => {
+      const sdp = SDP_BOILERPLATE +
+          'a=group:BUNDLE audio1 video1\r\n' +
+          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
+          'c=IN IP4 0.0.0.0\r\n' +
+          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+          'a=ice-pwd:' + ICEPWD + '\r\n' +
+          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+          'a=setup:actpass\r\n' +
+          'a=mid:audio1\r\n' +
+          'a=sendrecv\r\n' +
+          'a=rtcp-mux\r\n' +
+          'a=rtcp-rsize\r\n' +
+          'a=rtpmap:111 opus/48000/2\r\n' +
+          'a=ssrc:1001 cname:some\r\n' +
+          'a=candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host\r\n' +
+          'a=msid:stream1 audiotrack\r\n' +
+          'a=end-of-candidates\r\n' +
+          'm=video 0 UDP/TLS/RTP/SAVPF 102\r\n' +
+          'c=IN IP4 0.0.0.0\r\n' +
+          'a=bundle-only\r\n' +
+          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+          'a=ice-pwd:' + ICEPWD + '\r\n' +
+          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+          'a=setup:actpass\r\n' +
+          'a=mid:video1\r\n' +
+          'a=sendrecv\r\n' +
+          'a=rtcp-mux\r\n' +
+          'a=rtcp-rsize\r\n' +
+          'a=rtpmap:102 vp8/90000\r\n' +
+          'a=ssrc:1002 cname:some\r\n' +
+          'a=candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host\r\n' +
+          'a=msid:stream1 videotrack\r\n' +
+          'a=end-of-candidates\r\n';
+      pc.setRemoteDescription({type: 'offer', sdp})
+      .then(() => {
+        const receivers = pc.getReceivers();
+        expect(receivers).to.have.length(2);
+        expect(receivers[1].track.id).to.equal('videotrack');
+        done();
+      });
+    });
   });
 
   describe('createOffer', () => {
