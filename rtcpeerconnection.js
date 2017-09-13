@@ -675,7 +675,9 @@ module.exports = function(window, edgeVersion) {
         var localCapabilities = transceiver.localCapabilities;
         var remoteCapabilities = transceiver.remoteCapabilities;
 
-        var rejected = SDPUtils.isRejected(mediaSection);
+        // treat bundle-only as not-rejected.
+        var rejected = SDPUtils.isRejected(mediaSection) &&
+            !SDPUtils.matchPrefix(mediaSection, 'a=bundle-only').length === 1;
 
         if (!rejected && !transceiver.isDatachannel) {
           var remoteIceParameters = SDPUtils.getIceParameters(
@@ -780,7 +782,9 @@ module.exports = function(window, edgeVersion) {
     sections.forEach(function(mediaSection, sdpMLineIndex) {
       var lines = SDPUtils.splitLines(mediaSection);
       var kind = SDPUtils.getKind(mediaSection);
-      var rejected = SDPUtils.isRejected(mediaSection);
+      // treat bundle-only as not-rejected.
+      var rejected = SDPUtils.isRejected(mediaSection) &&
+          !SDPUtils.matchPrefix(mediaSection, 'a=bundle-only').length === 1;
       var protocol = lines[0].substr(2).split(' ')[2];
 
       var direction = SDPUtils.getDirection(mediaSection, sessionpart);
