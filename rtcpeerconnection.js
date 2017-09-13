@@ -637,7 +637,7 @@ module.exports = function(window, edgeVersion) {
     if (!isActionAllowedInSignalingState('setLocalDescription',
         description.type, this.signalingState)) {
       return new Promise(function(resolve, reject) {
-        var e = new Error('Can not set remote ' + description.type +
+        var e = new Error('Can not set local ' + description.type +
             ' in state ' + self.signalingState);
         e.name = 'InvalidStateError';
         if (args.length > 2 && typeof args[2] === 'function') {
