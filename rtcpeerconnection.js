@@ -892,8 +892,9 @@ module.exports = function(window, edgeVersion) {
           ssrc: (2 * sdpMLineIndex + 2) * 1001
         }];
 
+        var isNewTrack = false;
         if (direction === 'sendrecv' || direction === 'sendonly') {
-          var isNewTrack = !transceiver.rtpReceiver;
+          isNewTrack = !transceiver.rtpReceiver;
           rtpReceiver = transceiver.rtpReceiver ||
               new window.RTCRtpReceiver(transceiver.dtlsTransport, kind);
 
@@ -938,7 +939,7 @@ module.exports = function(window, edgeVersion) {
         // setLocalDescription.
         self._transceive(self.transceivers[sdpMLineIndex],
             false,
-            direction === 'sendrecv' || direction === 'sendonly');
+            isNewTrack);
       } else if (description.type === 'answer' && !rejected) {
         transceiver = self.transceivers[sdpMLineIndex];
         iceGatherer = transceiver.iceGatherer;
