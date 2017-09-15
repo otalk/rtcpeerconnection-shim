@@ -2507,6 +2507,50 @@ describe('Edge shim', () => {
     });
   });
 
+  describe('remote reoffer', () => {
+    let pc1;
+    let pc2;
+    beforeEach(() => {
+      pc1 = new RTCPeerConnection();
+      pc2 = new RTCPeerConnection();
+    });
+    afterEach(() => {
+      pc1.close();
+      pc2.close();
+    });
+
+    it('retains SSRCs', (done) => {
+      navigator.mediaDevices.getUserMedia({audio: true, video: true})
+      .then((stream) => {
+        pc1.addStream(stream);
+        return pc1.createOffer();
+      })
+      .then((offer) => pc1.setLocalDescription(offer))
+      .then(() => pc2.setRemoteDescription(pc1.localDescription))
+      .then(() => pc2.createAnswer())
+      .then((answer) => pc2.setLocalDescription(answer))
+      .then(() => pc1.setRemoteDescription(pc2.localDescription))
+      .then(() => {
+        return navigator.mediaDevices.getUserMedia({audio: true, video: true});
+      })
+      .then((stream) => {
+        pc2.addStream(stream);
+        return pc2.createOffer();
+      })
+      .then((offer) => {
+        const sections = SDPUtils.splitSections(offer.sdp);
+        const audioEncodingParameters = SDPUtils.parseRtpEncodingParameters(
+            sections[1]);
+        const videoEncodingParameters = SDPUtils.parseRtpEncodingParameters(
+            sections[2]);
+        expect(audioEncodingParameters[0].ssrc).to.equal(2002);
+        expect(videoEncodingParameters[0].ssrc).to.equal(4004);
+        expect(videoEncodingParameters[0].rtx.ssrc).to.equal(4005);
+        done();
+      });
+    });
+  });
+
   describe('bundlePolicy', () => {
     it('creates an offer with a=group:BUNDLE by default', (done) => {
       const pc = new RTCPeerConnection();

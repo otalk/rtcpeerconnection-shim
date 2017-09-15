@@ -888,7 +888,7 @@ module.exports = function(window, edgeVersion) {
               });
         }
 
-        sendEncodingParameters = [{
+        sendEncodingParameters = transceiver.sendEncodingParameters || [{
           ssrc: (2 * sdpMLineIndex + 2) * 1001
         }];
 
@@ -1282,14 +1282,15 @@ module.exports = function(window, edgeVersion) {
       });
 
       // generate an ssrc now, to be used later in rtpSender.send
-      var sendEncodingParameters = [{
+      var sendEncodingParameters = transceiver.sendEncodingParameters || [{
         ssrc: (2 * sdpMLineIndex + 1) * 1001
       }];
       if (track) {
         // add RTX
-        if (edgeVersion >= 15019 && kind === 'video') {
+        if (edgeVersion >= 15019 && kind === 'video' &&
+            !sendEncodingParameters[0].rtx) {
           sendEncodingParameters[0].rtx = {
-            ssrc: (2 * sdpMLineIndex + 1) * 1001 + 1
+            ssrc: sendEncodingParameters[0].ssrc + 1
           };
         }
       }
@@ -1376,9 +1377,10 @@ module.exports = function(window, edgeVersion) {
         }
         if (localTrack) {
           // add RTX
-          if (edgeVersion >= 15019 && transceiver.kind === 'video') {
+          if (edgeVersion >= 15019 && transceiver.kind === 'video' &&
+              !transceiver.sendEncodingParameters[0].rtx) {
             transceiver.sendEncodingParameters[0].rtx = {
-              ssrc: (2 * sdpMLineIndex + 2) * 1001 + 1
+              ssrc: transceiver.sendEncodingParameters[0].ssrc + 1
             };
           }
         }
