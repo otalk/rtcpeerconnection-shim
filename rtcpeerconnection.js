@@ -10,7 +10,7 @@
 
 var SDPUtils = require('sdp');
 
-function writeMediaSection(transceiver, caps, type, stream) {
+function writeMediaSection(transceiver, caps, type, stream, dtlsRole) {
   var sdp = SDPUtils.writeRtpDescription(transceiver.kind, caps);
 
   // Map ICE parameters (ufrag, pwd) to SDP.
@@ -20,7 +20,7 @@ function writeMediaSection(transceiver, caps, type, stream) {
   // Map DTLS parameters to SDP.
   sdp += SDPUtils.writeDtlsParameters(
       transceiver.dtlsTransport.getLocalParameters(),
-      type === 'offer' ? 'actpass' : 'active');
+      type === 'offer' ? 'actpass' : dtlsRole || 'active');
 
   sdp += 'a=mid:' + transceiver.mid + '\r\n';
 
@@ -299,6 +299,8 @@ module.exports = function(window, edgeVersion) {
 
     this._sdpSessionId = SDPUtils.generateSessionId();
     this._sdpSessionVersion = 0;
+
+    this._dtlsRole = undefined; // role for a=setup to use in answers.
   };
 
   RTCPeerConnection.prototype._emitGatheringStateChange = function() {
@@ -1003,6 +1005,10 @@ module.exports = function(window, edgeVersion) {
       }
     });
 
+    if (this._dtlsRole === undefined) {
+      this._dtlsRole = description.type === 'offer' ? 'active' : 'passive';
+    }
+
     this.remoteDescription = {
       type: description.type,
       sdp: description.sdp
@@ -1313,8 +1319,8 @@ module.exports = function(window, edgeVersion) {
     sdp += 'a=ice-options:trickle\r\n';
 
     this.transceivers.forEach(function(transceiver, sdpMLineIndex) {
-      sdp += writeMediaSection(transceiver,
-          transceiver.localCapabilities, 'offer', transceiver.stream);
+      sdp += writeMediaSection(transceiver, transceiver.localCapabilities,
+          'offer', transceiver.stream, self._dtlsRole);
       sdp += 'a=rtcp-rsize\r\n';
 
       if (transceiver.iceGatherer && self.iceGatheringState !== 'new' &&
@@ -1345,6 +1351,7 @@ module.exports = function(window, edgeVersion) {
   };
 
   RTCPeerConnection.prototype.createAnswer = function() {
+    var self = this;
     var args = arguments;
 
     var sdp = SDPUtils.writeSessionBoilerplate(this._sdpSessionId,
@@ -1399,7 +1406,7 @@ module.exports = function(window, edgeVersion) {
       }
 
       sdp += writeMediaSection(transceiver, commonCapabilities,
-          'answer', transceiver.stream);
+          'answer', transceiver.stream, self._dtlsRole);
       if (transceiver.rtcpParameters &&
           transceiver.rtcpParameters.reducedSize) {
         sdp += 'a=rtcp-rsize\r\n';
