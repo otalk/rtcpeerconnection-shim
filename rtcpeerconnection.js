@@ -419,12 +419,50 @@ module.exports = function(window, edgeVersion) {
     }
   };
 
-  RTCPeerConnection.prototype.removeStream = function(stream) {
-    var idx = this.localStreams.indexOf(stream);
-    if (idx > -1) {
-      this.localStreams.splice(idx, 1);
-      this._maybeFireNegotiationNeeded();
+  RTCPeerConnection.prototype.removeTrack = function(sender) {
+    if (!(sender instanceof window.RTCRtpSender)) {
+      throw new TypeError('Argument 1 of RTCPeerConnection.removeTrack ' +
+          'does not implement interface RTCRtpSender.');
     }
+
+    var transceiver = this.transceivers.find(function(t) {
+      return t.rtpSender === sender;
+    });
+
+    if (!transceiver) {
+      var err = new Error('Sender was not created by this connection.');
+      err.name = 'InvalidAccessError';
+      throw err;
+    }
+    var stream = transceiver.stream;
+
+    transceiver.rtpSender.stop();
+    transceiver.rtpSender = null;
+    transceiver.track = null;
+    transceiver.stream = null;
+
+    // remove the stream from the set of local streams
+    var localStreams = this.transceivers.map(function(t) {
+      return t.stream;
+    });
+    if (localStreams.indexOf(stream) === -1 &&
+        this.localStreams.indexOf(stream) > -1) {
+      this.localStreams.splice(this.localStreams.indexOf(stream), 1);
+    }
+
+    this._maybeFireNegotiationNeeded();
+  };
+
+  RTCPeerConnection.prototype.removeStream = function(stream) {
+    var self = this;
+    stream.getTracks().forEach(function(track) {
+      var sender = self.getSenders().find(function(s) {
+        return s.track === track;
+      });
+      if (sender) {
+        self.removeTrack(sender);
+      }
+    });
   };
 
   RTCPeerConnection.prototype.getSenders = function() {
