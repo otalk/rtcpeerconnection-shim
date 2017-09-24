@@ -1443,7 +1443,7 @@ module.exports = function(window, edgeVersion) {
           break;
         }
       }
-    } else if (!(candidate.sdpMLineIndex || candidate.sdpMid)) {
+    } else if (!(candidate.sdpMLineIndex !== undefined || candidate.sdpMid)) {
       throw new TypeError('sdpMLineIndex or sdpMid required');
     } else if (!this.remoteDescription) {
       err = new Error('Can not add ICE candidate without ' +
