@@ -187,6 +187,17 @@ describe('Edge shim', () => {
       });
     });
 
+    it('calls the signalingstatechange event', () => {
+      pc.onsignalingstatechange = sinon.stub();
+      pc.createOffer({offerToReceiveAudio: 1})
+      .then((offer) => {
+        return pc.setLocalDescription(offer);
+      })
+      .then(() => {
+        expect(pc.onsignalingstatechange).to.have.been.calledOnce();
+      });
+    });
+
     describe('InvalidStateError is thrown when called with', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       it('an offer in signalingState have-remote-offer', (done) => {
@@ -406,6 +417,16 @@ describe('Edge shim', () => {
         done();
       });
     });
+
+    it('calls the signalingstatechange event', () => {
+      pc.onsignalingstatechange = sinon.stub();
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      .then(() => {
+        expect(pc.onsignalingstatechange).to.have.been.calledOnce();
+      });
+    });
+
 
     it('sets the remoteDescription', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
