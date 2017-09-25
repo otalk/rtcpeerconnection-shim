@@ -794,8 +794,7 @@ describe('Edge shim', () => {
       });
     });
 
-    describe('when called with an subsequent offer containing a ' +
-        'new track', () => {
+    describe('when called with an subsequent offer', () => {
       let clock;
       beforeEach(() => {
         clock = sinon.useFakeTimers();
@@ -839,38 +838,89 @@ describe('Edge shim', () => {
           'a=ssrc:1001 cname:some\r\n' +
           'a=ssrc:1002 msid:stream1 videotrack\r\n' +
           'a=ssrc:1002 cname:some\r\n';
-      it('triggers ontrack', (done) => {
-        pc.onaddstream = sinon.stub();
-        pc.ontrack = sinon.stub();
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          return pc.setRemoteDescription({type: 'offer',
-              sdp: sdp + videoPart});
-        })
-        .then(() => {
-          window.setTimeout(() => {
-            expect(pc.onaddstream).to.have.been.calledOnce();
-            expect(pc.ontrack).to.have.been.calledTwice();
-            done();
+
+      describe('adding a new track', () => {
+        it('triggers ontrack', (done) => {
+          pc.onaddstream = sinon.stub();
+          pc.ontrack = sinon.stub();
+          pc.setRemoteDescription({type: 'offer', sdp: sdp})
+          .then(() => {
+            return pc.setRemoteDescription({type: 'offer',
+                sdp: sdp + videoPart});
+          })
+          .then(() => {
+            window.setTimeout(() => {
+              expect(pc.onaddstream).to.have.been.calledOnce();
+              expect(pc.ontrack).to.have.been.calledTwice();
+              done();
+            });
+            clock.tick(500);
           });
-          clock.tick(500);
+        });
+
+        it('fires the stream addtrack event', (done) => {
+          let remoteStream;
+          pc.onaddstream = (e) => {
+            remoteStream = e.stream;
+            remoteStream.addEventListener('addtrack', (event) => {
+              expect(event).to.have.property('track');
+              expect(event.track.id).to.equal('videotrack');
+              done();
+            });
+          };
+          pc.setRemoteDescription({type: 'offer', sdp: sdp})
+          .then(() => {
+            window.setTimeout(() => {
+              pc.setRemoteDescription({type: 'offer', sdp: sdp + videoPart});
+            });
+            clock.tick(500);
+          });
         });
       });
 
-      it('fires the stream addtrack event', (done) => {
-        let remoteStream;
-        pc.onaddstream = (e) => {
-          remoteStream = e.stream;
-          remoteStream.addEventListener('addtrack', (event) => {
-            expect(event).to.have.property('track');
-            expect(event.track.id).to.equal('videotrack');
-            done();
+      describe('removing a track', () => {
+        it('fires the stream removetrack event', (done) => {
+          let remoteStream;
+          pc.onaddstream = (e) => {
+            remoteStream = e.stream;
+            remoteStream.addEventListener('removetrack', (event) => {
+              expect(event).to.have.property('track');
+              expect(event.track.id).to.equal('videotrack');
+              done();
+            });
+          };
+          pc.setRemoteDescription({type: 'offer', sdp: sdp + videoPart})
+          .then(() => {
+            window.setTimeout(() => {
+              pc.setRemoteDescription({type: 'offer', sdp:
+                  sdp + videoPart.replace('sendrecv', 'recvonly')});
+            });
+            clock.tick(500);
           });
+        });
+      });
+    });
+
+    describe('when called with an subsequent offer removing a ' +
+        'track', () => {
+      it('triggers stream.onremovetrack', (done) => {
+        let clock = sinon.useFakeTimers();
+
+        const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+        const streamInfo = 'a=msid:stream audiotrack\r\n';
+
+        const removetrackStub = sinon.stub();
+        pc.onaddstream = (e) => {
+          e.stream.addEventListener('removetrack', removetrackStub);
+          pc.setRemoteDescription({type: 'offer',
+              sdp: sdp.replace('sendonly', 'inactive')});
         };
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        pc.setRemoteDescription({type: 'offer', sdp: sdp + streamInfo})
         .then(() => {
           window.setTimeout(() => {
-            pc.setRemoteDescription({type: 'offer', sdp: sdp + videoPart});
+            expect(removetrackStub).to.have.been.calledOnce();
+            clock.restore();
+            done();
           });
           clock.tick(500);
         });

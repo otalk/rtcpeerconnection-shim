@@ -225,6 +225,13 @@ function addTrackToStreamAndFireEvent(track, stream) {
   stream.dispatchEvent(e);
 }
 
+function removeTrackFromStreamAndFireEvent(track, stream) {
+  stream.removeTrack(track);
+  var e = new Event('removetrack'); // TODO: MediaStreamTrackEvent
+  e.track = track;
+  stream.dispatchEvent(e);
+}
+
 module.exports = function(window, edgeVersion) {
   var RTCPeerConnection = function(config) {
     var self = this;
@@ -352,6 +359,7 @@ module.exports = function(window, edgeVersion) {
       sendEncodingParameters: null,
       recvEncodingParameters: null,
       stream: null,
+      associatedRemoteMediaStreams: [],
       wantReceive: true
     };
     if (this.usingBundle && hasBundleTransport) {
@@ -905,6 +913,7 @@ module.exports = function(window, edgeVersion) {
           ssrc: (2 * sdpMLineIndex + 2) * 1001
         }];
 
+        // TODO: rewrite to use http://w3c.github.io/webrtc-pc/#set-associated-remote-streams
         var isNewTrack = false;
         if (direction === 'sendrecv' || direction === 'sendonly') {
           isNewTrack = !transceiver.rtpReceiver;
@@ -938,7 +947,18 @@ module.exports = function(window, edgeVersion) {
             }
             addTrackToStreamAndFireEvent(track, stream);
             receiverList.push([track, rtpReceiver, stream]);
+            transceiver.associatedRemoteMediaStreams.push(stream);
           }
+        } else if (transceiver.rtpReceiver && transceiver.rtpReceiver.track) {
+          transceiver.associatedRemoteMediaStreams.forEach(function(s) {
+            var nativeTrack = s.getTracks().find(function(t) {
+              return t.id === transceiver.rtpReceiver.track.id;
+            });
+            if (nativeTrack) {
+              removeTrackFromStreamAndFireEvent(nativeTrack, s);
+            }
+          });
+          transceiver.associatedRemoteMediaStreams = [];
         }
 
         transceiver.localCapabilities = localCapabilities;
@@ -993,6 +1013,7 @@ module.exports = function(window, edgeVersion) {
             direction === 'sendrecv' || direction === 'recvonly',
             direction === 'sendrecv' || direction === 'sendonly');
 
+        // TODO: rewrite to use http://w3c.github.io/webrtc-pc/#set-associated-remote-streams
         if (rtpReceiver &&
             (direction === 'sendrecv' || direction === 'sendonly')) {
           track = rtpReceiver.track;
