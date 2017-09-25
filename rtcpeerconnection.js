@@ -1141,7 +1141,6 @@ module.exports = function(window, edgeVersion) {
 
   // Update the connection state.
   RTCPeerConnection.prototype._updateConnectionState = function() {
-    var self = this;
     var newState;
     var states = {
       'new': 0,
@@ -1173,8 +1172,8 @@ module.exports = function(window, edgeVersion) {
       newState = 'connected';
     }
 
-    if (newState !== self.iceConnectionState) {
-      self.iceConnectionState = newState;
+    if (newState !== this.iceConnectionState) {
+      this.iceConnectionState = newState;
       var event = new Event('iceconnectionstatechange');
       this.dispatchEvent(event);
       if (typeof this.oniceconnectionstatechange === 'function') {
