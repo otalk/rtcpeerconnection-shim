@@ -214,6 +214,17 @@ function maybeAddCandidate(iceTransport, candidate) {
   return !alreadyAdded;
 }
 
+
+// https://w3c.github.io/mediacapture-main/#mediastream
+// Helper function to add the track to the stream and
+// dispatch the event ourselves.
+function addTrackToStreamAndFireEvent(track, stream) {
+  stream.addTrack(track);
+  var e = new Event('addtrack'); // TODO: MediaStreamTrackEvent
+  e.track = track;
+  stream.dispatchEvent(e);
+}
+
 module.exports = function(window, edgeVersion) {
   var RTCPeerConnection = function(config) {
     var self = this;
@@ -925,7 +936,7 @@ module.exports = function(window, edgeVersion) {
               }
               stream = streams.default;
             }
-            stream.addTrack(track);
+            addTrackToStreamAndFireEvent(track, stream);
             receiverList.push([track, rtpReceiver, stream]);
           }
         }
@@ -989,13 +1000,13 @@ module.exports = function(window, edgeVersion) {
             if (!streams[remoteMsid.stream]) {
               streams[remoteMsid.stream] = new window.MediaStream();
             }
-            streams[remoteMsid.stream].addTrack(track);
+            addTrackToStreamAndFireEvent(track, streams[remoteMsid.stream]);
             receiverList.push([track, rtpReceiver, streams[remoteMsid.stream]]);
           } else {
             if (!streams.default) {
               streams.default = new window.MediaStream();
             }
-            streams.default.addTrack(track);
+            addTrackToStreamAndFireEvent(track, streams.default);
             receiverList.push([track, rtpReceiver, streams.default]);
           }
         } else {
