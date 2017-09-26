@@ -98,7 +98,6 @@ function filterIceServers(iceServers, edgeVersion) {
       server.urls = isString ? urls[0] : urls;
       return !!urls.length;
     }
-    return false;
   });
 }
 
