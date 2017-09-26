@@ -13,6 +13,17 @@ module.exports = function(window) {
   const MediaStream = function(tracks) {
     this.id = SDPUtils.generateIdentifier();
     this._tracks = tracks || [];
+
+    this._emitter = new EventEmitter();
+    this.addEventListener = (name, cb) => {
+      this._emitter.addListener(name, cb);
+    };
+    this.removeEventListener = (name, cb) => {
+      this._emitter.removeListener(name, cb);
+    };
+    this.dispatchEvent = (ev) => {
+      this._emitter.emit(ev.type, ev);
+    };
   };
 
   MediaStream.prototype.getTracks = function() {
@@ -27,6 +38,12 @@ module.exports = function(window) {
   MediaStream.prototype.addTrack = function(t) {
     this._tracks.push(t);
   };
+  MediaStream.prototype.removeTrack = function(t) {
+    var idx = this._tracks.indexOf(t);
+    if (idx !== -1) {
+      this._tracks.splice(idx, 1);
+    }
+  };
 
   window.MediaStream = MediaStream;
 
@@ -34,8 +51,12 @@ module.exports = function(window) {
     this.id = SDPUtils.generateIdentifier();
 
     this._emitter = new EventEmitter();
-    this.addEventListener = this._emitter.addListener.bind(this);
-    this.removeEventListener = this._emitter.removeListener.bind(this);
+    this.addEventListener = (name, cb) => {
+      this._emitter.addListener(name, cb);
+    };
+    this.removeEventListener = (name, cb) => {
+      this._emitter.removeListener(name, cb);
+    };
     this.dispatchEvent = (ev) => {
       this._emitter.emit(ev.type, ev);
     };
