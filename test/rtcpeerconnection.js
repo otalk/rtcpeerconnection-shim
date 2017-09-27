@@ -2082,7 +2082,7 @@ describe('Edge shim', () => {
               'a=rtcp-mux\r\n' +
               'a=rtcp-rsize\r\n' +
               'a=rtpmap:101 vp8/90000\r\n' +
-              'a=rtpmap:102 H264/90000\r\n' +
+              'a=rtpmap:102 no-such-codec/90000\r\n' +
               'a=rtpmap:103 rtx/90000\r\n' +
               'a=fmtp:103 apt=102\r\n';
           pc.setRemoteDescription({type: 'offer', sdp: modifiedSDP})
@@ -2091,7 +2091,7 @@ describe('Edge shim', () => {
           })
           .then((answer) => {
             expect(answer.sdp).to.contain('a=rtpmap:101 vp8');
-            expect(answer.sdp).not.to.contain('a=rtpmap:102 H264');
+            expect(answer.sdp).not.to.contain('a=rtpmap:102 no-such-codec');
             expect(answer.sdp).not.to.contain('a=rtpmap:103 rtx');
             expect(answer.sdp).not.to.contain('a=fmtp:103 apt=102');
             done();
