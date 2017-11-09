@@ -9,11 +9,12 @@
 'use strict';
 
 var SDPUtils = require('sdp');
+var util = require('./util');
 var shimSenderWithTrackOrKind = require('./rtcrtpsender');
 var shimIceGatherer = require('./rtcicegatherer');
 var shimIceTransport = require('./rtcicetransport');
 var shimDtlsTransport = require('./rtcdtlstransport');
-var util = require('./util');
+var shimRTCRtpTransceiver = require('./rtcrtptransceiver');
 
 function fixStatsType(stat) {
   return {
@@ -49,10 +50,21 @@ function writeMediaSection(transceiver, caps, type, stream, dtlsRole) {
     sdp += 'a=inactive\r\n';
   }
 
-  if (transceiver.rtpSender) {
-    var trackId = transceiver.rtpSender._initialTrackId ||
-        transceiver.rtpSender.track.id;
+  // https://tools.ietf.org/html/draft-ietf-rtcweb-jsep-24#section-5.2.1
+  // "If the RtpTransceiver has a sendrecv or sendonly direction"
+  var direction = transceiver.rtcRtpTransceiver.direction;
+  if (transceiver.rtpSender &&
+      (direction === 'sendrecv' || direction === 'sendonly')) {
+    var trackId;
+    if (transceiver.rtpSender._initialTrackId) {
+      trackId = transceiver.rtpSender._initialTrackId;
+    } else if (transceiver.rtpSender.track) {
+      trackId = transceiver.rtpSender.track.id;
+    } else {
+      trackId = SDPUtils.generateIdentifier();
+    }
     transceiver.rtpSender._initialTrackId = trackId;
+
     // spec.
     var msid = 'msid:' + (stream ? stream.id : '-') + ' ' +
         trackId + '\r\n';
@@ -230,6 +242,7 @@ module.exports = function(window, edgeVersion) {
   if (window.RTCDtlsTransport) { // wrap native RTCDtlsTransport.
     window.RTCDtlsTransport = shimDtlsTransport(window);
   }
+  window.RTCRtpTransceiver = shimRTCRtpTransceiver();
 
   var RTCPeerConnection = function(config) {
     var pc = this;
@@ -373,6 +386,8 @@ module.exports = function(window, edgeVersion) {
       associatedRemoteMediaStreams: [],
       wantReceive: true
     };
+    transceiver.rtcRtpTransceiver = new window.RTCRtpTransceiver(transceiver);
+
     if (this.usingBundle && hasBundleTransport) {
       transceiver.iceTransport = this.transceivers[0].iceTransport;
       transceiver.dtlsTransport = this.transceivers[0].dtlsTransport;
@@ -385,6 +400,35 @@ module.exports = function(window, edgeVersion) {
       this.transceivers.push(transceiver);
     }
     return transceiver;
+  };
+
+  RTCPeerConnection.prototype.addTransceiver = function(trackOrKind, init) {
+    if (this._isClosed) {
+      throw util.makeError('InvalidStateError',
+          'Attempted to call addTransceiver on a closed peerconnection.');
+    }
+    var kind;
+    var track;
+    if (typeof trackOrKind === 'string') {
+      kind = trackOrKind;
+      track = null;
+    } else {
+      track = trackOrKind;
+      kind = track.kind;
+    }
+    var transceiver = this._createTransceiver(kind);
+    if (track) {
+      transceiver.rtpSender = new window.RTCRtpSender(track,
+          transceiver.dtlsTransport);
+      if (init && init.streams) {
+        transceiver.stream = init.streams[0];
+      }
+    } else {
+      transceiver.rtpSender = new window.RTCRtpSender(kind);
+      // https://github.com/w3c/webrtc-pc/issues/1662
+      // transceiver.direction = 'recvonly';
+    }
+    return transceiver.rtcRtpTransceiver;
   };
 
   RTCPeerConnection.prototype.addTrack = function(track, stream) {
@@ -515,6 +559,11 @@ module.exports = function(window, edgeVersion) {
     });
   };
 
+  RTCPeerConnection.prototype.getTransceivers = function() {
+    return this.transceivers.map(function(transceiver) {
+      return transceiver.rtcRtpTransceiver;
+    });
+  };
 
   RTCPeerConnection.prototype._createIceGatherer = function(sdpMLineIndex,
       usingBundle) {
@@ -923,6 +972,7 @@ module.exports = function(window, edgeVersion) {
               pc.transceivers[0].dtlsTransport);
         }
       }
+
       if (description.type === 'offer' && !rejected) {
         transceiver = pc.transceivers[sdpMLineIndex] ||
             pc._createTransceiver(kind);

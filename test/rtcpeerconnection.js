@@ -1241,6 +1241,17 @@ describe('Edge shim', () => {
         });
       });
     });
+
+    it('creates an RTCRtpTransceiver for a rejected m-lines', (done) => {
+      const sdp = SDP_BOILERPLATE +
+          MINIMAL_AUDIO_MLINE.replace('m=audio 9', 'm=audio 0');
+      pc.setRemoteDescription({type: 'offer', sdp})
+      .then(() => {
+        const transceivers = pc.getTransceivers();
+        expect(transceivers).to.have.length(1);
+        done();
+      });
+    });
   });
 
   describe('createOffer', () => {
@@ -1757,6 +1768,21 @@ describe('Edge shim', () => {
             const msid = SDPUtils.parseMsid(sections[0]);
             expect(msid.stream).to.equal('-');
           });
+        });
+      });
+    });
+
+    describe('when called after addTransceiver', () => {
+      // I have questions... https://github.com/w3c/webrtc-pc/issues/1662
+      it('the generated SDP should contain an m-line', (done) => {
+        pc.addTransceiver('audio');
+        pc.createOffer()
+        .then((offer) => {
+          const sections = SDPUtils.splitSections(offer.sdp);
+          expect(sections.length).to.equal(2);
+          expect(SDPUtils.getKind(sections[1])).to.equal('audio');
+          // TODO: a=msid:- something
+          done();
         });
       });
     });
