@@ -2972,6 +2972,94 @@ describe('Edge shim', () => {
     });
   });
 
+  describe('removeTrack', () => {
+    let pc;
+    beforeEach(() => {
+      pc = new RTCPeerConnection();
+    });
+    afterEach(() => {
+      pc.close();
+    });
+
+    it('throws a TypeError if the argument is not an RTCRtpSender', () => {
+      const constructor = () => {
+        pc.removeTrack('something');
+      };
+      expect(constructor).to.throw(/does not implement/)
+          .that.has.property('name').that.equals('TypeError');
+    });
+
+    it('throws an InvalidAccessError if the sender does not belong ' +
+        'to the peerconnection', () => {
+      const constructor = () => {
+        pc.removeTrack(new window.RTCRtpSender());
+      };
+      expect(constructor).to.throw(/not created by/)
+          .that.has.property('name').that.equals('InvalidAccessError');
+    });
+
+    it('makes the m-line recvonly', () => {
+      return navigator.mediaDevices.getUserMedia({audio: true})
+      .then((stream) => {
+        const sender = pc.addTrack(stream.getAudioTracks()[0], stream);
+        pc.removeTrack(sender);
+        return pc.createOffer();
+      })
+      .then((offer) => {
+        const sections = SDPUtils.splitSections(offer.sdp);
+        expect(sections).to.have.length(2);
+        expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+      });
+    });
+
+    describe('and getLocalStreams', () => {
+      it('removes local streams when the last sender has been removed', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true})
+        .then((stream) => {
+          const sender = pc.addTrack(stream.getAudioTracks()[0], stream);
+          pc.removeTrack(sender);
+          expect(pc.getLocalStreams()).to.have.length(0);
+        });
+      });
+
+      it('keeps the local stream if there is a transceiver to which the ' +
+         'stream belongs', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true, video: true})
+        .then((stream) => {
+          pc.addTrack(stream.getAudioTracks()[0], stream);
+          const sender = pc.addTrack(stream.getVideoTracks()[0], stream);
+          pc.removeTrack(sender);
+          expect(pc.getLocalStreams()).to.have.length(1);
+        });
+      });
+    });
+
+    describe('legacy removeStream', () => {
+      it('removes the stream from getLocalStreams', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true})
+        .then((stream) => {
+          pc.addStream(stream);
+          pc.removeStream(stream);
+          expect(pc.getLocalStreams()).to.have.length(0);
+        });
+      });
+
+      it('makes the m-line recvonly', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true})
+        .then((stream) => {
+          pc.addStream(stream);
+          pc.removeStream(stream);
+          return pc.createOffer();
+        })
+        .then((offer) => {
+          const sections = SDPUtils.splitSections(offer.sdp);
+          expect(sections).to.have.length(2);
+          expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+        });
+      });
+    });
+  });
+
   describe('getConfiguration', () => {
     let pc;
     it('fills in default values when no configuration is passed', () => {
