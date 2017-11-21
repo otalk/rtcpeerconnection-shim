@@ -161,7 +161,7 @@ describe('Edge shim', () => {
     });
 
     it('returns a promise', (done) => {
-      pc.createOffer({offerToReceiveAudio: 1})
+      pc.createOffer({offerToReceiveAudio: true})
       .then((offer) => {
         return pc.setLocalDescription(offer);
       })
@@ -169,14 +169,14 @@ describe('Edge shim', () => {
     });
 
     it('calls the legacy success callback', (done) => {
-      pc.createOffer({offerToReceiveAudio: 1})
+      pc.createOffer({offerToReceiveAudio: true})
       .then((offer) => {
         return pc.setLocalDescription(offer, done, () => {});
       });
     });
 
     it('changes the signalingState to have-local-offer', (done) => {
-      pc.createOffer({offerToReceiveAudio: 1})
+      pc.createOffer({offerToReceiveAudio: true})
       .then((offer) => {
         return pc.setLocalDescription(offer);
       })
@@ -189,7 +189,7 @@ describe('Edge shim', () => {
 
     it('calls the signalingstatechange event', () => {
       pc.onsignalingstatechange = sinon.stub();
-      pc.createOffer({offerToReceiveAudio: 1})
+      pc.createOffer({offerToReceiveAudio: true})
       .then((offer) => {
         return pc.setLocalDescription(offer);
       })
@@ -212,7 +212,7 @@ describe('Edge shim', () => {
       });
 
       it('an answer in signalingState have-local-offer', (done) => {
-        pc.createOffer({offerToReceiveAudio: 1})
+        pc.createOffer({offerToReceiveAudio: true})
         .then((offer) => {
           return pc.setLocalDescription(offer);
         })
@@ -244,7 +244,7 @@ describe('Edge shim', () => {
             }
           };
           pc.onicecandidate = sinon.stub();
-          pc.createOffer({offerToReceiveAudio: 1})
+          pc.createOffer({offerToReceiveAudio: true})
           .then(offer => pc.setLocalDescription(offer))
           .then(() => {
             window.setTimeout(() => {
@@ -262,7 +262,7 @@ describe('Edge shim', () => {
             }
           };
           pc.addEventListener('icecandidate', stub);
-          pc.createOffer({offerToReceiveAudio: 1})
+          pc.createOffer({offerToReceiveAudio: true})
           .then(offer => pc.setLocalDescription(offer))
           .then(() => {
             window.setTimeout(() => {
@@ -283,7 +283,7 @@ describe('Edge shim', () => {
             done();
           }
         };
-        pc.createOffer({offerToReceiveAudio: 1})
+        pc.createOffer({offerToReceiveAudio: true})
         .then(offer => pc.setLocalDescription(offer))
         .then(() => {
           window.setTimeout(() => {
@@ -305,7 +305,7 @@ describe('Edge shim', () => {
             done();
           }
         });
-        pc.createOffer({offerToReceiveAudio: 1})
+        pc.createOffer({offerToReceiveAudio: true})
         .then(offer => pc.setLocalDescription(offer))
         .then(() => {
           expect(pc.iceGatheringState).to.equal('new');
@@ -780,7 +780,7 @@ describe('Edge shim', () => {
       });
 
       it('an offer in signalingState have-local-offer', (done) => {
-        pc.createOffer({offerToReceiveAudio: 1})
+        pc.createOffer({offerToReceiveAudio: true})
         .then((offer) => {
           return pc.setLocalDescription(offer);
         })
@@ -1141,7 +1141,7 @@ describe('Edge shim', () => {
     });
 
     it('returns a promise', (done) => {
-      pc.createOffer({offerToReceiveAudio: 1})
+      pc.createOffer({offerToReceiveAudio: true})
       .then(() => {
         done();
       });
@@ -1151,7 +1151,7 @@ describe('Edge shim', () => {
       pc.createOffer((offer) => {
         expect(offer.type).to.equal('offer');
         done();
-      }, () => {}, {offerToReceiveAudio: 1});
+      }, () => {}, {offerToReceiveAudio: true});
     });
 
     it('calls the legacy success callback and resolves with ' +
@@ -1164,7 +1164,7 @@ describe('Edge shim', () => {
     });
 
     it('does not change the signalingState', (done) => {
-      pc.createOffer({offerToReceiveAudio: 1})
+      pc.createOffer({offerToReceiveAudio: true})
       .then(() => {
         expect(pc.signalingState).to.equal('stable');
         done();
@@ -1174,7 +1174,7 @@ describe('Edge shim', () => {
     it('does not start emitting ICE candidates', (done) => {
       let clock = sinon.useFakeTimers();
       pc.onicecandidate = sinon.stub();
-      pc.createOffer({offerToReceiveAudio: 1})
+      pc.createOffer({offerToReceiveAudio: true})
       .then(() => {
         clock.tick(500);
         expect(pc.onicecandidate).not.to.have.been.calledWith();
@@ -1198,8 +1198,8 @@ describe('Edge shim', () => {
     });
 
     describe('when called with offerToReceiveAudio', () => {
-      it('= 1 the generated SDP should contain one audio m-line', (done) => {
-        pc.createOffer({offerToReceiveAudio: 1})
+      it('= true the generated SDP should contain one audio m-line', (done) => {
+        pc.createOffer({offerToReceiveAudio: true})
         .then((offer) => {
           const sections = SDPUtils.splitSections(offer.sdp);
           expect(sections.length).to.equal(2);
@@ -1207,6 +1207,8 @@ describe('Edge shim', () => {
           done();
         });
       });
+
+      // probably legacy which was covered by the spec at some point.
       it('= 2 the generated SDP should contain two audio m-lines', (done) => {
         pc.createOffer({offerToReceiveAudio: 2})
         .then((offer) => {
@@ -1217,6 +1219,7 @@ describe('Edge shim', () => {
           done();
         });
       });
+
       it('= true the generated SDP should contain one audio m-line', (done) => {
         pc.createOffer({offerToReceiveAudio: true})
         .then((offer) => {
@@ -1226,6 +1229,7 @@ describe('Edge shim', () => {
           done();
         });
       });
+
       it('= false the generated SDP should not offer to receive ' +
           'audio', (done) => {
         navigator.mediaDevices.getUserMedia({audio: true})
@@ -1254,8 +1258,8 @@ describe('Edge shim', () => {
     });
 
     describe('when called with offerToReceiveVideo', () => {
-      it('= 1 the generated SDP should contain one video m-line', (done) => {
-        pc.createOffer({offerToReceiveVideo: 1})
+      it('= true the generated SDP should contain one video m-line', (done) => {
+        pc.createOffer({offerToReceiveVideo: true})
         .then((offer) => {
           const sections = SDPUtils.splitSections(offer.sdp);
           expect(sections.length).to.equal(2);
@@ -1263,6 +1267,8 @@ describe('Edge shim', () => {
           done();
         });
       });
+
+      // probably legacy which was covered by the spec at some point.
       it('= 2 the generated SDP should contain two video m-lines', (done) => {
         pc.createOffer({offerToReceiveVideo: 2})
         .then((offer) => {
@@ -1273,6 +1279,7 @@ describe('Edge shim', () => {
           done();
         });
       });
+
       it('= true the generated SDP should contain one video m-line', (done) => {
         pc.createOffer({offerToReceiveVideo: true})
         .then((offer) => {
@@ -1282,6 +1289,7 @@ describe('Edge shim', () => {
           done();
         });
       });
+
       it('= false the generated SDP should not offer to receive ' +
           'video', (done) => {
         navigator.mediaDevices.getUserMedia({video: true})
@@ -1312,7 +1320,7 @@ describe('Edge shim', () => {
     describe('when called with offerToReceiveAudio and ' +
         'offerToReceiveVideo', () => {
       it('the generated SDP should contain two m-lines', (done) => {
-        pc.createOffer({offerToReceiveAudio: 1, offerToReceiveVideo: 1})
+        pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true})
         .then((offer) => {
           const sections = SDPUtils.splitSections(offer.sdp);
           expect(sections.length).to.equal(3);
@@ -1348,7 +1356,7 @@ describe('Edge shim', () => {
           navigator.mediaDevices.getUserMedia({audio: true})
           .then((stream) => {
             pc.addStream(stream);
-            return pc.createOffer({offerToReceiveAudio: 0});
+            return pc.createOffer({offerToReceiveAudio: false});
           })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
@@ -1364,7 +1372,7 @@ describe('Edge shim', () => {
           navigator.mediaDevices.getUserMedia({audio: true})
           .then((stream) => {
             pc.addStream(stream);
-            return pc.createOffer({offerToReceiveVideo: 1});
+            return pc.createOffer({offerToReceiveVideo: true});
           })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
@@ -1400,7 +1408,7 @@ describe('Edge shim', () => {
           navigator.mediaDevices.getUserMedia({video: true})
           .then((stream) => {
             pc.addStream(stream);
-            return pc.createOffer({offerToReceiveAudio: 1});
+            return pc.createOffer({offerToReceiveAudio: true});
           })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
@@ -1479,7 +1487,7 @@ describe('Edge shim', () => {
           navigator.mediaDevices.getUserMedia({audio: true})
           .then((stream) => {
             pc.addTrack(stream.getAudioTracks()[0], stream);
-            return pc.createOffer({offerToReceiveAudio: 0});
+            return pc.createOffer({offerToReceiveAudio: false});
           })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
@@ -1496,7 +1504,7 @@ describe('Edge shim', () => {
           navigator.mediaDevices.getUserMedia({audio: true})
           .then((stream) => {
             pc.addTrack(stream.getAudioTracks()[0], stream);
-            return pc.createOffer({offerToReceiveVideo: 1});
+            return pc.createOffer({offerToReceiveVideo: true});
           })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
@@ -1532,7 +1540,7 @@ describe('Edge shim', () => {
           navigator.mediaDevices.getUserMedia({video: true})
           .then((stream) => {
             pc.addTrack(stream.getVideoTracks()[0], stream);
-            return pc.createOffer({offerToReceiveAudio: 1});
+            return pc.createOffer({offerToReceiveAudio: true});
           })
           .then((offer) => {
             const sections = SDPUtils.splitSections(offer.sdp);
@@ -2680,7 +2688,7 @@ describe('Edge shim', () => {
     it('creates an offer with a=group:BUNDLE by default', (done) => {
       const pc = new RTCPeerConnection();
 
-      pc.createOffer({offerToReceiveAudio: 1})
+      pc.createOffer({offerToReceiveAudio: true})
       .then((offer) => {
         expect(offer.sdp).to.contain('a=group:BUNDLE');
         done();
@@ -2690,7 +2698,7 @@ describe('Edge shim', () => {
     it('max-compat creates an offer without a=group:BUNDLE', (done) => {
       const pc = new RTCPeerConnection({bundlePolicy: 'max-compat'});
 
-      pc.createOffer({offerToReceiveAudio: 1})
+      pc.createOffer({offerToReceiveAudio: true})
       .then((offer) => {
         expect(offer.sdp).not.to.contain('a=group:BUNDLE');
         done();
@@ -2722,7 +2730,7 @@ describe('Edge shim', () => {
           }
         };
 
-        pc.createOffer({offerToReceiveAudio: 1, offerToReceiveVideo: 1})
+        pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true})
         .then((offer) => {
           return pc.setLocalDescription(offer);
         })
@@ -2750,7 +2758,7 @@ describe('Edge shim', () => {
           }
         };
 
-        pc.createOffer({offerToReceiveAudio: 1, offerToReceiveVideo: 1})
+        pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true})
         .then((offer) => {
           return pc.setLocalDescription(offer);
         })
