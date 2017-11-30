@@ -229,7 +229,7 @@ function removeTrackFromStreamAndFireEvent(track, stream) {
   stream.dispatchEvent(e);
 }
 
-module.exports = function(window, edgeVersion) {
+function shimPeerConnection(window, edgeVersion) {
   var RTCPeerConnection = function(config) {
     var self = this;
 
@@ -1626,4 +1626,8 @@ module.exports = function(window, edgeVersion) {
     });
   };
   return RTCPeerConnection;
-};
+}
+
+if (typeof module === 'object') {
+  module.exports = shimPeerConnection;
+}
