@@ -229,6 +229,20 @@ function removeTrackFromStreamAndFireEvent(track, stream) {
   stream.dispatchEvent(e);
 }
 
+function fireAddTrack(pc, track, receiver, streams) {
+  var trackEvent = new Event('track');
+  trackEvent.track = track;
+  trackEvent.receiver = receiver;
+  trackEvent.transceiver = {receiver: receiver};
+  trackEvent.streams = streams;
+  window.setTimeout(function() {
+    pc.dispatchEvent(trackEvent);
+    if (typeof pc.ontrack === 'function') {
+      pc.ontrack(trackEvent);
+    }
+  });
+}
+
 module.exports = function(window, edgeVersion) {
   var RTCPeerConnection = function(config) {
     var self = this;
@@ -963,7 +977,9 @@ module.exports = function(window, edgeVersion) {
             var stream;
             track = rtpReceiver.track;
             // FIXME: does not work with Plan B.
-            if (remoteMsid) {
+            if (remoteMsid && remoteMsid.stream === '-') {
+              // no-op. a stream id of '-' means: no associated stream.
+            } else if (remoteMsid) {
               if (!streams[remoteMsid.stream]) {
                 streams[remoteMsid.stream] = new window.MediaStream();
                 Object.defineProperty(streams[remoteMsid.stream], 'id', {
@@ -984,9 +1000,11 @@ module.exports = function(window, edgeVersion) {
               }
               stream = streams.default;
             }
-            addTrackToStreamAndFireEvent(track, stream);
+            if (stream) {
+              addTrackToStreamAndFireEvent(track, stream);
+              transceiver.associatedRemoteMediaStreams.push(stream);
+            }
             receiverList.push([track, rtpReceiver, stream]);
-            transceiver.associatedRemoteMediaStreams.push(stream);
           }
         } else if (transceiver.rtpReceiver && transceiver.rtpReceiver.track) {
           transceiver.associatedRemoteMediaStreams.forEach(function(s) {
@@ -1116,19 +1134,15 @@ module.exports = function(window, edgeVersion) {
           if (stream.id !== item[2].id) {
             return;
           }
-          var trackEvent = new Event('track');
-          trackEvent.track = track;
-          trackEvent.receiver = receiver;
-          trackEvent.transceiver = {receiver: receiver};
-          trackEvent.streams = [stream];
-          window.setTimeout(function() {
-            self.dispatchEvent(trackEvent);
-            if (typeof self.ontrack === 'function') {
-              self.ontrack(trackEvent);
-            }
-          });
+          fireAddTrack(self, track, receiver, [stream]);
         });
       }
+    });
+    receiverList.forEach(function(item) {
+      if (item[2]) {
+        return;
+      }
+      fireAddTrack(self, item[0], item[1], []);
     });
 
     // check whether addIceCandidate({}) was called within four seconds after

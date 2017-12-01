@@ -513,6 +513,35 @@ describe('Edge shim', () => {
           clock.tick(500);
         });
       });
+
+      describe('without a stream (stream id -)', () => {
+        it('does not trigger onaddstream', (done) => {
+          let clock = sinon.useFakeTimers();
+          pc.onaddstream = sinon.stub();
+          pc.setRemoteDescription({type: 'offer',
+              sdp: sdp.replace('stream1', '-')})
+          .then(() => {
+            window.setTimeout(() => {
+              expect(pc.onaddstream).not.to.have.been.calledWith();
+              clock.restore();
+              done();
+            }, 0);
+            clock.tick(500);
+          });
+        });
+
+        it('does trigger ontrack with an empty streams set', (done) => {
+          pc.addEventListener('track', function(event) {
+            expect(event.track.kind).to.equal('audio');
+            expect(event.receiver);
+            expect(event.streams.length).to.equal(0);
+
+            done();
+          });
+          pc.setRemoteDescription({type: 'offer',
+              sdp: sdp.replace('stream1', '-')});
+        });
+      });
     });
 
     describe('when called with an offer without (explicit) tracks', () => {
