@@ -9,6 +9,7 @@
 'use strict';
 
 var SDPUtils = require('sdp');
+var shimSenderWithTrackOrKind = require('./rtcrtpsender');
 
 function fixStatsType(stat) {
   return {
@@ -267,6 +268,9 @@ module.exports = function(window, edgeVersion) {
     });
   }
 
+  if (window.RTCRtpSender) { // wrap native RTCRtpSender.
+    window.RTCRtpSender = shimSenderWithTrackOrKind(window);
+  }
   var RTCPeerConnection = function(config) {
     var pc = this;
 
@@ -455,8 +459,7 @@ module.exports = function(window, edgeVersion) {
 
     transceiver.track = track;
     transceiver.stream = stream;
-    transceiver.rtpSender = new window.RTCRtpSender(track,
-        transceiver.dtlsTransport);
+    transceiver.rtpSender = new window.RTCRtpSender(track);
     return transceiver.rtpSender;
   };
 
@@ -820,6 +823,9 @@ module.exports = function(window, edgeVersion) {
             SDPUtils.matchPrefix(mediaSection, 'a=bundle-only').length === 0;
 
         if (!rejected && !transceiver.rejected) {
+          if (transceiver.rtpSender && !transceiver.rtpSender.transport) {
+            transceiver.rtpSender.setTransport(transceiver.dtlsTransport);
+          }
           var remoteIceParameters = SDPUtils.getIceParameters(
               mediaSection, sessionpart);
           var remoteDtlsParameters = SDPUtils.getDtlsParameters(
@@ -1122,6 +1128,9 @@ module.exports = function(window, edgeVersion) {
           if (dtlsTransport.state === 'new') {
             dtlsTransport.start(remoteDtlsParameters);
           }
+        }
+        if (transceiver.rtpSender && !transceiver.rtpSender.transport) {
+          transceiver.rtpSender.setTransport(transceiver.dtlsTransport);
         }
 
         pc._transceive(transceiver,
