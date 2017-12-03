@@ -236,10 +236,7 @@ function fireAddTrack(pc, track, receiver, streams) {
   trackEvent.transceiver = {receiver: receiver};
   trackEvent.streams = streams;
   window.setTimeout(function() {
-    pc.dispatchEvent(trackEvent);
-    if (typeof pc.ontrack === 'function') {
-      pc.ontrack(trackEvent);
-    }
+    pc._dispatchEvent('track', trackEvent);
   });
 }
 
@@ -253,15 +250,6 @@ module.exports = function(window, edgeVersion) {
           pc[method] = _eventTarget[method].bind(_eventTarget);
         });
 
-    this.onicecandidate = null;
-    this.onaddstream = null;
-    this.ontrack = null;
-    this.onremovestream = null;
-    this.onsignalingstatechange = null;
-    this.oniceconnectionstatechange = null;
-    this.onicegatheringstatechange = null;
-    this.onnegotiationneeded = null;
-    this.ondatachannel = null;
     this.canTrickleIceCandidates = null;
 
     this.needNegotiation = false;
@@ -332,12 +320,27 @@ module.exports = function(window, edgeVersion) {
     this._dtlsRole = undefined; // role for a=setup to use in answers.
   };
 
+  // set up event handlers on prototype
+  RTCPeerConnection.prototype.onicecandidate = null;
+  RTCPeerConnection.prototype.onaddstream = null;
+  RTCPeerConnection.prototype.ontrack = null;
+  RTCPeerConnection.prototype.onremovestream = null;
+  RTCPeerConnection.prototype.onsignalingstatechange = null;
+  RTCPeerConnection.prototype.oniceconnectionstatechange = null;
+  RTCPeerConnection.prototype.onicegatheringstatechange = null;
+  RTCPeerConnection.prototype.onnegotiationneeded = null;
+  RTCPeerConnection.prototype.ondatachannel = null;
+
+  RTCPeerConnection.prototype._dispatchEvent = function(name, event) {
+    this.dispatchEvent(event);
+    if (typeof this['on' + name] === 'function') {
+      this['on' + name](event);
+    }
+  };
+
   RTCPeerConnection.prototype._emitGatheringStateChange = function() {
     var event = new Event('icegatheringstatechange');
-    this.dispatchEvent(event);
-    if (typeof this.onicegatheringstatechange === 'function') {
-      this.onicegatheringstatechange(event);
-    }
+    this._dispatchEvent('icegatheringstatechange', event);
   };
 
   RTCPeerConnection.prototype.getConfiguration = function() {
@@ -591,16 +594,10 @@ module.exports = function(window, edgeVersion) {
       // Emit candidate. Also emit null candidate when all gatherers are
       // complete.
       if (!end) {
-        pc.dispatchEvent(event);
-        if (typeof pc.onicecandidate === 'function') {
-          pc.onicecandidate(event);
-        }
+        pc._dispatchEvent('icecandidate', event);
       }
       if (complete) {
-        pc.dispatchEvent(new Event('icecandidate'));
-        if (typeof pc.onicecandidate === 'function') {
-          pc.onicecandidate(new Event('icecandidate'));
-        }
+        pc._dispatchEvent('icecandidate', new Event('icecandidate'));
         pc.iceGatheringState = 'complete';
         pc._emitGatheringStateChange();
       }
@@ -1121,10 +1118,7 @@ module.exports = function(window, edgeVersion) {
           var event = new Event('addstream');
           event.stream = stream;
           window.setTimeout(function() {
-            pc.dispatchEvent(event);
-            if (typeof pc.onaddstream === 'function') {
-              pc.onaddstream(event);
-            }
+            pc._dispatchEvent('addstream', event);
           });
         }
 
@@ -1198,10 +1192,7 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype._updateSignalingState = function(newState) {
     this.signalingState = newState;
     var event = new Event('signalingstatechange');
-    this.dispatchEvent(event);
-    if (typeof this.onsignalingstatechange === 'function') {
-      this.onsignalingstatechange(event);
-    }
+    this._dispatchEvent('signalingstatechange', event);
   };
 
   // Determine whether to fire the negotiationneeded event.
@@ -1217,10 +1208,7 @@ module.exports = function(window, edgeVersion) {
       }
       pc.needNegotiation = false;
       var event = new Event('negotiationneeded');
-      pc.dispatchEvent(event);
-      if (typeof pc.onnegotiationneeded === 'function') {
-        pc.onnegotiationneeded(event);
-      }
+      pc._dispatchEvent('negotiationneeded', event);
     }, 0);
   };
 
@@ -1260,10 +1248,7 @@ module.exports = function(window, edgeVersion) {
     if (newState !== this.iceConnectionState) {
       this.iceConnectionState = newState;
       var event = new Event('iceconnectionstatechange');
-      this.dispatchEvent(event);
-      if (typeof this.oniceconnectionstatechange === 'function') {
-        this.oniceconnectionstatechange(event);
-      }
+      this._dispatchEvent('iceconnetionstatechange', event);
     }
   };
 
