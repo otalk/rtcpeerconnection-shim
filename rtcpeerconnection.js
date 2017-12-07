@@ -389,6 +389,23 @@ module.exports = function(window, edgeVersion) {
   };
 
   RTCPeerConnection.prototype.addTrack = function(track, stream) {
+    var alreadyExists = this.transceivers.find(function(s) {
+      return s.track === track;
+    });
+
+    var err;
+    if (alreadyExists) {
+      err = new Error('Track already exists.');
+      err.name = 'InvalidAccessError';
+      throw err;
+    }
+
+    if (this.signalingState === 'closed') {
+      err = new Error('Attempted to call addTrack on a closed peerconnection.');
+      err.name = 'InvalidStateError';
+      throw err;
+    }
+
     var transceiver;
     for (var i = 0; i < this.transceivers.length; i++) {
       if (!this.transceivers[i].track &&

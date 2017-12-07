@@ -3097,6 +3097,67 @@ describe('Edge shim', () => {
     });
   });
 
+  describe('addTrack', () => {
+    let pc;
+    beforeEach(() => {
+      pc = new RTCPeerConnection();
+    });
+    afterEach(() => {
+      pc.close();
+    });
+
+    describe('throws an exception', () => {
+      it('if the track has already been added', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true})
+        .then(stream => {
+          pc.addTrack(stream.getTracks()[0], stream);
+          const again = () => {
+            pc.addTrack(stream.getTracks()[0], stream);
+          };
+          expect(again).to.throw(/already/)
+            .that.has.property('name').that.equals('InvalidAccessError');
+        });
+      });
+
+      it('if the track has already been added via addStream', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true})
+        .then(stream => {
+          pc.addStream(stream);
+          const again = () => {
+            pc.addTrack(stream.getTracks()[0], stream);
+          };
+          expect(again).to.throw(/already/)
+            .that.has.property('name').that.equals('InvalidAccessError');
+        });
+      });
+
+      it('if addStream is called with a stream containing a track ' +
+         'already added', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true, video: true})
+        .then(stream => {
+          pc.addTrack(stream.getTracks()[0], stream);
+          const again = () => {
+            pc.addStream(stream);
+          };
+          expect(again).to.throw(/already/)
+            .that.has.property('name').that.equals('InvalidAccessError');
+        });
+      });
+
+      it('if the peerconnection has been closed already', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true})
+        .then(stream => {
+          pc.close();
+          const afterClose = () => {
+            pc.addTrack(stream.getTracks()[0], stream);
+          };
+          expect(afterClose).to.throw(/closed/)
+            .that.has.property('name').that.equals('InvalidStateError');
+        });
+      });
+    });
+  });
+
   describe('getConfiguration', () => {
     let pc;
     it('fills in default values when no configuration is passed', () => {
