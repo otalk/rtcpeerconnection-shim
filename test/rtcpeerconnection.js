@@ -151,6 +151,17 @@ describe('Edge shim', () => {
     });
   });
 
+  describe('prototype', () => {
+    ['icecandidate', 'addstream', 'removestream', 'track',
+        'signalingstatechange', 'iceconnectionstatechange',
+        'icegatheringstatechange', 'negotiationneeded'].forEach((name) => {
+          it('has on' + name + ' handler', () => {
+            expect(RTCPeerConnection.prototype)
+                .to.have.ownPropertyDescriptor('on' + name);
+          });
+        });
+  });
+
   describe('setLocalDescription', () => {
     let pc;
     beforeEach(() => {
