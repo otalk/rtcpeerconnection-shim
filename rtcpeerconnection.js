@@ -1287,9 +1287,8 @@ module.exports = function(window, edgeVersion) {
       return new Promise(function(resolve, reject) {
         var e = new Error('Can not call createOffer after close');
         e.name = 'InvalidStateError';
-        var eb = typeof args[0] === 'function' ? args[1] : args[2];
-        if (eb && typeof eb === 'function') {
-          eb.apply(null, [e]);
+        if (args.length > 1 && typeof args[1] === 'function') {
+          args[1].apply(null, [e]);
           return resolve();
         }
         reject(e);
