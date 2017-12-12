@@ -1570,8 +1570,6 @@ module.exports = function(window, edgeVersion) {
             }
           });
     });
-    var cb = arguments.length > 1 && typeof arguments[1] === 'function' &&
-        arguments[1];
     var fixStatsType = function(stat) {
       return {
         inboundrtp: 'inbound-rtp',
@@ -1591,10 +1589,6 @@ module.exports = function(window, edgeVersion) {
             results.set(id, result[id]);
           });
         });
-        if (cb) {
-          cb.apply(null, results);
-          return resolve();
-        }
         resolve(results);
       });
     });
@@ -1638,6 +1632,24 @@ module.exports = function(window, edgeVersion) {
         }, function(error) {
           if (typeof args[2] === 'function') {
             args[2].apply(null, [error]);
+          }
+        });
+      }
+      return nativeMethod.apply(this, arguments);
+    };
+  });
+
+  // getStats is special. It doesn't have a spec legacy method yet we support
+  // getStats(something, cb) without error callbacks.
+  ['getStats'].forEach(function(method) {
+    var nativeMethod = RTCPeerConnection.prototype[method];
+    RTCPeerConnection.prototype[method] = function() {
+      var args = arguments;
+      if (typeof args[1] === 'function') {
+        return nativeMethod.apply(this, arguments)
+        .then(function() {
+          if (typeof args[1] === 'function') {
+            args[1].apply(null);
           }
         });
       }
