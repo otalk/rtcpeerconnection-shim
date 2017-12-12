@@ -162,6 +162,23 @@ describe('Edge shim', () => {
         });
   });
 
+  describe('close', () => {
+    let pc;
+    beforeEach(() => {
+      pc = new RTCPeerConnection();
+    });
+    it('sets the signalingState to closed', () => {
+      pc.close();
+      expect(pc.signalingState).to.equal('closed');
+    });
+
+    it('does not fire signalingstatechange', () => {
+      pc.onsignalingstatechange = sinon.stub();
+      pc.close();
+      expect(pc.onsignalingstatechange).not.to.have.been.calledWith();
+    });
+  });
+
   describe('setLocalDescription', () => {
     let pc;
     beforeEach(() => {

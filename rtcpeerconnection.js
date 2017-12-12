@@ -332,6 +332,9 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.ondatachannel = null;
 
   RTCPeerConnection.prototype._dispatchEvent = function(name, event) {
+    if (this.signalingState === 'closed') {
+      return;
+    }
     this.dispatchEvent(event);
     if (typeof this['on' + name] === 'function') {
       this['on' + name](event);
