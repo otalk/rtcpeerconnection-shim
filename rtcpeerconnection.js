@@ -830,6 +830,7 @@ module.exports = function(window, edgeVersion) {
     return new Promise(function(resolve) {
       if (cb) {
         cb.apply(null);
+        return resolve();
       }
       resolve();
     });
@@ -1183,6 +1184,7 @@ module.exports = function(window, edgeVersion) {
     return new Promise(function(resolve) {
       if (args.length > 1 && typeof args[1] === 'function') {
         args[1].apply(null);
+        return resolve();
       }
       resolve();
     });
@@ -1625,11 +1627,13 @@ module.exports = function(window, edgeVersion) {
       if (err) {
         if (args.length > 2 && typeof args[2] === 'function') {
           args[2].apply(null, [err]);
+          return resolve();
         }
         reject(err);
       } else {
         if (args.length > 1 && typeof args[1] === 'function') {
           args[1].apply(null);
+          return resolve();
         }
         resolve();
       }
@@ -1669,6 +1673,7 @@ module.exports = function(window, edgeVersion) {
         });
         if (cb) {
           cb.apply(null, results);
+          return resolve();
         }
         resolve(results);
       });
