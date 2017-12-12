@@ -240,6 +240,12 @@ function fireAddTrack(pc, track, receiver, streams) {
   });
 }
 
+function makeError(name, description) {
+  var e = new Error(description);
+  e.name = name;
+  return e;
+}
+
 module.exports = function(window, edgeVersion) {
   var RTCPeerConnection = function(config) {
     var pc = this;
@@ -268,9 +274,8 @@ module.exports = function(window, edgeVersion) {
 
     this.usingBundle = config.bundlePolicy === 'max-bundle';
     if (config.rtcpMuxPolicy === 'negotiate') {
-      var e = new Error('rtcpMuxPolicy \'negotiate\' is not supported');
-      e.name = 'NotSupportedError';
-      throw(e);
+      throw(makeError('NotSupportedError',
+          'rtcpMuxPolicy \'negotiate\' is not supported'));
     } else if (!config.rtcpMuxPolicy) {
       config.rtcpMuxPolicy = 'require';
     }
@@ -398,17 +403,13 @@ module.exports = function(window, edgeVersion) {
       return s.track === track;
     });
 
-    var err;
     if (alreadyExists) {
-      err = new Error('Track already exists.');
-      err.name = 'InvalidAccessError';
-      throw err;
+      throw makeError('InvalidAccessError', 'Track already exists.');
     }
 
     if (this.signalingState === 'closed') {
-      err = new Error('Attempted to call addTrack on a closed peerconnection.');
-      err.name = 'InvalidStateError';
-      throw err;
+      throw makeError('InvalidStateError',
+          'Attempted to call addTrack on a closed peerconnection.');
     }
 
     var transceiver;
@@ -469,9 +470,8 @@ module.exports = function(window, edgeVersion) {
     });
 
     if (!transceiver) {
-      var err = new Error('Sender was not created by this connection.');
-      err.name = 'InvalidAccessError';
-      throw err;
+      throw makeError('InvalidAccessError',
+          'Sender was not created by this connection.');
     }
     var stream = transceiver.stream;
 
@@ -725,20 +725,12 @@ module.exports = function(window, edgeVersion) {
 
   RTCPeerConnection.prototype.setLocalDescription = function(description) {
     var pc = this;
-    var args = arguments;
 
     if (!isActionAllowedInSignalingState('setLocalDescription',
         description.type, this.signalingState) || this._isClosed) {
-      return new Promise(function(resolve, reject) {
-        var e = new Error('Can not set local ' + description.type +
-            ' in state ' + pc.signalingState);
-        e.name = 'InvalidStateError';
-        if (args.length > 2 && typeof args[2] === 'function') {
-          args[2].apply(null, [e]);
-          return resolve();
-        }
-        reject(e);
-      });
+      return Promise.reject(makeError('InvalidStateError',
+          'Can not set local ' + description.type +
+          ' in state ' + pc.signalingState));
     }
 
     var sections;
@@ -822,36 +814,17 @@ module.exports = function(window, edgeVersion) {
             '"');
     }
 
-    // If a success callback was provided, emit ICE candidates after it
-    // has been executed. Otherwise, emit callback after the Promise is
-    // resolved.
-    var cb = arguments.length > 1 && typeof arguments[1] === 'function' &&
-        arguments[1];
-    return new Promise(function(resolve) {
-      if (cb) {
-        cb.apply(null);
-        return resolve();
-      }
-      resolve();
-    });
+    return Promise.resolve();
   };
 
   RTCPeerConnection.prototype.setRemoteDescription = function(description) {
     var pc = this;
-    var args = arguments;
 
     if (!isActionAllowedInSignalingState('setRemoteDescription',
         description.type, this.signalingState) || this._isClosed) {
-      return new Promise(function(resolve, reject) {
-        var e = new Error('Can not set remote ' + description.type +
-            ' in state ' + pc.signalingState);
-        e.name = 'InvalidStateError';
-        if (args.length > 2 && typeof args[2] === 'function') {
-          args[2].apply(null, [e]);
-          return resolve();
-        }
-        reject(e);
-      });
+      return Promise.reject(makeError('InvalidStateError',
+          'Can not set remote ' + description.type +
+          ' in state ' + pc.signalingState));
     }
 
     var streams = {};
@@ -1181,13 +1154,7 @@ module.exports = function(window, edgeVersion) {
       });
     }, 4000);
 
-    return new Promise(function(resolve) {
-      if (args.length > 1 && typeof args[1] === 'function') {
-        args[1].apply(null);
-        return resolve();
-      }
-      resolve();
-    });
+    return Promise.resolve();
   };
 
   RTCPeerConnection.prototype.close = function() {
@@ -1281,25 +1248,10 @@ module.exports = function(window, edgeVersion) {
 
   RTCPeerConnection.prototype.createOffer = function() {
     var pc = this;
-    var args = arguments;
 
     if (this._isClosed) {
-      return new Promise(function(resolve, reject) {
-        var e = new Error('Can not call createOffer after close');
-        e.name = 'InvalidStateError';
-        if (args.length > 1 && typeof args[1] === 'function') {
-          args[1].apply(null, [e]);
-          return resolve();
-        }
-        reject(e);
-      });
-    }
-
-    var offerOptions;
-    if (arguments.length === 1 && typeof arguments[0] !== 'function') {
-      offerOptions = arguments[0];
-    } else if (arguments.length === 3) {
-      offerOptions = arguments[2];
+      return Promise.reject(makeError('InvalidStateError',
+          'Can not call createOffer after close'));
     }
 
     var numAudioTracks = this.transceivers.filter(function(t) {
@@ -1310,6 +1262,7 @@ module.exports = function(window, edgeVersion) {
     }).length;
 
     // Determine number of audio and video tracks we need to send/recv.
+    var offerOptions = arguments[0];
     if (offerOptions) {
       // Reject Chrome legacy constraints.
       if (offerOptions.mandatory || offerOptions.optional) {
@@ -1448,30 +1401,15 @@ module.exports = function(window, edgeVersion) {
       type: 'offer',
       sdp: sdp
     });
-    return new Promise(function(resolve) {
-      if (args.length > 0 && typeof args[0] === 'function') {
-        args[0].apply(null, [desc]);
-        resolve();
-        return;
-      }
-      resolve(desc);
-    });
+    return Promise.resolve(desc);
   };
 
   RTCPeerConnection.prototype.createAnswer = function() {
     var pc = this;
-    var args = arguments;
 
     if (this._isClosed) {
-      return new Promise(function(resolve, reject) {
-        var e = new Error('Can not call createAnswer after close');
-        e.name = 'InvalidStateError';
-        if (args.length > 1 && typeof args[1] === 'function') {
-          args[1].apply(null, [e]);
-          return resolve();
-        }
-        reject(e);
-      });
+      return Promise.reject(makeError('InvalidStateError',
+          'Can not call createAnswer after close'));
     }
 
     var sdp = SDPUtils.writeSessionBoilerplate(this._sdpSessionId,
@@ -1537,18 +1475,10 @@ module.exports = function(window, edgeVersion) {
       type: 'answer',
       sdp: sdp
     });
-    return new Promise(function(resolve) {
-      if (args.length > 0 && typeof args[0] === 'function') {
-        args[0].apply(null, [desc]);
-        resolve();
-        return;
-      }
-      resolve(desc);
-    });
+    return Promise.resolve(desc);
   };
 
   RTCPeerConnection.prototype.addIceCandidate = function(candidate) {
-    var err;
     var sections;
     if (!candidate || candidate.candidate === '') {
       for (var j = 0; j < this.transceivers.length; j++) {
@@ -1566,9 +1496,8 @@ module.exports = function(window, edgeVersion) {
     } else if (!(candidate.sdpMLineIndex !== undefined || candidate.sdpMid)) {
       throw new TypeError('sdpMLineIndex or sdpMid required');
     } else if (!this.remoteDescription) {
-      err = new Error('Can not add ICE candidate without ' +
-          'a remote description');
-      err.name = 'InvalidStateError';
+      return Promise.reject(makeError('InvalidStateError',
+          'Can not add ICE candidate without a remote description'));
     } else {
       var sdpMLineIndex = candidate.sdpMLineIndex;
       if (candidate.sdpMid) {
@@ -1599,44 +1528,27 @@ module.exports = function(window, edgeVersion) {
         if (sdpMLineIndex === 0 || (sdpMLineIndex > 0 &&
             transceiver.iceTransport !== this.transceivers[0].iceTransport)) {
           if (!maybeAddCandidate(transceiver.iceTransport, cand)) {
-            err = new Error('Can not add ICE candidate');
-            err.name = 'OperationError';
+            return Promise.reject(makeError('OperationError',
+                'Can not add ICE candidate'));
           }
         }
 
-        if (!err) {
-          // update the remoteDescription.
-          var candidateString = candidate.candidate.trim();
-          if (candidateString.indexOf('a=') === 0) {
-            candidateString = candidateString.substr(2);
-          }
-          sections = SDPUtils.splitSections(this.remoteDescription.sdp);
-          sections[sdpMLineIndex + 1] += 'a=' +
-              (cand.type ? candidateString : 'end-of-candidates')
-              + '\r\n';
-          this.remoteDescription.sdp = sections.join('');
+        // update the remoteDescription.
+        var candidateString = candidate.candidate.trim();
+        if (candidateString.indexOf('a=') === 0) {
+          candidateString = candidateString.substr(2);
         }
+        sections = SDPUtils.splitSections(this.remoteDescription.sdp);
+        sections[sdpMLineIndex + 1] += 'a=' +
+            (cand.type ? candidateString : 'end-of-candidates')
+            + '\r\n';
+        this.remoteDescription.sdp = sections.join('');
       } else {
-        err = new Error('Can not add ICE candidate');
-        err.name = 'OperationError';
+        return Promise.reject(makeError('OperationError',
+            'Can not add ICE candidate'));
       }
     }
-    var args = arguments;
-    return new Promise(function(resolve, reject) {
-      if (err) {
-        if (args.length > 2 && typeof args[2] === 'function') {
-          args[2].apply(null, [err]);
-          return resolve();
-        }
-        reject(err);
-      } else {
-        if (args.length > 1 && typeof args[1] === 'function') {
-          args[1].apply(null);
-          return resolve();
-        }
-        resolve();
-      }
-    });
+    return Promise.resolve();
   };
 
   RTCPeerConnection.prototype.getStats = function() {
@@ -1649,8 +1561,6 @@ module.exports = function(window, edgeVersion) {
             }
           });
     });
-    var cb = arguments.length > 1 && typeof arguments[1] === 'function' &&
-        arguments[1];
     var fixStatsType = function(stat) {
       return {
         inboundrtp: 'inbound-rtp',
@@ -1670,13 +1580,73 @@ module.exports = function(window, edgeVersion) {
             results.set(id, result[id]);
           });
         });
-        if (cb) {
-          cb.apply(null, results);
-          return resolve();
-        }
         resolve(results);
       });
     });
   };
+
+  // legacy callback shims. Should be moved to adapter.js some days.
+  var methods = ['createOffer', 'createAnswer'];
+  methods.forEach(function(method) {
+    var nativeMethod = RTCPeerConnection.prototype[method];
+    RTCPeerConnection.prototype[method] = function() {
+      var args = arguments;
+      if (typeof args[0] === 'function' ||
+          typeof args[1] === 'function') { // legacy
+        return nativeMethod.apply(this, [arguments[2]])
+        .then(function(description) {
+          if (typeof args[0] === 'function') {
+            args[0].apply(null, [description]);
+          }
+        }, function(error) {
+          if (typeof args[1] === 'function') {
+            args[1].apply(null, [error]);
+          }
+        });
+      }
+      return nativeMethod.apply(this, arguments);
+    };
+  });
+
+  methods = ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate'];
+  methods.forEach(function(method) {
+    var nativeMethod = RTCPeerConnection.prototype[method];
+    RTCPeerConnection.prototype[method] = function() {
+      var args = arguments;
+      if (typeof args[1] === 'function' ||
+          typeof args[2] === 'function') { // legacy
+        return nativeMethod.apply(this, arguments)
+        .then(function() {
+          if (typeof args[1] === 'function') {
+            args[1].apply(null);
+          }
+        }, function(error) {
+          if (typeof args[2] === 'function') {
+            args[2].apply(null, [error]);
+          }
+        });
+      }
+      return nativeMethod.apply(this, arguments);
+    };
+  });
+
+  // getStats is special. It doesn't have a spec legacy method yet we support
+  // getStats(something, cb) without error callbacks.
+  ['getStats'].forEach(function(method) {
+    var nativeMethod = RTCPeerConnection.prototype[method];
+    RTCPeerConnection.prototype[method] = function() {
+      var args = arguments;
+      if (typeof args[1] === 'function') {
+        return nativeMethod.apply(this, arguments)
+        .then(function() {
+          if (typeof args[1] === 'function') {
+            args[1].apply(null);
+          }
+        });
+      }
+      return nativeMethod.apply(this, arguments);
+    };
+  });
+
   return RTCPeerConnection;
 };
