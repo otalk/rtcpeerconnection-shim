@@ -820,7 +820,8 @@ describe('Edge shim', () => {
           const iceTransport = receiver.transport.transport;
 
           pc.addIceCandidate({sdpMid: 'audio1', sdpMLineIndex: 0,
-            candidate: candidateString});
+            candidate: candidateString})
+          .catch(() => {});
           expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
           done();
         });
