@@ -1440,18 +1440,11 @@ module.exports = function(window, edgeVersion) {
 
   RTCPeerConnection.prototype.createAnswer = function() {
     var pc = this;
-    var args = arguments;
 
     if (this._isClosed) {
-      return new Promise(function(resolve, reject) {
-        var e = new Error('Can not call createAnswer after close');
-        e.name = 'InvalidStateError';
-        if (args.length > 1 && typeof args[1] === 'function') {
-          args[1].apply(null, [e]);
-          return resolve();
-        }
-        reject(e);
-      });
+      var e = new Error('Can not call createAnswer after close');
+      e.name = 'InvalidStateError';
+      return Promise.reject(e);
     }
 
     var sdp = SDPUtils.writeSessionBoilerplate(this._sdpSessionId,
@@ -1517,14 +1510,7 @@ module.exports = function(window, edgeVersion) {
       type: 'answer',
       sdp: sdp
     });
-    return new Promise(function(resolve) {
-      if (args.length > 0 && typeof args[0] === 'function') {
-        args[0].apply(null, [desc]);
-        resolve();
-        return;
-      }
-      resolve(desc);
-    });
+    return Promise.resolve(desc);
   };
 
   RTCPeerConnection.prototype.addIceCandidate = function(candidate) {
@@ -1677,6 +1663,25 @@ module.exports = function(window, edgeVersion) {
       });
     }
     return origCreateOffer.apply(this, arguments);
+  };
+
+  var origCreateAnswer = RTCPeerConnection.prototype.createAnswer;
+  RTCPeerConnection.prototype.createAnswer = function() {
+    var args = arguments;
+    if (typeof args[0] === 'function' ||
+        typeof args[1] === 'function') { // legacy
+      return origCreateAnswer.apply(this)
+      .then(function(answer) {
+        if (typeof args[0] === 'function') {
+          args[0].apply(null, [answer]);
+        }
+      }, function(error) {
+        if (typeof args[1] === 'function') {
+          args[1].apply(null, [error]);
+        }
+      });
+    }
+    return origCreateAnswer.apply(this, arguments);
   };
 
   return RTCPeerConnection;
