@@ -1504,6 +1504,7 @@ module.exports = function(window, edgeVersion) {
       err = new Error('Can not add ICE candidate without ' +
           'a remote description');
       err.name = 'InvalidStateError';
+      return Promise.reject(err);
     } else {
       var sdpMLineIndex = candidate.sdpMLineIndex;
       if (candidate.sdpMid) {
@@ -1536,42 +1537,27 @@ module.exports = function(window, edgeVersion) {
           if (!maybeAddCandidate(transceiver.iceTransport, cand)) {
             err = new Error('Can not add ICE candidate');
             err.name = 'OperationError';
+            return Promise.reject(err);
           }
         }
 
-        if (!err) {
-          // update the remoteDescription.
-          var candidateString = candidate.candidate.trim();
-          if (candidateString.indexOf('a=') === 0) {
-            candidateString = candidateString.substr(2);
-          }
-          sections = SDPUtils.splitSections(this.remoteDescription.sdp);
-          sections[sdpMLineIndex + 1] += 'a=' +
-              (cand.type ? candidateString : 'end-of-candidates')
-              + '\r\n';
-          this.remoteDescription.sdp = sections.join('');
+        // update the remoteDescription.
+        var candidateString = candidate.candidate.trim();
+        if (candidateString.indexOf('a=') === 0) {
+          candidateString = candidateString.substr(2);
         }
+        sections = SDPUtils.splitSections(this.remoteDescription.sdp);
+        sections[sdpMLineIndex + 1] += 'a=' +
+            (cand.type ? candidateString : 'end-of-candidates')
+            + '\r\n';
+        this.remoteDescription.sdp = sections.join('');
       } else {
         err = new Error('Can not add ICE candidate');
         err.name = 'OperationError';
+        return Promise.reject(err);
       }
     }
-    var args = arguments;
-    return new Promise(function(resolve, reject) {
-      if (err) {
-        if (args.length > 2 && typeof args[2] === 'function') {
-          args[2].apply(null, [err]);
-          return resolve();
-        }
-        reject(err);
-      } else {
-        if (args.length > 1 && typeof args[1] === 'function') {
-          args[1].apply(null);
-          return resolve();
-        }
-        resolve();
-      }
-    });
+    return Promise.resolve();
   };
 
   RTCPeerConnection.prototype.getStats = function() {
@@ -1690,6 +1676,25 @@ module.exports = function(window, edgeVersion) {
       });
     }
     return origSetRemoteDescription.apply(this, arguments);
+  };
+
+  var origAddIceCandidate = RTCPeerConnection.prototype.addIceCandidate;
+  RTCPeerConnection.prototype.addIceCandidate = function(description) {
+    var args = arguments;
+    if (typeof args[1] === 'function' ||
+        typeof args[2] === 'function') { // legacy
+      return origAddIceCandidate.apply(this, arguments)
+      .then(function() {
+        if (typeof args[1] === 'function') {
+          args[1].apply(null);
+        }
+      }, function(error) {
+        if (typeof args[2] === 'function') {
+          args[2].apply(null, [error]);
+        }
+      });
+    }
+    return origAddIceCandidate.apply(this, arguments);
   };
 
   return RTCPeerConnection;
