@@ -318,6 +318,8 @@ module.exports = function(window, edgeVersion) {
     this._sdpSessionVersion = 0;
 
     this._dtlsRole = undefined; // role for a=setup to use in answers.
+
+    this._isClosed = false;
   };
 
   // set up event handlers on prototype
@@ -332,7 +334,7 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.ondatachannel = null;
 
   RTCPeerConnection.prototype._dispatchEvent = function(name, event) {
-    if (this.signalingState === 'closed') {
+    if (this._isClosed) {
       return;
     }
     this.dispatchEvent(event);
@@ -726,13 +728,14 @@ module.exports = function(window, edgeVersion) {
     var args = arguments;
 
     if (!isActionAllowedInSignalingState('setLocalDescription',
-        description.type, this.signalingState)) {
+        description.type, this.signalingState) || this._isClosed) {
       return new Promise(function(resolve, reject) {
         var e = new Error('Can not set local ' + description.type +
             ' in state ' + pc.signalingState);
         e.name = 'InvalidStateError';
         if (args.length > 2 && typeof args[2] === 'function') {
           args[2].apply(null, [e]);
+          return resolve();
         }
         reject(e);
       });
@@ -837,13 +840,14 @@ module.exports = function(window, edgeVersion) {
     var args = arguments;
 
     if (!isActionAllowedInSignalingState('setRemoteDescription',
-        description.type, this.signalingState)) {
+        description.type, this.signalingState) || this._isClosed) {
       return new Promise(function(resolve, reject) {
         var e = new Error('Can not set remote ' + description.type +
             ' in state ' + pc.signalingState);
         e.name = 'InvalidStateError';
         if (args.length > 2 && typeof args[2] === 'function') {
           args[2].apply(null, [e]);
+          return resolve();
         }
         reject(e);
       });
@@ -1205,6 +1209,7 @@ module.exports = function(window, edgeVersion) {
       }
     });
     // FIXME: clean up tracks, local streams, remote streams, etc
+    this._isClosed = true;
     this._updateSignalingState('closed');
   };
 
@@ -1275,6 +1280,19 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.createOffer = function() {
     var pc = this;
     var args = arguments;
+
+    if (this._isClosed) {
+      return new Promise(function(resolve, reject) {
+        var e = new Error('Can not call createOffer after close');
+        e.name = 'InvalidStateError';
+        var eb = typeof args[0] === 'function' ? args[1] : args[2];
+        if (eb && typeof eb === 'function') {
+          eb.apply(null, [e]);
+          return resolve();
+        }
+        reject(e);
+      });
+    }
 
     var offerOptions;
     if (arguments.length === 1 && typeof arguments[0] !== 'function') {
@@ -1442,6 +1460,18 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.createAnswer = function() {
     var pc = this;
     var args = arguments;
+
+    if (this._isClosed) {
+      return new Promise(function(resolve, reject) {
+        var e = new Error('Can not call createAnswer after close');
+        e.name = 'InvalidStateError';
+        if (args.length > 1 && typeof args[1] === 'function') {
+          args[1].apply(null, [e]);
+          return resolve();
+        }
+        reject(e);
+      });
+    }
 
     var sdp = SDPUtils.writeSessionBoilerplate(this._sdpSessionId,
         this._sdpSessionVersion++);

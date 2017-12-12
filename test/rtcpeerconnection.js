@@ -185,7 +185,9 @@ describe('Edge shim', () => {
       pc = new RTCPeerConnection();
     });
     afterEach(() => {
-      pc.close();
+      if (pc.signalingState !== 'closed') {
+        pc.close();
+      }
     });
 
     it('returns a promise', (done) => {
@@ -200,6 +202,29 @@ describe('Edge shim', () => {
       pc.createOffer({offerToReceiveAudio: true})
       .then((offer) => {
         return pc.setLocalDescription(offer, done, () => {});
+      });
+    });
+
+    it('throws an InvalidStateError when called after close', (done) => {
+      pc.createOffer({offerToReceiveAudio: true})
+      .then((offer) => {
+        pc.close();
+        return pc.setLocalDescription(offer);
+      })
+      .catch((e) => {
+        expect(e.name).to.equal('InvalidStateError');
+        done();
+      });
+    });
+    it('throws an InvalidStateError when called after close ' +
+        '(callback)', (done) => {
+      pc.createOffer({offerToReceiveAudio: true})
+      .then((offer) => {
+        pc.close();
+        return pc.setLocalDescription(offer, undefined, (e) => {
+          expect(e.name).to.equal('InvalidStateError');
+          done();
+        });
       });
     });
 
@@ -424,7 +449,9 @@ describe('Edge shim', () => {
       pc = new RTCPeerConnection();
     });
     afterEach(() => {
-      pc.close();
+      if (pc.signalingState !== 'closed') {
+        pc.close();
+      }
     });
 
     it('returns a promise', (done) => {
@@ -455,6 +482,25 @@ describe('Edge shim', () => {
       });
     });
 
+    it('throws an InvalidStateError when called after close', (done) => {
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+      pc.close();
+      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      .catch((e) => {
+        expect(e.name).to.equal('InvalidStateError');
+        done();
+      });
+    });
+
+    it('throws an InvalidStateError when called after close ' +
+        '(callback)', (done) => {
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+      pc.close();
+      pc.setRemoteDescription({type: 'offer', sdp: sdp}, undefined, (e) => {
+        expect(e.name).to.equal('InvalidStateError');
+        done();
+      });
+    });
 
     it('sets the remoteDescription', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
@@ -1194,7 +1240,9 @@ describe('Edge shim', () => {
       pc = new RTCPeerConnection();
     });
     afterEach(() => {
-      pc.close();
+      if (pc.signalingState !== 'closed') {
+        pc.close();
+      }
     });
 
     it('returns a promise', (done) => {
@@ -1236,6 +1284,24 @@ describe('Edge shim', () => {
         clock.tick(500);
         expect(pc.onicecandidate).not.to.have.been.calledWith();
         clock.restore();
+        done();
+      });
+    });
+
+    it('throws an InvalidStateError when called after close', (done) => {
+      pc.close();
+      pc.createOffer({offerToReceiveAudio: true})
+      .catch((e) => {
+        expect(e.name).to.equal('InvalidStateError');
+        done();
+      });
+    });
+
+    it('throws an InvalidStateError when called after close ' +
+        '(callback)', (done) => {
+      pc.close();
+      pc.createOffer({offerToReceiveAudio: true}, undefined, (e) => {
+        expect(e.name).to.equal('InvalidStateError');
         done();
       });
     });
@@ -1782,6 +1848,32 @@ describe('Edge shim', () => {
       .then(() => {
         expect(pc.signalingState).to.equal('have-remote-offer');
         done();
+      });
+    });
+
+    it('throws an InvalidStateError when called after close', (done) => {
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      .then(() => {
+        pc.close();
+        return pc.createAnswer();
+      })
+      .catch((e) => {
+        expect(e.name).to.equal('InvalidStateError');
+        done();
+      });
+    });
+
+    it('throws an InvalidStateError when called after close ' +
+        '(callback)', (done) => {
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      .then(() => {
+        pc.close();
+        return pc.createAnswer(undefined, (e) => {
+          expect(e.name).to.equal('InvalidStateError');
+          done();
+        });
       });
     });
 
