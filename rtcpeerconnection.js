@@ -820,20 +820,13 @@ module.exports = function(window, edgeVersion) {
 
   RTCPeerConnection.prototype.setRemoteDescription = function(description) {
     var pc = this;
-    var args = arguments;
 
     if (!isActionAllowedInSignalingState('setRemoteDescription',
         description.type, this.signalingState) || this._isClosed) {
-      return new Promise(function(resolve, reject) {
-        var e = new Error('Can not set remote ' + description.type +
-            ' in state ' + pc.signalingState);
-        e.name = 'InvalidStateError';
-        if (args.length > 2 && typeof args[2] === 'function') {
-          args[2].apply(null, [e]);
-          return resolve();
-        }
-        reject(e);
-      });
+      var e = new Error('Can not set remote ' + description.type +
+          ' in state ' + pc.signalingState);
+      e.name = 'InvalidStateError';
+      return Promise.reject(e);
     }
 
     var streams = {};
@@ -1163,13 +1156,7 @@ module.exports = function(window, edgeVersion) {
       });
     }, 4000);
 
-    return new Promise(function(resolve) {
-      if (args.length > 1 && typeof args[1] === 'function') {
-        args[1].apply(null);
-        return resolve();
-      }
-      resolve();
-    });
+    return Promise.resolve();
   };
 
   RTCPeerConnection.prototype.close = function() {
@@ -1683,6 +1670,26 @@ module.exports = function(window, edgeVersion) {
       });
     }
     return origSetLocalDescription.apply(this, arguments);
+  };
+
+  var origSetRemoteDescription =
+      RTCPeerConnection.prototype.setRemoteDescription;
+  RTCPeerConnection.prototype.setRemoteDescription = function(description) {
+    var args = arguments;
+    if (typeof args[1] === 'function' ||
+        typeof args[2] === 'function') { // legacy
+      return origSetRemoteDescription.apply(this, arguments)
+      .then(function() {
+        if (typeof args[1] === 'function') {
+          args[1].apply(null);
+        }
+      }, function(error) {
+        if (typeof args[2] === 'function') {
+          args[2].apply(null, [error]);
+        }
+      });
+    }
+    return origSetRemoteDescription.apply(this, arguments);
   };
 
   return RTCPeerConnection;
