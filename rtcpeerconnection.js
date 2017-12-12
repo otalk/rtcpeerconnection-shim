@@ -1281,25 +1281,11 @@ module.exports = function(window, edgeVersion) {
 
   RTCPeerConnection.prototype.createOffer = function() {
     var pc = this;
-    var args = arguments;
 
     if (this._isClosed) {
-      return new Promise(function(resolve, reject) {
-        var e = new Error('Can not call createOffer after close');
-        e.name = 'InvalidStateError';
-        if (args.length > 1 && typeof args[1] === 'function') {
-          args[1].apply(null, [e]);
-          return resolve();
-        }
-        reject(e);
-      });
-    }
-
-    var offerOptions;
-    if (arguments.length === 1 && typeof arguments[0] !== 'function') {
-      offerOptions = arguments[0];
-    } else if (arguments.length === 3) {
-      offerOptions = arguments[2];
+      var e = new Error('Can not call createOffer after close');
+      e.name = 'InvalidStateError';
+      return Promise.reject(e);
     }
 
     var numAudioTracks = this.transceivers.filter(function(t) {
@@ -1310,6 +1296,7 @@ module.exports = function(window, edgeVersion) {
     }).length;
 
     // Determine number of audio and video tracks we need to send/recv.
+    var offerOptions = arguments[0];
     if (offerOptions) {
       // Reject Chrome legacy constraints.
       if (offerOptions.mandatory || offerOptions.optional) {
@@ -1448,14 +1435,7 @@ module.exports = function(window, edgeVersion) {
       type: 'offer',
       sdp: sdp
     });
-    return new Promise(function(resolve) {
-      if (args.length > 0 && typeof args[0] === 'function') {
-        args[0].apply(null, [desc]);
-        resolve();
-        return;
-      }
-      resolve(desc);
-    });
+    return Promise.resolve(desc);
   };
 
   RTCPeerConnection.prototype.createAnswer = function() {
@@ -1678,5 +1658,26 @@ module.exports = function(window, edgeVersion) {
       });
     });
   };
+
+  // legacy callback shims. Should be moved to adapter.js some days.
+  var origCreateOffer = RTCPeerConnection.prototype.createOffer;
+  RTCPeerConnection.prototype.createOffer = function() {
+    var args = arguments;
+    if (typeof args[0] === 'function' ||
+        typeof args[1] === 'function') { // legacy
+      return origCreateOffer.apply(this, [arguments[2]])
+      .then(function(offer) {
+        if (typeof args[0] === 'function') {
+          args[0].apply(null, [offer]);
+        }
+      }, function(error) {
+        if (typeof args[1] === 'function') {
+          args[1].apply(null, [error]);
+        }
+      });
+    }
+    return origCreateOffer.apply(this, arguments);
+  };
+
   return RTCPeerConnection;
 };
