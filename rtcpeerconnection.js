@@ -1601,101 +1601,49 @@ module.exports = function(window, edgeVersion) {
   };
 
   // legacy callback shims. Should be moved to adapter.js some days.
-  var origCreateOffer = RTCPeerConnection.prototype.createOffer;
-  RTCPeerConnection.prototype.createOffer = function() {
-    var args = arguments;
-    if (typeof args[0] === 'function' ||
-        typeof args[1] === 'function') { // legacy
-      return origCreateOffer.apply(this, [arguments[2]])
-      .then(function(offer) {
-        if (typeof args[0] === 'function') {
-          args[0].apply(null, [offer]);
-        }
-      }, function(error) {
-        if (typeof args[1] === 'function') {
-          args[1].apply(null, [error]);
-        }
-      });
-    }
-    return origCreateOffer.apply(this, arguments);
-  };
+  var methods = ['createOffer', 'createAnswer'];
+  methods.forEach(function(method) {
+    var nativeMethod = RTCPeerConnection.prototype[method];
+    RTCPeerConnection.prototype[method] = function() {
+      var args = arguments;
+      if (typeof args[0] === 'function' ||
+          typeof args[1] === 'function') { // legacy
+        return nativeMethod.apply(this, [arguments[2]])
+        .then(function(description) {
+          if (typeof args[0] === 'function') {
+            args[0].apply(null, [description]);
+          }
+        }, function(error) {
+          if (typeof args[1] === 'function') {
+            args[1].apply(null, [error]);
+          }
+        });
+      }
+      return nativeMethod.apply(this, arguments);
+    };
+  });
 
-  var origCreateAnswer = RTCPeerConnection.prototype.createAnswer;
-  RTCPeerConnection.prototype.createAnswer = function() {
-    var args = arguments;
-    if (typeof args[0] === 'function' ||
-        typeof args[1] === 'function') { // legacy
-      return origCreateAnswer.apply(this)
-      .then(function(answer) {
-        if (typeof args[0] === 'function') {
-          args[0].apply(null, [answer]);
-        }
-      }, function(error) {
-        if (typeof args[1] === 'function') {
-          args[1].apply(null, [error]);
-        }
-      });
-    }
-    return origCreateAnswer.apply(this, arguments);
-  };
-
-  var origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
-  RTCPeerConnection.prototype.setLocalDescription = function(description) {
-    var args = arguments;
-    if (typeof args[1] === 'function' ||
-        typeof args[2] === 'function') { // legacy
-      return origSetLocalDescription.apply(this, arguments)
-      .then(function() {
-        if (typeof args[1] === 'function') {
-          args[1].apply(null);
-        }
-      }, function(error) {
-        if (typeof args[2] === 'function') {
-          args[2].apply(null, [error]);
-        }
-      });
-    }
-    return origSetLocalDescription.apply(this, arguments);
-  };
-
-  var origSetRemoteDescription =
-      RTCPeerConnection.prototype.setRemoteDescription;
-  RTCPeerConnection.prototype.setRemoteDescription = function(description) {
-    var args = arguments;
-    if (typeof args[1] === 'function' ||
-        typeof args[2] === 'function') { // legacy
-      return origSetRemoteDescription.apply(this, arguments)
-      .then(function() {
-        if (typeof args[1] === 'function') {
-          args[1].apply(null);
-        }
-      }, function(error) {
-        if (typeof args[2] === 'function') {
-          args[2].apply(null, [error]);
-        }
-      });
-    }
-    return origSetRemoteDescription.apply(this, arguments);
-  };
-
-  var origAddIceCandidate = RTCPeerConnection.prototype.addIceCandidate;
-  RTCPeerConnection.prototype.addIceCandidate = function(description) {
-    var args = arguments;
-    if (typeof args[1] === 'function' ||
-        typeof args[2] === 'function') { // legacy
-      return origAddIceCandidate.apply(this, arguments)
-      .then(function() {
-        if (typeof args[1] === 'function') {
-          args[1].apply(null);
-        }
-      }, function(error) {
-        if (typeof args[2] === 'function') {
-          args[2].apply(null, [error]);
-        }
-      });
-    }
-    return origAddIceCandidate.apply(this, arguments);
-  };
+  methods = ['setLocalDescription', 'setRemoteDescription', 'addIceCandidate'];
+  methods.forEach(function(method) {
+    var nativeMethod = RTCPeerConnection.prototype[method];
+    RTCPeerConnection.prototype[method] = function() {
+      var args = arguments;
+      if (typeof args[1] === 'function' ||
+          typeof args[2] === 'function') { // legacy
+        return nativeMethod.apply(this, arguments)
+        .then(function() {
+          if (typeof args[1] === 'function') {
+            args[1].apply(null);
+          }
+        }, function(error) {
+          if (typeof args[2] === 'function') {
+            args[2].apply(null, [error]);
+          }
+        });
+      }
+      return nativeMethod.apply(this, arguments);
+    };
+  });
 
   return RTCPeerConnection;
 };
