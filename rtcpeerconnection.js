@@ -725,20 +725,13 @@ module.exports = function(window, edgeVersion) {
 
   RTCPeerConnection.prototype.setLocalDescription = function(description) {
     var pc = this;
-    var args = arguments;
 
     if (!isActionAllowedInSignalingState('setLocalDescription',
         description.type, this.signalingState) || this._isClosed) {
-      return new Promise(function(resolve, reject) {
-        var e = new Error('Can not set local ' + description.type +
-            ' in state ' + pc.signalingState);
-        e.name = 'InvalidStateError';
-        if (args.length > 2 && typeof args[2] === 'function') {
-          args[2].apply(null, [e]);
-          return resolve();
-        }
-        reject(e);
-      });
+      var e = new Error('Can not set local ' + description.type +
+          ' in state ' + pc.signalingState);
+      e.name = 'InvalidStateError';
+      return Promise.reject(e);
     }
 
     var sections;
@@ -822,18 +815,7 @@ module.exports = function(window, edgeVersion) {
             '"');
     }
 
-    // If a success callback was provided, emit ICE candidates after it
-    // has been executed. Otherwise, emit callback after the Promise is
-    // resolved.
-    var cb = arguments.length > 1 && typeof arguments[1] === 'function' &&
-        arguments[1];
-    return new Promise(function(resolve) {
-      if (cb) {
-        cb.apply(null);
-        return resolve();
-      }
-      resolve();
-    });
+    return Promise.resolve();
   };
 
   RTCPeerConnection.prototype.setRemoteDescription = function(description) {
@@ -1682,6 +1664,25 @@ module.exports = function(window, edgeVersion) {
       });
     }
     return origCreateAnswer.apply(this, arguments);
+  };
+
+  var origSetLocalDescription = RTCPeerConnection.prototype.setLocalDescription;
+  RTCPeerConnection.prototype.setLocalDescription = function(description) {
+    var args = arguments;
+    if (typeof args[1] === 'function' ||
+        typeof args[2] === 'function') { // legacy
+      return origSetLocalDescription.apply(this, arguments)
+      .then(function() {
+        if (typeof args[1] === 'function') {
+          args[1].apply(null);
+        }
+      }, function(error) {
+        if (typeof args[2] === 'function') {
+          args[2].apply(null, [error]);
+        }
+      });
+    }
+    return origSetLocalDescription.apply(this, arguments);
   };
 
   return RTCPeerConnection;
