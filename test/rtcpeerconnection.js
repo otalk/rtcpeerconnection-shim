@@ -1301,10 +1301,10 @@ describe('Edge shim', () => {
     it('throws an InvalidStateError when called after close ' +
         '(callback)', (done) => {
       pc.close();
-      pc.createOffer({offerToReceiveAudio: true}, undefined, (e) => {
+      pc.createOffer(undefined, (e) => {
         expect(e.name).to.equal('InvalidStateError');
         done();
-      });
+      }, {offerToReceiveAudio: true});
     });
 
     describe('throws a TypeError when called with legacy constraints', () => {
