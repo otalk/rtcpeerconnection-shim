@@ -2004,12 +2004,17 @@ describe('Edge shim', () => {
         });
       });
 
-      it('and ignores candidates', () => {
+      it('ignores candidates', () => {
         return pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
           return pc.addIceCandidate({sdpMid: 'data', candidate:
               'candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host'});
         });
+      });
+
+      it('ignores end-of-candidates', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => pc.addIceCandidate());
       });
     });
 
