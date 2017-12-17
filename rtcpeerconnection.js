@@ -539,14 +539,14 @@ module.exports = function(window, edgeVersion) {
         {value: 'new', writable: true}
     );
 
-    this.transceivers[sdpMLineIndex].candidates = [];
+    this.transceivers[sdpMLineIndex].bufferedCandidateEvents = [];
     this.transceivers[sdpMLineIndex].bufferCandidates = function(event) {
       var end = !event.candidate || Object.keys(event.candidate).length === 0;
       // polyfill since RTCIceGatherer.state is not implemented in
       // Edge 10547 yet.
       iceGatherer.state = end ? 'completed' : 'gathering';
-      if (pc.transceivers[sdpMLineIndex].candidates !== null) {
-        pc.transceivers[sdpMLineIndex].candidates.push(event.candidate);
+      if (pc.transceivers[sdpMLineIndex].bufferedCandidateEvents !== null) {
+        pc.transceivers[sdpMLineIndex].bufferedCandidateEvents.push(event);
       }
     };
     iceGatherer.addEventListener('localcandidate',
@@ -561,8 +561,9 @@ module.exports = function(window, edgeVersion) {
     if (iceGatherer.onlocalcandidate) {
       return;
     }
-    var candidates = this.transceivers[sdpMLineIndex].candidates;
-    this.transceivers[sdpMLineIndex].candidates = null;
+    var bufferedCandidateEvents =
+      this.transceivers[sdpMLineIndex].bufferedCandidateEvents;
+    this.transceivers[sdpMLineIndex].bufferedCandidateEvents = null;
     iceGatherer.removeEventListener('localcandidate',
       this.transceivers[sdpMLineIndex].bufferCandidates);
     iceGatherer.onlocalcandidate = function(evt) {
@@ -627,9 +628,7 @@ module.exports = function(window, edgeVersion) {
 
     // emit already gathered candidates.
     window.setTimeout(function() {
-      candidates.forEach(function(candidate) {
-        var e = new Event('RTCIceGatherEvent');
-        e.candidate = candidate;
+      bufferedCandidateEvents.forEach(function(e) {
         iceGatherer.onlocalcandidate(e);
       });
     }, 0);
