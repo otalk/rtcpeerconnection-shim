@@ -3414,6 +3414,94 @@ describe('Edge shim', () => {
     });
   });
 
+  describe('_updateConnectionState', () => {
+    let pc;
+    beforeEach(() => {
+      pc = new RTCPeerConnection();
+      return pc.createOffer({offerToReceiveAudio: 1});
+    });
+    afterEach(() => {
+      pc.close();
+    });
+
+    it('calls both event and oniceconnectionstatechange', () => {
+      pc.iceConnectionState = 'weird state';
+
+      const stub = sinon.stub();
+      pc.oniceconnectionstatechange = stub;
+      pc.addEventListener('iceconnectionstatechange', stub);
+
+      pc._updateConnectionState();
+
+      expect(stub).to.have.been.calledTwice();
+      expect(pc.iceConnectionState).to.equal('new');
+    });
+
+    it('does not emit iceconnectionstatechange when just the ' +
+       'ice connection changes', () => {
+      const transceiver = pc.transceivers[0];
+      const iceTransport = transceiver.iceTransport;
+      iceTransport.state = 'connected';
+
+      const stub = sinon.stub();
+      pc.oniceconnectionstatechange = stub;
+      pc.addEventListener('iceconnectionstatechange', stub);
+
+      iceTransport.onicestatechange();
+      expect(stub).not.to.have.been.calledWith();
+    });
+
+    it('emits iceconnectionstatechange when ice and dtls are connected', () => {
+      const transceiver = pc.transceivers[0];
+      const iceTransport = transceiver.iceTransport;
+      iceTransport.state = 'connected';
+
+      const dtlsTransport = transceiver.dtlsTransport;
+      dtlsTransport.state = 'connected';
+
+      const stub = sinon.stub();
+      pc.oniceconnectionstatechange = stub;
+
+      dtlsTransport.ondtlsstatechange();
+
+      expect(stub).to.have.been.calledOnce();
+      expect(pc.iceConnectionState).to.equal('connected');
+    });
+
+    it('changes the connection state to failed when there ' +
+       'was a DTLS error', () => {
+      const transceiver = pc.transceivers[0];
+      const dtlsTransport = transceiver.dtlsTransport;
+
+      const stub = sinon.stub();
+      pc.oniceconnectionstatechange = stub;
+
+      dtlsTransport.onerror();
+      expect(stub).to.have.been.calledOnce();
+      expect(pc.iceConnectionState).to.equal('failed');
+    });
+
+    it('changes the connection state to disconnected when the ICE ' +
+        'connection disconnects', () => {
+      pc.iceConnectionState = 'connected';
+
+      const transceiver = pc.transceivers[0];
+      const iceTransport = transceiver.iceTransport;
+      iceTransport.state = 'disconnected';
+
+      const dtlsTransport = transceiver.dtlsTransport;
+      dtlsTransport.state = 'connected';
+
+      const stub = sinon.stub();
+      pc.oniceconnectionstatechange = stub;
+
+      iceTransport.onicestatechange();
+
+      expect(stub).to.have.been.calledOnce();
+      expect(pc.iceConnectionState).to.equal('disconnected');
+    });
+  });
+
   describe('edge pre-rtx behaviour', () => {
     let pc;
     beforeEach(() => {
