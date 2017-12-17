@@ -1277,6 +1277,16 @@ describe('Edge shim', () => {
       });
     });
 
+    it('uses pooled RTCIceGatherer', (done) => {
+      pc.close();
+      pc = new RTCPeerConnection({iceCandidatePoolSize: 1});
+      pc.createOffer({offerToReceiveAudio: true})
+      .then(() => {
+        expect(pc._iceGatherers).to.have.length(0);
+        done();
+      });
+    });
+
     it('does not start emitting ICE candidates', (done) => {
       let clock = sinon.useFakeTimers();
       pc.onicecandidate = sinon.stub();
