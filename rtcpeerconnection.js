@@ -1242,7 +1242,7 @@ module.exports = function(window, edgeVersion) {
     if (newState !== this.iceConnectionState) {
       this.iceConnectionState = newState;
       var event = new Event('iceconnectionstatechange');
-      this._dispatchEvent('iceconnetionstatechange', event);
+      this._dispatchEvent('iceconnectionstatechange', event);
     }
   };
 
