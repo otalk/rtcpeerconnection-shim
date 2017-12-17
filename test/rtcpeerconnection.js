@@ -3303,6 +3303,17 @@ describe('Edge shim', () => {
 
   describe('filtering of STUN and TURN servers', () => {
     let pc;
+
+    it('converts legacy url member to urls', () => {
+      pc = new RTCPeerConnection({
+        iceServers: [{url: 'stun:stun.l.google.com'}]
+      });
+      const config = pc.getConfiguration();
+      expect(config.iceServers).to.deep.equal([
+        {urls: 'stun:stun.l.google.com'}
+      ]);
+    });
+
     it('filters STUN before r14393', () => {
       RTCPeerConnection = shimPeerConnection(window, 14392);
       pc = new RTCPeerConnection({
