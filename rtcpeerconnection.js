@@ -1196,12 +1196,11 @@ module.exports = function(window, edgeVersion) {
     }
     this.needNegotiation = true;
     window.setTimeout(function() {
-      if (pc.needNegotiation === false) {
-        return;
+      if (pc.needNegotiation) {
+        pc.needNegotiation = false;
+        var event = new Event('negotiationneeded');
+        pc._dispatchEvent('negotiationneeded', event);
       }
-      pc.needNegotiation = false;
-      var event = new Event('negotiationneeded');
-      pc._dispatchEvent('negotiationneeded', event);
     }, 0);
   };
 
