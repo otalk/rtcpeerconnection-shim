@@ -3151,24 +3151,36 @@ describe('Edge shim', () => {
       pc = new RTCPeerConnection();
     });
     afterEach(() => {
-      pc.close();
+      if (pc.signalingState !== 'closed') {
+        pc.close();
+      }
     });
 
     it('throws a TypeError if the argument is not an RTCRtpSender', () => {
-      const constructor = () => {
+      const removeTrack = () => {
         pc.removeTrack('something');
       };
-      expect(constructor).to.throw(/does not implement/)
+      expect(removeTrack).to.throw(/does not implement/)
           .that.has.property('name').that.equals('TypeError');
     });
 
     it('throws an InvalidAccessError if the sender does not belong ' +
         'to the peerconnection', () => {
-      const constructor = () => {
+      const removeTrack = () => {
         pc.removeTrack(new window.RTCRtpSender());
       };
-      expect(constructor).to.throw(/not created by/)
+      expect(removeTrack).to.throw(/not created by/)
           .that.has.property('name').that.equals('InvalidAccessError');
+    });
+
+    it('throws an InvalidStateError if the peerconnection has been ' +
+        'closed already', () => {
+      pc.close();
+      const removeTrack = () => {
+        pc.removeTrack(new window.RTCRtpSender());
+      };
+      expect(removeTrack).to.throw()
+          .that.has.property('name').that.equals('InvalidStateError');
     });
 
     it('makes the m-line recvonly', () => {
