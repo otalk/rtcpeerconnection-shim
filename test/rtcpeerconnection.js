@@ -3435,6 +3435,38 @@ describe('Edge shim', () => {
     });
   });
 
+  describe('RTCIceCandidate contains a port property in', () => {
+    it('the onicecandidate callback', (done) => {
+      let hasProperty = false;
+      const pc = new RTCPeerConnection();
+      pc.onicecandidate = (e) => {
+        if (!e.candidate) {
+          expect(hasProperty).to.equal(true);
+          done();
+        } else {
+          hasProperty = e.candidate.hasOwnProperty('port');
+        }
+      };
+      pc.createOffer({offerToReceiveAudio: true})
+      .then(offer => pc.setLocalDescription(offer));
+    });
+
+    it('the icecandidate event', (done) => {
+      let hasProperty = false;
+      const pc = new RTCPeerConnection();
+      pc.addEventListener('icecandidate', (e) => {
+        if (!e.candidate) {
+          expect(hasProperty).to.equal(true);
+          done();
+        } else {
+          hasProperty = e.candidate.hasOwnProperty('port');
+        }
+      });
+      pc.createOffer({offerToReceiveAudio: true})
+      .then(offer => pc.setLocalDescription(offer));
+    });
+  });
+
   describe('_updateConnectionState', () => {
     let pc;
     beforeEach(() => {
