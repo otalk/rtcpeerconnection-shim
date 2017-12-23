@@ -399,17 +399,17 @@ module.exports = function(window, edgeVersion) {
   };
 
   RTCPeerConnection.prototype.addTrack = function(track, stream) {
+    if (this._isClosed) {
+      throw makeError('InvalidStateError',
+          'Attempted to call addTrack on a closed peerconnection.');
+    }
+
     var alreadyExists = this.transceivers.find(function(s) {
       return s.track === track;
     });
 
     if (alreadyExists) {
       throw makeError('InvalidAccessError', 'Track already exists.');
-    }
-
-    if (this.signalingState === 'closed') {
-      throw makeError('InvalidStateError',
-          'Attempted to call addTrack on a closed peerconnection.');
     }
 
     var transceiver;
@@ -460,6 +460,11 @@ module.exports = function(window, edgeVersion) {
   };
 
   RTCPeerConnection.prototype.removeTrack = function(sender) {
+    if (this._isClosed) {
+      throw makeError('InvalidStateError',
+          'Attempted to call removeTrack on a closed peerconnection.');
+    }
+
     if (!(sender instanceof window.RTCRtpSender)) {
       throw new TypeError('Argument 1 of RTCPeerConnection.removeTrack ' +
           'does not implement interface RTCRtpSender.');
