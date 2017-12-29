@@ -428,6 +428,8 @@ module.exports = function(window, edgeVersion) {
       // https://github.com/w3c/webrtc-pc/issues/1662
       // transceiver.direction = 'recvonly';
     }
+    transceiver.rtpReceiver =
+        new window.RTCRtpReceiver(transceiver.dtlsTransport, kind);
     return transceiver.rtcRtpTransceiver;
   };
 
