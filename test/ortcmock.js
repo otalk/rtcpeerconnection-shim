@@ -205,7 +205,9 @@ module.exports = function(window) {
     this.track.kind = kind;
     this.transport = transport;
   };
-  RTCRtpReceiver.prototype.receive = function() {};
+  RTCRtpReceiver.prototype.receive = function() {
+    return Promise.resolve();
+  };
   RTCRtpReceiver.prototype.stop = function() {};
   RTCRtpReceiver.prototype.setTransport = function(transport) {
     this.transport = transport;
@@ -214,6 +216,12 @@ module.exports = function(window) {
   RTCRtpReceiver.getCapabilities = getCapabilities;
   RTCRtpReceiver.prototype.getStats = function() {
     return Promise.resolve({});
+  };
+  RTCRtpReceiver.prototype.getContributingSources = function() {
+    return [];
+  };
+  RTCRtpReceiver.prototype.getSynchronizationSources = function() {
+    return [];
   };
   window.RTCRtpReceiver = RTCRtpReceiver;
 
