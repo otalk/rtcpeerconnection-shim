@@ -41,7 +41,6 @@ const MINIMAL_AUDIO_MLINE =
     'a=rtpmap:111 opus/48000/2\r\n' +
     'a=ssrc:1001 cname:some\r\n';
 
-
 // this detects that we are not running in a browser.
 const mockWindow = typeof window === 'undefined';
 
@@ -377,20 +376,7 @@ describe('Edge shim', () => {
         window.RTCDtlsTransport.prototype.start.restore();
       });
 
-      const sdp = SDP_BOILERPLATE +
-          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
-          'c=IN IP4 0.0.0.0\r\n' +
-          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
-          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
-          'a=ice-pwd:' + ICEPWD + '\r\n' +
-          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
-          'a=setup:actpass\r\n' +
-          'a=mid:audio1\r\n' +
-          'a=sendonly\r\n' +
-          'a=rtcp-mux\r\n' +
-          'a=rtcp-rsize\r\n' +
-          'a=rtpmap:111 opus/48000/2\r\n' +
-          'a=ssrc:1001 cname:some\r\n';
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       it('starts the ice transport', (done) => {
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
@@ -512,21 +498,8 @@ describe('Edge shim', () => {
     });
 
     describe('when called with an offer containing a track', () => {
-      const sdp = SDP_BOILERPLATE +
-          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
-          'c=IN IP4 0.0.0.0\r\n' +
-          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
-          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
-          'a=ice-pwd:' + ICEPWD + '\r\n' +
-          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
-          'a=setup:actpass\r\n' +
-          'a=mid:audio1\r\n' +
-          'a=sendonly\r\n' +
-          'a=rtcp-mux\r\n' +
-          'a=rtcp-rsize\r\n' +
-          'a=rtpmap:111 opus/48000/2\r\n' +
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
-          'a=ssrc:1001 cname:some\r\n';
       it('triggers onaddstream', (done) => {
         pc.onaddstream = function(event) {
           const stream = event.stream;
@@ -619,20 +592,7 @@ describe('Edge shim', () => {
     });
 
     describe('when called with an offer without (explicit) tracks', () => {
-      const sdp = SDP_BOILERPLATE +
-          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
-          'c=IN IP4 0.0.0.0\r\n' +
-          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
-          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
-          'a=ice-pwd:' + ICEPWD + '\r\n' +
-          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
-          'a=setup:actpass\r\n' +
-          'a=mid:audio1\r\n' +
-          'a=sendonly\r\n' +
-          'a=rtcp-mux\r\n' +
-          'a=rtcp-rsize\r\n' +
-          'a=rtpmap:111 opus/48000/2\r\n' +
-          'a=ssrc:1001 cname:some\r\n'
+      const sdp = (SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE)
           .replace('a=msid-semantics:WMS *\r\n', '');
 
       it('triggers onaddstream', (done) => {
@@ -660,21 +620,8 @@ describe('Edge shim', () => {
 
     describe('when called with an offer containing multiple streams ' +
         '/ tracks', () => {
-      const sdp = SDP_BOILERPLATE +
-          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
-          'c=IN IP4 0.0.0.0\r\n' +
-          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
-          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
-          'a=ice-pwd:' + ICEPWD + '\r\n' +
-          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
-          'a=setup:actpass\r\n' +
-          'a=mid:audio1\r\n' +
-          'a=sendonly\r\n' +
-          'a=rtcp-mux\r\n' +
-          'a=rtcp-rsize\r\n' +
-          'a=rtpmap:111 opus/48000/2\r\n' +
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
-          'a=ssrc:1001 cname:some\r\n' +
           'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
           'c=IN IP4 0.0.0.0\r\n' +
           'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
@@ -719,20 +666,8 @@ describe('Edge shim', () => {
         'two tracks', () => {
       const sdp = SDP_BOILERPLATE +
           'a=group:BUNDLE audio1 video1\r\n' +
-          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
-          'c=IN IP4 0.0.0.0\r\n' +
-          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
-          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
-          'a=ice-pwd:' + ICEPWD + '\r\n' +
-          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
-          'a=setup:actpass\r\n' +
-          'a=mid:audio1\r\n' +
-          'a=sendonly\r\n' +
-          'a=rtcp-mux\r\n' +
-          'a=rtcp-rsize\r\n' +
-          'a=rtpmap:111 opus/48000/2\r\n' +
+          MINIMAL_AUDIO_MLINE +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
-          'a=ssrc:1001 cname:some\r\n' +
           'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
           'c=IN IP4 0.0.0.0\r\n' +
           'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
@@ -805,21 +740,8 @@ describe('Edge shim', () => {
       });
       const candidateString = 'a=candidate:702786350 1 udp 41819902 ' +
           '8.8.8.8 60769 typ host';
-      const sdp = SDP_BOILERPLATE +
-          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
-          'c=IN IP4 0.0.0.0\r\n' +
-          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
-          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
-          'a=ice-pwd:' + ICEPWD + '\r\n' +
-          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
-          'a=setup:actpass\r\n' +
-          'a=mid:audio1\r\n' +
-          'a=sendonly\r\n' +
-          'a=rtcp-mux\r\n' +
-          'a=rtcp-rsize\r\n' +
-          'a=rtpmap:111 opus/48000/2\r\n' +
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
-          'a=ssrc:1001 cname:some\r\n' +
           candidateString + '\r\n';
       it('adds the candidates to the ice transport', (done) => {
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
@@ -907,21 +829,8 @@ describe('Edge shim', () => {
         clock.restore();
       });
 
-      const sdp = SDP_BOILERPLATE +
-          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
-          'c=IN IP4 0.0.0.0\r\n' +
-          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
-          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
-          'a=ice-pwd:' + ICEPWD + '\r\n' +
-          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
-          'a=setup:actpass\r\n' +
-          'a=mid:audio1\r\n' +
-          'a=sendonly\r\n' +
-          'a=rtcp-mux\r\n' +
-          'a=rtcp-rsize\r\n' +
-          'a=rtpmap:111 opus/48000/2\r\n' +
-          'a=ssrc:1001 msid:stream1 audiotrack\r\n' +
-          'a=ssrc:1001 cname:some\r\n';
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
+          'a=ssrc:1001 msid:stream1 audiotrack\r\n';
       const videoPart =
           'm=video 9 UDP/TLS/RTP/SAVPF 102 103\r\n' +
           'c=IN IP4 0.0.0.0\r\n' +
@@ -1032,21 +941,8 @@ describe('Edge shim', () => {
     });
 
     describe('when rtcp-rsize is', () => {
-      const sdp = SDP_BOILERPLATE +
-          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
-          'c=IN IP4 0.0.0.0\r\n' +
-          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
-          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
-          'a=ice-pwd:' + ICEPWD + '\r\n' +
-          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
-          'a=setup:actpass\r\n' +
-          'a=mid:audio1\r\n' +
-          'a=sendonly\r\n' +
-          'a=rtcp-mux\r\n' +
-          'a=rtcp-rsize\r\n' +
-          'a=rtpmap:111 opus/48000/2\r\n' +
-          'a=ssrc:1001 msid:stream1 track1\r\n' +
-          'a=ssrc:1001 cname:some\r\n';
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
+          'a=ssrc:1001 msid:stream1 track1\r\n';
       beforeEach(() => {
         sinon.spy(window.RTCRtpReceiver.prototype, 'receive');
       });
@@ -1149,19 +1045,7 @@ describe('Edge shim', () => {
       it('ignores extra candidates in a bundle answer', (done) => {
         const sdp = SDP_BOILERPLATE +
             'a=group:BUNDLE audio1 video1\r\n' +
-            'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
-            'c=IN IP4 0.0.0.0\r\n' +
-            'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
-            'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
-            'a=ice-pwd:' + ICEPWD + '\r\n' +
-            'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
-            'a=setup:actpass\r\n' +
-            'a=mid:audio1\r\n' +
-            'a=sendrecv\r\n' +
-            'a=rtcp-mux\r\n' +
-            'a=rtcp-rsize\r\n' +
-            'a=rtpmap:111 opus/48000/2\r\n' +
-            'a=ssrc:1001 cname:some\r\n' +
+            MINIMAL_AUDIO_MLINE +
             'a=candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host\r\n' +
             'a=end-of-candidates\r\n' +
             'm=video 9 UDP/TLS/RTP/SAVPF 102\r\n' +
@@ -1192,19 +1076,7 @@ describe('Edge shim', () => {
     it('treats bundle-only m-lines as not rejected', (done) => {
       const sdp = SDP_BOILERPLATE +
           'a=group:BUNDLE audio1 video1\r\n' +
-          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
-          'c=IN IP4 0.0.0.0\r\n' +
-          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
-          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
-          'a=ice-pwd:' + ICEPWD + '\r\n' +
-          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
-          'a=setup:actpass\r\n' +
-          'a=mid:audio1\r\n' +
-          'a=sendrecv\r\n' +
-          'a=rtcp-mux\r\n' +
-          'a=rtcp-rsize\r\n' +
-          'a=rtpmap:111 opus/48000/2\r\n' +
-          'a=ssrc:1001 cname:some\r\n' +
+          MINIMAL_AUDIO_MLINE +
           'a=candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host\r\n' +
           'a=msid:stream1 audiotrack\r\n' +
           'a=end-of-candidates\r\n' +
