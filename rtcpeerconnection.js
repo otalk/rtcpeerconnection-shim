@@ -217,16 +217,14 @@ function maybeAddCandidate(iceTransport, candidate) {
 // dispatch the event ourselves.
 function addTrackToStreamAndFireEvent(track, stream) {
   stream.addTrack(track);
-  var e = new Event('addtrack'); // TODO: MediaStreamTrackEvent
-  e.track = track;
-  stream.dispatchEvent(e);
+  stream.dispatchEvent(new window.MediaStreamTrackEvent('addtrack',
+      {track: track}));
 }
 
 function removeTrackFromStreamAndFireEvent(track, stream) {
   stream.removeTrack(track);
-  var e = new Event('removetrack'); // TODO: MediaStreamTrackEvent
-  e.track = track;
-  stream.dispatchEvent(e);
+  stream.dispatchEvent(new window.MediaStreamTrackEvent('removetrack',
+      {track: track}));
 }
 
 function fireAddTrack(pc, track, receiver, streams) {
