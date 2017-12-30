@@ -733,6 +733,12 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.setLocalDescription = function(description) {
     var pc = this;
 
+    // Note: pranswer is not supported.
+    if (['offer', 'answer'].indexOf(description.type) === -1) {
+      return Promise.reject(makeError('TypeError',
+          'Unsupported type "' + description.type + '"'));
+    }
+
     if (!isActionAllowedInSignalingState('setLocalDescription',
         description.type, this.signalingState) || this._isClosed) {
       return Promise.reject(makeError('InvalidStateError',
@@ -809,16 +815,10 @@ module.exports = function(window, edgeVersion) {
       type: description.type,
       sdp: description.sdp
     };
-    switch (description.type) {
-      case 'offer':
-        this._updateSignalingState('have-local-offer');
-        break;
-      case 'answer':
-        this._updateSignalingState('stable');
-        break;
-      default:
-        throw new TypeError('unsupported type "' + description.type +
-            '"');
+    if (description.type === 'offer') {
+      this._updateSignalingState('have-local-offer');
+    } else {
+      this._updateSignalingState('stable');
     }
 
     return Promise.resolve();
@@ -826,6 +826,12 @@ module.exports = function(window, edgeVersion) {
 
   RTCPeerConnection.prototype.setRemoteDescription = function(description) {
     var pc = this;
+
+    // Note: pranswer is not supported.
+    if (['offer', 'answer'].indexOf(description.type) === -1) {
+      return Promise.reject(makeError('TypeError',
+          'Unsupported type "' + description.type + '"'));
+    }
 
     if (!isActionAllowedInSignalingState('setRemoteDescription',
         description.type, this.signalingState) || this._isClosed) {
@@ -1104,16 +1110,10 @@ module.exports = function(window, edgeVersion) {
       type: description.type,
       sdp: description.sdp
     };
-    switch (description.type) {
-      case 'offer':
-        this._updateSignalingState('have-remote-offer');
-        break;
-      case 'answer':
-        this._updateSignalingState('stable');
-        break;
-      default:
-        throw new TypeError('unsupported type "' + description.type +
-            '"');
+    if (description.type === 'offer') {
+      this._updateSignalingState('have-remote-offer');
+    } else {
+      this._updateSignalingState('stable');
     }
     Object.keys(streams).forEach(function(sid) {
       var stream = streams[sid];
