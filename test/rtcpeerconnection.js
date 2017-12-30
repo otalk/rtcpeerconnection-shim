@@ -227,6 +227,16 @@ describe('Edge shim', () => {
       });
     });
 
+    it('throws a TypeError when called with an ' +
+        'unsupported description type', (done) => {
+      pc.setLocalDescription({type: 'invalid'})
+      .catch((e) => {
+        expect(e.name).to.equal('TypeError');
+        done();
+      });
+    });
+
+
     it('changes the signalingState to have-local-offer', (done) => {
       pc.createOffer({offerToReceiveAudio: true})
       .then((offer) => {
@@ -484,6 +494,16 @@ describe('Edge shim', () => {
       pc.close();
       pc.setRemoteDescription({type: 'offer', sdp: sdp}, undefined, (e) => {
         expect(e.name).to.equal('InvalidStateError');
+        done();
+      });
+    });
+
+    it('throws a TypeError when called with an ' +
+        'unsupported description type', (done) => {
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+      pc.setRemoteDescription({type: 'invalid', sdp: sdp})
+      .catch((e) => {
+        expect(e.name).to.equal('TypeError');
         done();
       });
     });
