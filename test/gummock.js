@@ -64,6 +64,11 @@ module.exports = function(window) {
   MediaStreamTrack.prototype.stop = function() {};
   window.MediaStreamTrack = MediaStreamTrack;
 
+  const MediaStreamTrackEvent = function(type, args) {
+    this.type = type;
+    this.track = args.track;
+  };
+  window.MediaStreamTrackEvent = MediaStreamTrackEvent;
 
   const getUserMedia = (constraints) => {
     const tracks = [];

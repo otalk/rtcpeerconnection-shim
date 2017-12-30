@@ -896,6 +896,7 @@ describe('Edge shim', () => {
           pc.onaddstream = (e) => {
             remoteStream = e.stream;
             remoteStream.addEventListener('addtrack', (event) => {
+              expect(event).to.be.an.instanceOf(window.MediaStreamTrackEvent);
               expect(event).to.have.property('track');
               expect(event.track.id).to.equal('videotrack');
               done();
@@ -917,6 +918,7 @@ describe('Edge shim', () => {
           pc.onaddstream = (e) => {
             remoteStream = e.stream;
             remoteStream.addEventListener('removetrack', (event) => {
+              expect(event).to.be.an.instanceOf(window.MediaStreamTrackEvent);
               expect(event).to.have.property('track');
               expect(event.track.id).to.equal('videotrack');
               done();
@@ -930,32 +932,6 @@ describe('Edge shim', () => {
             });
             clock.tick(500);
           });
-        });
-      });
-    });
-
-    describe('when called with an subsequent offer removing a ' +
-        'track', () => {
-      it('triggers stream.onremovetrack', (done) => {
-        let clock = sinon.useFakeTimers();
-
-        const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-        const streamInfo = 'a=msid:stream audiotrack\r\n';
-
-        const removetrackStub = sinon.stub();
-        pc.onaddstream = (e) => {
-          e.stream.addEventListener('removetrack', removetrackStub);
-          pc.setRemoteDescription({type: 'offer',
-              sdp: sdp.replace('sendonly', 'inactive')});
-        };
-        pc.setRemoteDescription({type: 'offer', sdp: sdp + streamInfo})
-        .then(() => {
-          window.setTimeout(() => {
-            expect(removetrackStub).to.have.been.calledOnce();
-            clock.restore();
-            done();
-          });
-          clock.tick(500);
         });
       });
     });
