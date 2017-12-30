@@ -212,32 +212,6 @@ function maybeAddCandidate(iceTransport, candidate) {
 }
 
 
-// https://w3c.github.io/mediacapture-main/#mediastream
-// Helper function to add the track to the stream and
-// dispatch the event ourselves.
-function addTrackToStreamAndFireEvent(track, stream) {
-  stream.addTrack(track);
-  stream.dispatchEvent(new window.MediaStreamTrackEvent('addtrack',
-      {track: track}));
-}
-
-function removeTrackFromStreamAndFireEvent(track, stream) {
-  stream.removeTrack(track);
-  stream.dispatchEvent(new window.MediaStreamTrackEvent('removetrack',
-      {track: track}));
-}
-
-function fireAddTrack(pc, track, receiver, streams) {
-  var trackEvent = new Event('track');
-  trackEvent.track = track;
-  trackEvent.receiver = receiver;
-  trackEvent.transceiver = {receiver: receiver};
-  trackEvent.streams = streams;
-  window.setTimeout(function() {
-    pc._dispatchEvent('track', trackEvent);
-  });
-}
-
 function makeError(name, description) {
   var e = new Error(description);
   e.name = name;
@@ -245,6 +219,32 @@ function makeError(name, description) {
 }
 
 module.exports = function(window, edgeVersion) {
+  // https://w3c.github.io/mediacapture-main/#mediastream
+  // Helper function to add the track to the stream and
+  // dispatch the event ourselves.
+  function addTrackToStreamAndFireEvent(track, stream) {
+    stream.addTrack(track);
+    stream.dispatchEvent(new window.MediaStreamTrackEvent('addtrack',
+        {track: track}));
+  }
+
+  function removeTrackFromStreamAndFireEvent(track, stream) {
+    stream.removeTrack(track);
+    stream.dispatchEvent(new window.MediaStreamTrackEvent('removetrack',
+        {track: track}));
+  }
+
+  function fireAddTrack(pc, track, receiver, streams) {
+    var trackEvent = new Event('track');
+    trackEvent.track = track;
+    trackEvent.receiver = receiver;
+    trackEvent.transceiver = {receiver: receiver};
+    trackEvent.streams = streams;
+    window.setTimeout(function() {
+      pc._dispatchEvent('track', trackEvent);
+    });
+  }
+
   var RTCPeerConnection = function(config) {
     var pc = this;
 
