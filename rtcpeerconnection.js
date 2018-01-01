@@ -738,7 +738,7 @@ module.exports = function(window, edgeVersion) {
     }
 
     if (!isActionAllowedInSignalingState('setLocalDescription',
-        description.type, this.signalingState) || this._isClosed) {
+        description.type, pc.signalingState) || pc._isClosed) {
       return Promise.reject(makeError('InvalidStateError',
           'Can not set local ' + description.type +
           ' in state ' + pc.signalingState));
@@ -756,7 +756,7 @@ module.exports = function(window, edgeVersion) {
         pc.transceivers[sdpMLineIndex].localCapabilities = caps;
       });
 
-      this.transceivers.forEach(function(transceiver, sdpMLineIndex) {
+      pc.transceivers.forEach(function(transceiver, sdpMLineIndex) {
         pc._gather(transceiver.mid, sdpMLineIndex);
       });
     } else if (description.type === 'answer') {
@@ -809,14 +809,14 @@ module.exports = function(window, edgeVersion) {
       });
     }
 
-    this.localDescription = {
+    pc.localDescription = {
       type: description.type,
       sdp: description.sdp
     };
     if (description.type === 'offer') {
-      this._updateSignalingState('have-local-offer');
+      pc._updateSignalingState('have-local-offer');
     } else {
-      this._updateSignalingState('stable');
+      pc._updateSignalingState('stable');
     }
 
     return Promise.resolve();
@@ -832,14 +832,14 @@ module.exports = function(window, edgeVersion) {
     }
 
     if (!isActionAllowedInSignalingState('setRemoteDescription',
-        description.type, this.signalingState) || this._isClosed) {
+        description.type, pc.signalingState) || pc._isClosed) {
       return Promise.reject(makeError('InvalidStateError',
           'Can not set remote ' + description.type +
           ' in state ' + pc.signalingState));
     }
 
     var streams = {};
-    this.remoteStreams.forEach(function(stream) {
+    pc.remoteStreams.forEach(function(stream) {
       streams[stream.id] = stream;
     });
     var receiverList = [];
@@ -849,14 +849,14 @@ module.exports = function(window, edgeVersion) {
         'a=ice-lite').length > 0;
     var usingBundle = SDPUtils.matchPrefix(sessionpart,
         'a=group:BUNDLE ').length > 0;
-    this.usingBundle = usingBundle;
+    pc.usingBundle = usingBundle;
     var iceOptions = SDPUtils.matchPrefix(sessionpart,
         'a=ice-options:')[0];
     if (iceOptions) {
-      this.canTrickleIceCandidates = iceOptions.substr(14).split(' ')
+      pc.canTrickleIceCandidates = iceOptions.substr(14).split(' ')
           .indexOf('trickle') >= 0;
     } else {
-      this.canTrickleIceCandidates = false;
+      pc.canTrickleIceCandidates = false;
     }
 
     sections.forEach(function(mediaSection, sdpMLineIndex) {
@@ -1100,18 +1100,18 @@ module.exports = function(window, edgeVersion) {
       }
     });
 
-    if (this._dtlsRole === undefined) {
-      this._dtlsRole = description.type === 'offer' ? 'active' : 'passive';
+    if (pc._dtlsRole === undefined) {
+      pc._dtlsRole = description.type === 'offer' ? 'active' : 'passive';
     }
 
-    this.remoteDescription = {
+    pc.remoteDescription = {
       type: description.type,
       sdp: description.sdp
     };
     if (description.type === 'offer') {
-      this._updateSignalingState('have-remote-offer');
+      pc._updateSignalingState('have-remote-offer');
     } else {
-      this._updateSignalingState('stable');
+      pc._updateSignalingState('stable');
     }
     Object.keys(streams).forEach(function(sid) {
       var stream = streams[sid];
@@ -1253,15 +1253,15 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.createOffer = function() {
     var pc = this;
 
-    if (this._isClosed) {
+    if (pc._isClosed) {
       return Promise.reject(makeError('InvalidStateError',
           'Can not call createOffer after close'));
     }
 
-    var numAudioTracks = this.transceivers.filter(function(t) {
+    var numAudioTracks = pc.transceivers.filter(function(t) {
       return t.kind === 'audio';
     }).length;
-    var numVideoTracks = this.transceivers.filter(function(t) {
+    var numVideoTracks = pc.transceivers.filter(function(t) {
       return t.kind === 'video';
     }).length;
 
@@ -1293,7 +1293,7 @@ module.exports = function(window, edgeVersion) {
       }
     }
 
-    this.transceivers.forEach(function(transceiver) {
+    pc.transceivers.forEach(function(transceiver) {
       if (transceiver.kind === 'audio') {
         numAudioTracks--;
         if (numAudioTracks < 0) {
@@ -1310,18 +1310,18 @@ module.exports = function(window, edgeVersion) {
     // Create M-lines for recvonly streams.
     while (numAudioTracks > 0 || numVideoTracks > 0) {
       if (numAudioTracks > 0) {
-        this._createTransceiver('audio');
+        pc._createTransceiver('audio');
         numAudioTracks--;
       }
       if (numVideoTracks > 0) {
-        this._createTransceiver('video');
+        pc._createTransceiver('video');
         numVideoTracks--;
       }
     }
 
-    var sdp = SDPUtils.writeSessionBoilerplate(this._sdpSessionId,
-        this._sdpSessionVersion++);
-    this.transceivers.forEach(function(transceiver, sdpMLineIndex) {
+    var sdp = SDPUtils.writeSessionBoilerplate(pc._sdpSessionId,
+        pc._sdpSessionVersion++);
+    pc.transceivers.forEach(function(transceiver, sdpMLineIndex) {
       // For each track, create an ice gatherer, ice transport,
       // dtls transport, potentially rtpsender and rtpreceiver.
       var track = transceiver.track;
@@ -1376,14 +1376,14 @@ module.exports = function(window, edgeVersion) {
     });
 
     // always offer BUNDLE and dispose on return if not supported.
-    if (this._config.bundlePolicy !== 'max-compat') {
-      sdp += 'a=group:BUNDLE ' + this.transceivers.map(function(t) {
+    if (pc._config.bundlePolicy !== 'max-compat') {
+      sdp += 'a=group:BUNDLE ' + pc.transceivers.map(function(t) {
         return t.mid;
       }).join(' ') + '\r\n';
     }
     sdp += 'a=ice-options:trickle\r\n';
 
-    this.transceivers.forEach(function(transceiver, sdpMLineIndex) {
+    pc.transceivers.forEach(function(transceiver, sdpMLineIndex) {
       sdp += writeMediaSection(transceiver, transceiver.localCapabilities,
           'offer', transceiver.stream, pc._dtlsRole);
       sdp += 'a=rtcp-rsize\r\n';
@@ -1411,21 +1411,21 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.createAnswer = function() {
     var pc = this;
 
-    if (this._isClosed) {
+    if (pc._isClosed) {
       return Promise.reject(makeError('InvalidStateError',
           'Can not call createAnswer after close'));
     }
 
-    var sdp = SDPUtils.writeSessionBoilerplate(this._sdpSessionId,
-        this._sdpSessionVersion++);
-    if (this.usingBundle) {
-      sdp += 'a=group:BUNDLE ' + this.transceivers.map(function(t) {
+    var sdp = SDPUtils.writeSessionBoilerplate(pc._sdpSessionId,
+        pc._sdpSessionVersion++);
+    if (pc.usingBundle) {
+      sdp += 'a=group:BUNDLE ' + pc.transceivers.map(function(t) {
         return t.mid;
       }).join(' ') + '\r\n';
     }
     var mediaSectionsInOffer = SDPUtils.splitSections(
-        this.remoteDescription.sdp).length - 1;
-    this.transceivers.forEach(function(transceiver, sdpMLineIndex) {
+        pc.remoteDescription.sdp).length - 1;
+    pc.transceivers.forEach(function(transceiver, sdpMLineIndex) {
       if (sdpMLineIndex + 1 > mediaSectionsInOffer) {
         return;
       }
@@ -1483,36 +1483,37 @@ module.exports = function(window, edgeVersion) {
   };
 
   RTCPeerConnection.prototype.addIceCandidate = function(candidate) {
+    var pc = this;
     var sections;
     if (!candidate || candidate.candidate === '') {
-      for (var j = 0; j < this.transceivers.length; j++) {
-        if (this.transceivers[j].isDatachannel) {
+      for (var j = 0; j < pc.transceivers.length; j++) {
+        if (pc.transceivers[j].isDatachannel) {
           continue;
         }
-        this.transceivers[j].iceTransport.addRemoteCandidate({});
-        sections = SDPUtils.splitSections(this.remoteDescription.sdp);
+        pc.transceivers[j].iceTransport.addRemoteCandidate({});
+        sections = SDPUtils.splitSections(pc.remoteDescription.sdp);
         sections[j + 1] += 'a=end-of-candidates\r\n';
-        this.remoteDescription.sdp = sections.join('');
-        if (this.usingBundle) {
+        pc.remoteDescription.sdp = sections.join('');
+        if (pc.usingBundle) {
           break;
         }
       }
     } else if (!(candidate.sdpMLineIndex !== undefined || candidate.sdpMid)) {
       throw new TypeError('sdpMLineIndex or sdpMid required');
-    } else if (!this.remoteDescription) {
+    } else if (!pc.remoteDescription) {
       return Promise.reject(makeError('InvalidStateError',
           'Can not add ICE candidate without a remote description'));
     } else {
       var sdpMLineIndex = candidate.sdpMLineIndex;
       if (candidate.sdpMid) {
-        for (var i = 0; i < this.transceivers.length; i++) {
-          if (this.transceivers[i].mid === candidate.sdpMid) {
+        for (var i = 0; i < pc.transceivers.length; i++) {
+          if (pc.transceivers[i].mid === candidate.sdpMid) {
             sdpMLineIndex = i;
             break;
           }
         }
       }
-      var transceiver = this.transceivers[sdpMLineIndex];
+      var transceiver = pc.transceivers[sdpMLineIndex];
       if (transceiver) {
         if (transceiver.isDatachannel) {
           return Promise.resolve();
@@ -1530,7 +1531,7 @@ module.exports = function(window, edgeVersion) {
         // when using bundle, avoid adding candidates to the wrong
         // ice transport. And avoid adding candidates added in the SDP.
         if (sdpMLineIndex === 0 || (sdpMLineIndex > 0 &&
-            transceiver.iceTransport !== this.transceivers[0].iceTransport)) {
+            transceiver.iceTransport !== pc.transceivers[0].iceTransport)) {
           if (!maybeAddCandidate(transceiver.iceTransport, cand)) {
             return Promise.reject(makeError('OperationError',
                 'Can not add ICE candidate'));
@@ -1542,11 +1543,11 @@ module.exports = function(window, edgeVersion) {
         if (candidateString.indexOf('a=') === 0) {
           candidateString = candidateString.substr(2);
         }
-        sections = SDPUtils.splitSections(this.remoteDescription.sdp);
+        sections = SDPUtils.splitSections(pc.remoteDescription.sdp);
         sections[sdpMLineIndex + 1] += 'a=' +
             (cand.type ? candidateString : 'end-of-candidates')
             + '\r\n';
-        this.remoteDescription.sdp = sections.join('');
+        pc.remoteDescription.sdp = sections.join('');
       } else {
         return Promise.reject(makeError('OperationError',
             'Can not add ICE candidate'));
