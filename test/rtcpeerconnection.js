@@ -2396,10 +2396,12 @@ describe('Edge shim', () => {
     });
 
     it('throws a TypeError when called without sdpMid or ' +
-        'sdpMLineIndex', () => {
-      expect(() => pc.addIceCandidate({candidate: candidateString}))
-          .to.throw()
-          .that.has.property('name').that.equals('TypeError');
+        'sdpMLineIndex', (done) => {
+      pc.addIceCandidate({})
+      .catch((e) => {
+        expect(e.name).to.equal('TypeError');
+        done();
+      });
     });
 
     describe('rejects with an OperationError when called with an', () => {
