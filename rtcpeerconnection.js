@@ -787,82 +787,82 @@ module.exports = function(window, edgeVersion) {
           ' in state ' + pc.signalingState));
     }
 
-    var sections;
-    var sessionpart;
-    if (description.type === 'offer') {
-      // VERY limited support for SDP munging. Limited to:
-      // * changing the order of codecs
-      sections = SDPUtils.splitSections(description.sdp);
-      sessionpart = sections.shift();
-      sections.forEach(function(mediaSection, sdpMLineIndex) {
-        var caps = SDPUtils.parseRtpParameters(mediaSection);
-        pc.transceivers[sdpMLineIndex].localCapabilities = caps;
-      });
+    return Promise.resolve().then(function() {
+      var sections;
+      var sessionpart;
+      if (description.type === 'offer') {
+        // VERY limited support for SDP munging. Limited to:
+        // * changing the order of codecs
+        sections = SDPUtils.splitSections(description.sdp);
+        sessionpart = sections.shift();
+        sections.forEach(function(mediaSection, sdpMLineIndex) {
+          var caps = SDPUtils.parseRtpParameters(mediaSection);
+          pc.transceivers[sdpMLineIndex].localCapabilities = caps;
+        });
 
-      pc.transceivers.forEach(function(transceiver, sdpMLineIndex) {
-        pc._gather(transceiver.mid, sdpMLineIndex);
-      });
-    } else if (description.type === 'answer') {
-      sections = SDPUtils.splitSections(pc.remoteDescription.sdp);
-      sessionpart = sections.shift();
-      var isIceLite = SDPUtils.matchPrefix(sessionpart,
-          'a=ice-lite').length > 0;
-      sections.forEach(function(mediaSection, sdpMLineIndex) {
-        var transceiver = pc.transceivers[sdpMLineIndex];
-        var iceGatherer = transceiver.iceGatherer;
-        var iceTransport = transceiver.iceTransport;
-        var dtlsTransport = transceiver.dtlsTransport;
-        var localCapabilities = transceiver.localCapabilities;
-        var remoteCapabilities = transceiver.remoteCapabilities;
+        pc.transceivers.forEach(function(transceiver, sdpMLineIndex) {
+          pc._gather(transceiver.mid, sdpMLineIndex);
+        });
+      } else if (description.type === 'answer') {
+        sections = SDPUtils.splitSections(pc.remoteDescription.sdp);
+        sessionpart = sections.shift();
+        var isIceLite = SDPUtils.matchPrefix(sessionpart,
+            'a=ice-lite').length > 0;
+        sections.forEach(function(mediaSection, sdpMLineIndex) {
+          var transceiver = pc.transceivers[sdpMLineIndex];
+          var iceGatherer = transceiver.iceGatherer;
+          var iceTransport = transceiver.iceTransport;
+          var dtlsTransport = transceiver.dtlsTransport;
+          var localCapabilities = transceiver.localCapabilities;
+          var remoteCapabilities = transceiver.remoteCapabilities;
 
-        // treat bundle-only as not-rejected.
-        var rejected = SDPUtils.isRejected(mediaSection) &&
-            SDPUtils.matchPrefix(mediaSection, 'a=bundle-only').length === 0;
+          // treat bundle-only as not-rejected.
+          var rejected = SDPUtils.isRejected(mediaSection) &&
+              SDPUtils.matchPrefix(mediaSection, 'a=bundle-only').length === 0;
 
-        if (!rejected && !transceiver.rejected) {
-          var remoteIceParameters = SDPUtils.getIceParameters(
-              mediaSection, sessionpart);
-          var remoteDtlsParameters = SDPUtils.getDtlsParameters(
-              mediaSection, sessionpart);
-          if (isIceLite) {
-            remoteDtlsParameters.role = 'server';
-          }
-
-          if (!pc.usingBundle || sdpMLineIndex === 0) {
-            pc._gather(transceiver.mid, sdpMLineIndex);
-            if (iceTransport.state === 'new') {
-              iceTransport.start(iceGatherer, remoteIceParameters,
-                  isIceLite ? 'controlling' : 'controlled');
+          if (!rejected && !transceiver.rejected) {
+            var remoteIceParameters = SDPUtils.getIceParameters(
+                mediaSection, sessionpart);
+            var remoteDtlsParameters = SDPUtils.getDtlsParameters(
+                mediaSection, sessionpart);
+            if (isIceLite) {
+              remoteDtlsParameters.role = 'server';
             }
-            if (dtlsTransport.state === 'new') {
-              dtlsTransport.start(remoteDtlsParameters);
+
+            if (!pc.usingBundle || sdpMLineIndex === 0) {
+              pc._gather(transceiver.mid, sdpMLineIndex);
+              if (iceTransport.state === 'new') {
+                iceTransport.start(iceGatherer, remoteIceParameters,
+                    isIceLite ? 'controlling' : 'controlled');
+              }
+              if (dtlsTransport.state === 'new') {
+                dtlsTransport.start(remoteDtlsParameters);
+              }
             }
+
+            // Calculate intersection of capabilities.
+            var params = getCommonCapabilities(localCapabilities,
+                remoteCapabilities);
+
+            // Start the RTCRtpSender. The RTCRtpReceiver for this
+            // transceiver has already been started in setRemoteDescription.
+            pc._transceive(transceiver,
+                params.codecs.length > 0,
+                false);
           }
+        });
+      }
 
-          // Calculate intersection of capabilities.
-          var params = getCommonCapabilities(localCapabilities,
-              remoteCapabilities);
-
-          // Start the RTCRtpSender. The RTCRtpReceiver for this
-          // transceiver has already been started in setRemoteDescription.
-          pc._transceive(transceiver,
-              params.codecs.length > 0,
-              false);
-        }
-      });
-    }
-
-    pc.localDescription = {
-      type: description.type,
-      sdp: description.sdp
-    };
-    if (description.type === 'offer') {
-      pc._updateSignalingState('have-local-offer');
-    } else {
-      pc._updateSignalingState('stable');
-    }
-
-    return Promise.resolve();
+      pc.localDescription = {
+        type: description.type,
+        sdp: description.sdp
+      };
+      if (description.type === 'offer') {
+        pc._updateSignalingState('have-local-offer');
+      } else {
+        pc._updateSignalingState('stable');
+      }
+    });
   };
 
   RTCPeerConnection.prototype.setRemoteDescription = function(description) {
