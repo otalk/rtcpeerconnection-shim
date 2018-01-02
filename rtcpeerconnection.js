@@ -1490,73 +1490,76 @@ module.exports = function(window, edgeVersion) {
       return Promise.reject(new TypeError('sdpMLineIndex or sdpMid required'));
     }
 
-    if (!pc.remoteDescription) {
-      return Promise.reject(makeError('InvalidStateError',
-          'Can not add ICE candidate without a remote description'));
-    } else if (!candidate || candidate.candidate === '') {
-      for (var j = 0; j < pc.transceivers.length; j++) {
-        if (pc.transceivers[j].isDatachannel) {
-          continue;
-        }
-        pc.transceivers[j].iceTransport.addRemoteCandidate({});
-        sections = SDPUtils.splitSections(pc.remoteDescription.sdp);
-        sections[j + 1] += 'a=end-of-candidates\r\n';
-        pc.remoteDescription.sdp = sections.join('');
-        if (pc.usingBundle) {
-          break;
-        }
-      }
-    } else {
-      var sdpMLineIndex = candidate.sdpMLineIndex;
-      if (candidate.sdpMid) {
-        for (var i = 0; i < pc.transceivers.length; i++) {
-          if (pc.transceivers[i].mid === candidate.sdpMid) {
-            sdpMLineIndex = i;
+    // TODO: needs to go into ops queue.
+    return new Promise(function(resolve, reject) {
+      if (!pc.remoteDescription) {
+        return reject(makeError('InvalidStateError',
+            'Can not add ICE candidate without a remote description'));
+      } else if (!candidate || candidate.candidate === '') {
+        for (var j = 0; j < pc.transceivers.length; j++) {
+          if (pc.transceivers[j].isDatachannel) {
+            continue;
+          }
+          pc.transceivers[j].iceTransport.addRemoteCandidate({});
+          sections = SDPUtils.splitSections(pc.remoteDescription.sdp);
+          sections[j + 1] += 'a=end-of-candidates\r\n';
+          pc.remoteDescription.sdp = sections.join('');
+          if (pc.usingBundle) {
             break;
           }
         }
-      }
-      var transceiver = pc.transceivers[sdpMLineIndex];
-      if (transceiver) {
-        if (transceiver.isDatachannel) {
-          return Promise.resolve();
-        }
-        var cand = Object.keys(candidate.candidate).length > 0 ?
-            SDPUtils.parseCandidate(candidate.candidate) : {};
-        // Ignore Chrome's invalid candidates since Edge does not like them.
-        if (cand.protocol === 'tcp' && (cand.port === 0 || cand.port === 9)) {
-          return Promise.resolve();
-        }
-        // Ignore RTCP candidates, we assume RTCP-MUX.
-        if (cand.component && cand.component !== 1) {
-          return Promise.resolve();
-        }
-        // when using bundle, avoid adding candidates to the wrong
-        // ice transport. And avoid adding candidates added in the SDP.
-        if (sdpMLineIndex === 0 || (sdpMLineIndex > 0 &&
-            transceiver.iceTransport !== pc.transceivers[0].iceTransport)) {
-          if (!maybeAddCandidate(transceiver.iceTransport, cand)) {
-            return Promise.reject(makeError('OperationError',
-                'Can not add ICE candidate'));
+      } else {
+        var sdpMLineIndex = candidate.sdpMLineIndex;
+        if (candidate.sdpMid) {
+          for (var i = 0; i < pc.transceivers.length; i++) {
+            if (pc.transceivers[i].mid === candidate.sdpMid) {
+              sdpMLineIndex = i;
+              break;
+            }
           }
         }
+        var transceiver = pc.transceivers[sdpMLineIndex];
+        if (transceiver) {
+          if (transceiver.isDatachannel) {
+            return resolve();
+          }
+          var cand = Object.keys(candidate.candidate).length > 0 ?
+              SDPUtils.parseCandidate(candidate.candidate) : {};
+          // Ignore Chrome's invalid candidates since Edge does not like them.
+          if (cand.protocol === 'tcp' && (cand.port === 0 || cand.port === 9)) {
+            return resolve();
+          }
+          // Ignore RTCP candidates, we assume RTCP-MUX.
+          if (cand.component && cand.component !== 1) {
+            return resolve();
+          }
+          // when using bundle, avoid adding candidates to the wrong
+          // ice transport. And avoid adding candidates added in the SDP.
+          if (sdpMLineIndex === 0 || (sdpMLineIndex > 0 &&
+              transceiver.iceTransport !== pc.transceivers[0].iceTransport)) {
+            if (!maybeAddCandidate(transceiver.iceTransport, cand)) {
+              return reject(makeError('OperationError',
+                  'Can not add ICE candidate'));
+            }
+          }
 
-        // update the remoteDescription.
-        var candidateString = candidate.candidate.trim();
-        if (candidateString.indexOf('a=') === 0) {
-          candidateString = candidateString.substr(2);
+          // update the remoteDescription.
+          var candidateString = candidate.candidate.trim();
+          if (candidateString.indexOf('a=') === 0) {
+            candidateString = candidateString.substr(2);
+          }
+          sections = SDPUtils.splitSections(pc.remoteDescription.sdp);
+          sections[sdpMLineIndex + 1] += 'a=' +
+              (cand.type ? candidateString : 'end-of-candidates')
+              + '\r\n';
+          pc.remoteDescription.sdp = sections.join('');
+        } else {
+          return reject(makeError('OperationError',
+              'Can not add ICE candidate'));
         }
-        sections = SDPUtils.splitSections(pc.remoteDescription.sdp);
-        sections[sdpMLineIndex + 1] += 'a=' +
-            (cand.type ? candidateString : 'end-of-candidates')
-            + '\r\n';
-        pc.remoteDescription.sdp = sections.join('');
-      } else {
-        return Promise.reject(makeError('OperationError',
-            'Can not add ICE candidate'));
       }
-    }
-    return Promise.resolve();
+      resolve();
+    });
   };
 
   RTCPeerConnection.prototype.getStats = function() {
