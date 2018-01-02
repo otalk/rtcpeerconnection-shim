@@ -36,7 +36,7 @@ function writeMediaSection(transceiver, caps, type, stream, dtlsRole) {
 
   if (transceiver.rtpSender) {
     // spec.
-    var msid = 'msid:' + stream.id + ' ' +
+    var msid = 'msid:' + (stream ? stream.id : '-') + ' ' +
         transceiver.rtpSender.track.id + '\r\n';
     sdp += 'a=' + msid;
 
