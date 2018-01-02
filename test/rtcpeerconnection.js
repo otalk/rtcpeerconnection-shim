@@ -1701,6 +1701,26 @@ describe('Edge shim', () => {
       });
     });
 
+    describe('when called immediately before addTrack', () => {
+      describe('with an audio track', () => {
+        it('the generated SDP should contain a sendrecv ' +
+           'audio m-line', (done) => {
+          navigator.mediaDevices.getUserMedia({audio: true})
+          .then((stream) => {
+            const p = pc.createOffer();
+            pc.addTrack(stream.getAudioTracks()[0], stream);
+            return p;
+          })
+          .then((offer) => {
+            const sections = SDPUtils.splitSections(offer.sdp);
+            expect(sections.length).to.equal(2);
+            expect(SDPUtils.getDirection(sections[1])).to.equal('sendrecv');
+            done();
+          });
+        });
+      });
+    });
+
     describe('when called subsequently', () => {
       let clock;
       beforeEach(() => {

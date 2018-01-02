@@ -1347,175 +1347,179 @@ module.exports = function(window, edgeVersion) {
           'Can not call createOffer after close'));
     }
 
-    var numAudioTracks = pc.transceivers.filter(function(t) {
-      return t.kind === 'audio';
-    }).length;
-    var numVideoTracks = pc.transceivers.filter(function(t) {
-      return t.kind === 'video';
-    }).length;
-
-    // Determine number of audio and video tracks we need to send/recv.
     var offerOptions = arguments[0];
-    if (offerOptions) {
-      // Reject Chrome legacy constraints.
-      if (offerOptions.mandatory || offerOptions.optional) {
-        throw new TypeError(
-            'Legacy mandatory/optional constraints not supported.');
-      }
-      if (offerOptions.offerToReceiveAudio !== undefined) {
-        if (offerOptions.offerToReceiveAudio === true) {
-          numAudioTracks = 1;
-        } else if (offerOptions.offerToReceiveAudio === false) {
-          numAudioTracks = 0;
-        } else {
-          numAudioTracks = offerOptions.offerToReceiveAudio;
-        }
-      }
-      if (offerOptions.offerToReceiveVideo !== undefined) {
-        if (offerOptions.offerToReceiveVideo === true) {
-          numVideoTracks = 1;
-        } else if (offerOptions.offerToReceiveVideo === false) {
-          numVideoTracks = 0;
-        } else {
-          numVideoTracks = offerOptions.offerToReceiveVideo;
-        }
-      }
+    if (offerOptions && (offerOptions.mandatory || offerOptions.optional)) {
+      // Reject Chrome legacy constraints
+      throw new TypeError(
+          'Legacy mandatory/optional constraints not supported.');
     }
+    return Promise.resolve().then(function() {
+      var numAudioTracks = pc.transceivers.filter(function(t) {
+        return t.kind === 'audio';
+      }).length;
+      var numVideoTracks = pc.transceivers.filter(function(t) {
+        return t.kind === 'video';
+      }).length;
 
-    pc.transceivers.forEach(function(transceiver) {
-      if (transceiver.kind === 'audio') {
-        numAudioTracks--;
-        if (numAudioTracks < 0) {
-          transceiver.wantReceive = false;
+      // Determine number of audio and video tracks we need to send/recv.
+      if (offerOptions) {
+        if (offerOptions.offerToReceiveAudio !== undefined) {
+          if (offerOptions.offerToReceiveAudio === true) {
+            numAudioTracks = 1;
+          } else if (offerOptions.offerToReceiveAudio === false) {
+            numAudioTracks = 0;
+          } else {
+            numAudioTracks = offerOptions.offerToReceiveAudio;
+          }
         }
-      } else if (transceiver.kind === 'video') {
-        numVideoTracks--;
-        if (numVideoTracks < 0) {
-          transceiver.wantReceive = false;
+        if (offerOptions.offerToReceiveVideo !== undefined) {
+          if (offerOptions.offerToReceiveVideo === true) {
+            numVideoTracks = 1;
+          } else if (offerOptions.offerToReceiveVideo === false) {
+            numVideoTracks = 0;
+          } else {
+            numVideoTracks = offerOptions.offerToReceiveVideo;
+          }
         }
       }
-    });
 
-    // Create M-lines for recvonly streams.
-    while (numAudioTracks > 0 || numVideoTracks > 0) {
-      if (numAudioTracks > 0) {
-        pc._createTransceiver('audio');
-        numAudioTracks--;
-      }
-      if (numVideoTracks > 0) {
-        pc._createTransceiver('video');
-        numVideoTracks--;
-      }
-    }
-
-    var sdp = SDPUtils.writeSessionBoilerplate(pc._sdpSessionId,
-        pc._sdpSessionVersion++);
-    pc.transceivers.forEach(function(transceiver, sdpMLineIndex) {
-      // For each track, create an ice gatherer, ice transport,
-      // dtls transport, potentially rtpsender and rtpreceiver.
-      var track = transceiver.track;
-      var kind = transceiver.kind;
-      var mid = transceiver.mid || SDPUtils.generateIdentifier();
-      transceiver.mid = mid;
-
-      if (!transceiver.iceGatherer) {
-        transceiver.iceGatherer = pc._createIceGatherer(sdpMLineIndex,
-            pc.usingBundle);
-      }
-
-      var localCapabilities = window.RTCRtpSender.getCapabilities(kind);
-      // filter RTX until additional stuff needed for RTX is implemented
-      // in adapter.js
-      if (edgeVersion < 15019) {
-        localCapabilities.codecs = localCapabilities.codecs.filter(
-            function(codec) {
-              return codec.name !== 'rtx';
-            });
-      }
-      localCapabilities.codecs.forEach(function(codec) {
-        // work around https://bugs.chromium.org/p/webrtc/issues/detail?id=6552
-        // by adding level-asymmetry-allowed=1
-        if (codec.name === 'H264' &&
-            codec.parameters['level-asymmetry-allowed'] === undefined) {
-          codec.parameters['level-asymmetry-allowed'] = '1';
-        }
-
-        // for subsequent offers, we might have to re-use the payload
-        // type of the last offer.
-        if (transceiver.remoteCapabilities &&
-            transceiver.remoteCapabilities.codecs) {
-          transceiver.remoteCapabilities.codecs.forEach(function(remoteCodec) {
-            if (codec.name.toLowerCase() === remoteCodec.name.toLowerCase() &&
-                codec.clockRate === remoteCodec.clockRate) {
-              codec.preferredPayloadType = remoteCodec.payloadType;
-            }
-          });
+      pc.transceivers.forEach(function(transceiver) {
+        if (transceiver.kind === 'audio') {
+          numAudioTracks--;
+          if (numAudioTracks < 0) {
+            transceiver.wantReceive = false;
+          }
+        } else if (transceiver.kind === 'video') {
+          numVideoTracks--;
+          if (numVideoTracks < 0) {
+            transceiver.wantReceive = false;
+          }
         }
       });
-      localCapabilities.headerExtensions.forEach(function(hdrExt) {
-        var remoteExtensions = transceiver.remoteCapabilities &&
-            transceiver.remoteCapabilities.headerExtensions || [];
-        remoteExtensions.forEach(function(rHdrExt) {
-          if (hdrExt.uri === rHdrExt.uri) {
-            hdrExt.id = rHdrExt.id;
+
+      // Create M-lines for recvonly streams.
+      while (numAudioTracks > 0 || numVideoTracks > 0) {
+        if (numAudioTracks > 0) {
+          pc._createTransceiver('audio');
+          numAudioTracks--;
+        }
+        if (numVideoTracks > 0) {
+          pc._createTransceiver('video');
+          numVideoTracks--;
+        }
+      }
+
+      var sdp = SDPUtils.writeSessionBoilerplate(pc._sdpSessionId,
+          pc._sdpSessionVersion++);
+      pc.transceivers.forEach(function(transceiver, sdpMLineIndex) {
+        // For each track, create an ice gatherer, ice transport,
+        // dtls transport, potentially rtpsender and rtpreceiver.
+        var track = transceiver.track;
+        var kind = transceiver.kind;
+        var mid = transceiver.mid || SDPUtils.generateIdentifier();
+        transceiver.mid = mid;
+
+        if (!transceiver.iceGatherer) {
+          transceiver.iceGatherer = pc._createIceGatherer(sdpMLineIndex,
+              pc.usingBundle);
+        }
+
+        var localCapabilities = window.RTCRtpSender.getCapabilities(kind);
+        // filter RTX until additional stuff needed for RTX is implemented
+        // in adapter.js
+        if (edgeVersion < 15019) {
+          localCapabilities.codecs = localCapabilities.codecs.filter(
+              function(codec) {
+                return codec.name !== 'rtx';
+              });
+        }
+
+        localCapabilities.codecs.forEach(function(codec) {
+          // work around https://bugs.chromium.org/p/webrtc/issues/detail?id=6552
+          // by adding level-asymmetry-allowed=1
+          if (codec.name === 'H264' &&
+              codec.parameters['level-asymmetry-allowed'] === undefined) {
+            codec.parameters['level-asymmetry-allowed'] = '1';
+          }
+
+          // for subsequent offers, we might have to re-use the payload
+          // type of the last offer.
+          var remoteCapabilities = transceiver.remoteCapabilities;
+          if (remoteCapabilities && remoteCapabilities.codecs) {
+            remoteCapabilities.codecs.forEach(function(remoteCodec) {
+              if (codec.name.toLowerCase() === remoteCodec.name.toLowerCase() &&
+                  codec.clockRate === remoteCodec.clockRate) {
+                codec.preferredPayloadType = remoteCodec.payloadType;
+              }
+            });
           }
         });
-      });
 
-      // generate an ssrc now, to be used later in rtpSender.send
-      var sendEncodingParameters = transceiver.sendEncodingParameters || [{
-        ssrc: (2 * sdpMLineIndex + 1) * 1001
-      }];
-      if (track) {
-        // add RTX
-        if (edgeVersion >= 15019 && kind === 'video' &&
-            !sendEncodingParameters[0].rtx) {
-          sendEncodingParameters[0].rtx = {
-            ssrc: sendEncodingParameters[0].ssrc + 1
-          };
-        }
-      }
-
-      if (transceiver.wantReceive) {
-        transceiver.rtpReceiver = new window.RTCRtpReceiver(
-            transceiver.dtlsTransport, kind);
-      }
-
-      transceiver.localCapabilities = localCapabilities;
-      transceiver.sendEncodingParameters = sendEncodingParameters;
-    });
-
-    // always offer BUNDLE and dispose on return if not supported.
-    if (pc._config.bundlePolicy !== 'max-compat') {
-      sdp += 'a=group:BUNDLE ' + pc.transceivers.map(function(t) {
-        return t.mid;
-      }).join(' ') + '\r\n';
-    }
-    sdp += 'a=ice-options:trickle\r\n';
-
-    pc.transceivers.forEach(function(transceiver, sdpMLineIndex) {
-      sdp += writeMediaSection(transceiver, transceiver.localCapabilities,
-          'offer', transceiver.stream, pc._dtlsRole);
-      sdp += 'a=rtcp-rsize\r\n';
-
-      if (transceiver.iceGatherer && pc.iceGatheringState !== 'new' &&
-          (sdpMLineIndex === 0 || !pc.usingBundle)) {
-        transceiver.iceGatherer.getLocalCandidates().forEach(function(cand) {
-          cand.component = 1;
-          sdp += 'a=' + SDPUtils.writeCandidate(cand) + '\r\n';
+        localCapabilities.headerExtensions.forEach(function(hdrExt) {
+          var remoteExtensions = transceiver.remoteCapabilities &&
+              transceiver.remoteCapabilities.headerExtensions || [];
+          remoteExtensions.forEach(function(rHdrExt) {
+            if (hdrExt.uri === rHdrExt.uri) {
+              hdrExt.id = rHdrExt.id;
+            }
+          });
         });
 
-        if (transceiver.iceGatherer.state === 'completed') {
-          sdp += 'a=end-of-candidates\r\n';
+        // generate an ssrc now, to be used later in rtpSender.send
+        var sendEncodingParameters = transceiver.sendEncodingParameters || [{
+          ssrc: (2 * sdpMLineIndex + 1) * 1001
+        }];
+        if (track) {
+          // add RTX
+          if (edgeVersion >= 15019 && kind === 'video' &&
+              !sendEncodingParameters[0].rtx) {
+            sendEncodingParameters[0].rtx = {
+              ssrc: sendEncodingParameters[0].ssrc + 1
+            };
+          }
         }
-      }
-    });
 
-    var desc = new window.RTCSessionDescription({
-      type: 'offer',
-      sdp: sdp
+        if (transceiver.wantReceive) {
+          transceiver.rtpReceiver = new window.RTCRtpReceiver(
+              transceiver.dtlsTransport, kind);
+        }
+
+        transceiver.localCapabilities = localCapabilities;
+        transceiver.sendEncodingParameters = sendEncodingParameters;
+      });
+
+      // always offer BUNDLE and dispose on return if not supported.
+      if (pc._config.bundlePolicy !== 'max-compat') {
+        sdp += 'a=group:BUNDLE ' + pc.transceivers.map(function(t) {
+          return t.mid;
+        }).join(' ') + '\r\n';
+      }
+      sdp += 'a=ice-options:trickle\r\n';
+
+      pc.transceivers.forEach(function(transceiver, sdpMLineIndex) {
+        sdp += writeMediaSection(transceiver, transceiver.localCapabilities,
+            'offer', transceiver.stream, pc._dtlsRole);
+        sdp += 'a=rtcp-rsize\r\n';
+
+        if (transceiver.iceGatherer && pc.iceGatheringState !== 'new' &&
+            (sdpMLineIndex === 0 || !pc.usingBundle)) {
+          transceiver.iceGatherer.getLocalCandidates().forEach(function(cand) {
+            cand.component = 1;
+            sdp += 'a=' + SDPUtils.writeCandidate(cand) + '\r\n';
+          });
+
+          if (transceiver.iceGatherer.state === 'completed') {
+            sdp += 'a=end-of-candidates\r\n';
+          }
+        }
+      });
+
+      var desc = new window.RTCSessionDescription({
+        type: 'offer',
+        sdp: sdp
+      });
+      return desc;
     });
-    return Promise.resolve(desc);
   };
 
   RTCPeerConnection.prototype.createAnswer = function() {
