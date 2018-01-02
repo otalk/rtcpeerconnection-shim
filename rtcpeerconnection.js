@@ -1485,7 +1485,15 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.addIceCandidate = function(candidate) {
     var pc = this;
     var sections;
-    if (!candidate || candidate.candidate === '') {
+    if (candidate && !(candidate.sdpMLineIndex !== undefined ||
+        candidate.sdpMid)) {
+      return Promise.reject(new TypeError('sdpMLineIndex or sdpMid required'));
+    }
+
+    if (!pc.remoteDescription) {
+      return Promise.reject(makeError('InvalidStateError',
+          'Can not add ICE candidate without a remote description'));
+    } else if (!candidate || candidate.candidate === '') {
       for (var j = 0; j < pc.transceivers.length; j++) {
         if (pc.transceivers[j].isDatachannel) {
           continue;
@@ -1498,11 +1506,6 @@ module.exports = function(window, edgeVersion) {
           break;
         }
       }
-    } else if (!(candidate.sdpMLineIndex !== undefined || candidate.sdpMid)) {
-      throw new TypeError('sdpMLineIndex or sdpMid required');
-    } else if (!pc.remoteDescription) {
-      return Promise.reject(makeError('InvalidStateError',
-          'Can not add ICE candidate without a remote description'));
     } else {
       var sdpMLineIndex = candidate.sdpMLineIndex;
       if (candidate.sdpMid) {
