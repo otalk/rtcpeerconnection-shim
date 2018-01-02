@@ -653,7 +653,7 @@ module.exports = function(window, edgeVersion) {
       pc._updateConnectionState();
     };
     dtlsTransport.onerror = function() {
-      // onerror does not set state to failed by itpc.
+      // onerror does not set state to failed by itself.
       Object.defineProperty(dtlsTransport, 'state',
           {value: 'failed', writable: true});
       pc._updateConnectionState();
