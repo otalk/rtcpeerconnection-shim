@@ -1624,10 +1624,9 @@ module.exports = function(window, edgeVersion) {
       return Promise.reject(new TypeError('sdpMLineIndex or sdpMid required'));
     }
 
-    // TODO: needs to go into ops queue.
-    return new Promise(function(resolve, reject) {
+    return Promise.resolve().then(function() {
       if (!pc.remoteDescription) {
-        return reject(makeError('InvalidStateError',
+        return Promise.reject(makeError('InvalidStateError',
             'Can not add ICE candidate without a remote description'));
       } else if (!candidate || candidate.candidate === '') {
         for (var j = 0; j < pc.transceivers.length; j++) {
@@ -1657,24 +1656,24 @@ module.exports = function(window, edgeVersion) {
         var transceiver = pc.transceivers[sdpMLineIndex];
         if (transceiver) {
           if (transceiver.rejected) {
-            return resolve();
+            return;
           }
           var cand = Object.keys(candidate.candidate).length > 0 ?
               SDPUtils.parseCandidate(candidate.candidate) : {};
           // Ignore Chrome's invalid candidates since Edge does not like them.
           if (cand.protocol === 'tcp' && (cand.port === 0 || cand.port === 9)) {
-            return resolve();
+            return;
           }
           // Ignore RTCP candidates, we assume RTCP-MUX.
           if (cand.component && cand.component !== 1) {
-            return resolve();
+            return;
           }
           // when using bundle, avoid adding candidates to the wrong
           // ice transport. And avoid adding candidates added in the SDP.
           if (sdpMLineIndex === 0 || (sdpMLineIndex > 0 &&
               transceiver.iceTransport !== pc.transceivers[0].iceTransport)) {
             if (!maybeAddCandidate(transceiver.iceTransport, cand)) {
-              return reject(makeError('OperationError',
+              return Promise.reject(makeError('OperationError',
                   'Can not add ICE candidate'));
             }
           }
@@ -1692,11 +1691,10 @@ module.exports = function(window, edgeVersion) {
               SDPUtils.getDescription(pc.remoteDescription.sdp) +
               sections.join('');
         } else {
-          return reject(makeError('OperationError',
+          return Promise.reject(makeError('OperationError',
               'Can not add ICE candidate'));
         }
       }
-      resolve();
     });
   };
 
