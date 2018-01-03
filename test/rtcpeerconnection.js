@@ -1601,6 +1601,24 @@ describe('Edge shim', () => {
           });
         });
       });
+
+      describe('with an audio track but no stream', () => {
+        it('creates an offer with msid stream set to "-"', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true})
+          .then((stream) => {
+            stream.getTracks().forEach((track) => {
+              pc.addTrack(track);
+            });
+            return pc.createOffer();
+          })
+          .then((offer) => {
+            const sections = SDPUtils.splitSections(offer.sdp);
+            expect(sections.length).to.equal(2);
+            const msid = SDPUtils.parseMsid(sections[1]);
+            expect(msid.stream).to.equal('-');
+          });
+        });
+      });
     });
 
     describe('when called subsequently', () => {
