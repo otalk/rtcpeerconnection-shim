@@ -1702,6 +1702,19 @@ describe('Edge shim', () => {
           expect(SDPUtils.getMid(sections[1])).to.equal('audio1');
         });
       });
+
+      it('retains the offerer payload types', () => {
+        return pc.setRemoteDescription({type: 'offer',
+            sdp: sdp.replace(/111/g, 98)
+        })
+        .then(() => pc.createAnswer())
+        .then((answer) => pc.setLocalDescription(answer))
+        .then(() => pc.createOffer())
+        .then((offer) => {
+          expect(offer.sdp).to.contain('a=rtpmap:98 opus');
+          expect(offer.sdp).not.to.contain('a=rtpmap:111 opus');
+        });
+      });
     });
   });
 
