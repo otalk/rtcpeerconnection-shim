@@ -1326,7 +1326,7 @@ module.exports = function(window, edgeVersion) {
       // dtls transport, potentially rtpsender and rtpreceiver.
       var track = transceiver.track;
       var kind = transceiver.kind;
-      var mid = SDPUtils.generateIdentifier();
+      var mid = transceiver.mid || SDPUtils.generateIdentifier();
       transceiver.mid = mid;
 
       if (!transceiver.iceGatherer) {
