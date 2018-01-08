@@ -1689,6 +1689,20 @@ describe('Edge shim', () => {
         });
       });
     });
+
+    describe('when called after SRD+createAnswer reversing the roles', () => {
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+      it('retains the MID attribute', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp})
+        .then(() => pc.createAnswer())
+        .then((answer) => pc.setLocalDescription(answer))
+        .then(() => pc.createOffer())
+        .then((offer) => {
+          const sections = SDPUtils.splitSections(offer.sdp);
+          expect(SDPUtils.getMid(sections[1])).to.equal('audio1');
+        });
+      });
+    });
   });
 
   describe('createAnswer', () => {
