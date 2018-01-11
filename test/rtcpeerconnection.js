@@ -1692,6 +1692,7 @@ describe('Edge shim', () => {
 
     describe('when called after SRD+createAnswer reversing the roles', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+
       it('retains the MID attribute', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => pc.createAnswer())
@@ -1713,6 +1714,35 @@ describe('Edge shim', () => {
         .then((offer) => {
           expect(offer.sdp).to.contain('a=rtpmap:98 opus');
           expect(offer.sdp).not.to.contain('a=rtpmap:111 opus');
+        });
+      });
+
+      it('retains the offerer extmap ids', () => {
+        const extmapUri = 'http://www.webrtc.org/experiments/' +
+            'rtp-hdrext/abs-send-time';
+        const videoSdp = SDP_BOILERPLATE +
+          'm=video 9 UDP/TLS/RTP/SAVPF 102\r\n' +
+          'c=IN IP4 0.0.0.0\r\n' +
+          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+          'a=ice-pwd:' + ICEPWD + '\r\n' +
+          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+          'a=setup:actpass\r\n' +
+          'a=mid:video1\r\n' +
+          'a=sendrecv\r\n' +
+          'a=rtcp-mux\r\n' +
+          'a=rtcp-rsize\r\n' +
+          'a=rtpmap:102 vp8/90000\r\n' +
+          'a=ssrc:1001 msid:stream1 track1\r\n' +
+          'a=ssrc:1001 cname:some\r\n' +
+          'a=extmap:5 ' + extmapUri + '\r\n';
+
+        return pc.setRemoteDescription({type: 'offer', sdp: videoSdp})
+        .then(() => pc.createAnswer())
+        .then((answer) => pc.setLocalDescription(answer))
+        .then(() => pc.createOffer())
+        .then((offer) => {
+          expect(offer.sdp).to.contain('a=extmap:5 ' + extmapUri + '\r\n');
         });
       });
     });
