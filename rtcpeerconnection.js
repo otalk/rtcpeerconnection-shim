@@ -1363,6 +1363,15 @@ module.exports = function(window, edgeVersion) {
           });
         }
       });
+      localCapabilities.headerExtensions.forEach(function(hdrExt) {
+        var remoteExtensions = transceiver.remoteCapabilities &&
+            transceiver.remoteCapabilities.headerExtensions || [];
+        remoteExtensions.forEach(function(rHdrExt) {
+          if (hdrExt.uri === rHdrExt.uri) {
+            hdrExt.id = rHdrExt.id;
+          }
+        });
+      });
 
       // generate an ssrc now, to be used later in rtpSender.send
       var sendEncodingParameters = transceiver.sendEncodingParameters || [{
