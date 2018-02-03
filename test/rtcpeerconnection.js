@@ -1203,9 +1203,9 @@ describe('Edge shim', () => {
       it('= true the generated SDP should contain one audio m-line', (done) => {
         pc.createOffer({offerToReceiveAudio: true})
         .then((offer) => {
-          const sections = SDPUtils.splitSections(offer.sdp);
-          expect(sections.length).to.equal(2);
-          expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+          const sections = SDPUtils.getMediaSections(offer.sdp);
+          expect(sections.length).to.equal(1);
+          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
           done();
         });
       });
@@ -1214,10 +1214,10 @@ describe('Edge shim', () => {
       it('= 2 the generated SDP should contain two audio m-lines', (done) => {
         pc.createOffer({offerToReceiveAudio: 2})
         .then((offer) => {
-          const sections = SDPUtils.splitSections(offer.sdp);
-          expect(sections.length).to.equal(3);
+          const sections = SDPUtils.getMediaSections(offer.sdp);
+          expect(sections.length).to.equal(2);
+          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
           expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
-          expect(SDPUtils.getDirection(sections[2])).to.equal('recvonly');
           done();
         });
       });
@@ -1225,9 +1225,9 @@ describe('Edge shim', () => {
       it('= true the generated SDP should contain one audio m-line', (done) => {
         pc.createOffer({offerToReceiveAudio: true})
         .then((offer) => {
-          const sections = SDPUtils.splitSections(offer.sdp);
-          expect(sections.length).to.equal(2);
-          expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+          const sections = SDPUtils.getMediaSections(offer.sdp);
+          expect(sections.length).to.equal(1);
+          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
           done();
         });
       });
@@ -1240,9 +1240,9 @@ describe('Edge shim', () => {
           return pc.createOffer({offerToReceiveAudio: false});
         })
         .then((offer) => {
-          const sections = SDPUtils.splitSections(offer.sdp);
-          expect(sections.length).to.equal(2);
-          expect(SDPUtils.getDirection(sections[1])).to.equal('sendonly');
+          const sections = SDPUtils.getMediaSections(offer.sdp);
+          expect(sections.length).to.equal(1);
+          expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
           done();
         });
       });
@@ -1252,8 +1252,8 @@ describe('Edge shim', () => {
         // see https://github.com/rtcweb-wg/jsep/issues/832
         pc.createOffer({offerToReceiveAudio: false})
         .then((offer) => {
-          const sections = SDPUtils.splitSections(offer.sdp);
-          expect(sections).to.have.length(1);
+          const sections = SDPUtils.getMediaSections(offer.sdp);
+          expect(sections).to.have.length(0);
           done();
         });
       });
@@ -1263,9 +1263,9 @@ describe('Edge shim', () => {
       it('= true the generated SDP should contain one video m-line', (done) => {
         pc.createOffer({offerToReceiveVideo: true})
         .then((offer) => {
-          const sections = SDPUtils.splitSections(offer.sdp);
-          expect(sections.length).to.equal(2);
-          expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+          const sections = SDPUtils.getMediaSections(offer.sdp);
+          expect(sections.length).to.equal(1);
+          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
           done();
         });
       });
@@ -1274,10 +1274,10 @@ describe('Edge shim', () => {
       it('= 2 the generated SDP should contain two video m-lines', (done) => {
         pc.createOffer({offerToReceiveVideo: 2})
         .then((offer) => {
-          const sections = SDPUtils.splitSections(offer.sdp);
-          expect(sections.length).to.equal(3);
+          const sections = SDPUtils.getMediaSections(offer.sdp);
+          expect(sections.length).to.equal(2);
+          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
           expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
-          expect(SDPUtils.getDirection(sections[2])).to.equal('recvonly');
           done();
         });
       });
@@ -1285,9 +1285,9 @@ describe('Edge shim', () => {
       it('= true the generated SDP should contain one video m-line', (done) => {
         pc.createOffer({offerToReceiveVideo: true})
         .then((offer) => {
-          const sections = SDPUtils.splitSections(offer.sdp);
-          expect(sections.length).to.equal(2);
-          expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+          const sections = SDPUtils.getMediaSections(offer.sdp);
+          expect(sections.length).to.equal(1);
+          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
           done();
         });
       });
@@ -1300,9 +1300,9 @@ describe('Edge shim', () => {
           return pc.createOffer({offerToReceiveVideo: false});
         })
         .then((offer) => {
-          const sections = SDPUtils.splitSections(offer.sdp);
-          expect(sections.length).to.equal(2);
-          expect(SDPUtils.getDirection(sections[1])).to.equal('sendonly');
+          const sections = SDPUtils.getMediaSections(offer.sdp);
+          expect(sections.length).to.equal(1);
+          expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
           done();
         });
       });
@@ -1312,8 +1312,8 @@ describe('Edge shim', () => {
         // see https://github.com/rtcweb-wg/jsep/issues/832
         pc.createOffer({offerToReceiveVideo: false})
         .then((offer) => {
-          const sections = SDPUtils.splitSections(offer.sdp);
-          expect(sections).to.have.length(1);
+          const sections = SDPUtils.getMediaSections(offer.sdp);
+          expect(sections).to.have.length(0);
           done();
         });
       });
@@ -1324,12 +1324,12 @@ describe('Edge shim', () => {
       it('the generated SDP should contain two m-lines', (done) => {
         pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true})
         .then((offer) => {
-          const sections = SDPUtils.splitSections(offer.sdp);
-          expect(sections.length).to.equal(3);
+          const sections = SDPUtils.getMediaSections(offer.sdp);
+          expect(sections.length).to.equal(2);
+          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
+          expect(SDPUtils.getKind(sections[0])).to.equal('audio');
           expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
-          expect(SDPUtils.getKind(sections[1])).to.equal('audio');
-          expect(SDPUtils.getDirection(sections[2])).to.equal('recvonly');
-          expect(SDPUtils.getKind(sections[2])).to.equal('video');
+          expect(SDPUtils.getKind(sections[1])).to.equal('video');
           done();
         });
       });
@@ -1344,9 +1344,9 @@ describe('Edge shim', () => {
             return pc.createOffer();
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(2);
-            expect(SDPUtils.getDirection(sections[1])).to.equal('sendrecv');
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(1);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
             done();
           });
         });
@@ -1361,9 +1361,9 @@ describe('Edge shim', () => {
             return pc.createOffer({offerToReceiveAudio: false});
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(2);
-            expect(SDPUtils.getDirection(sections[1])).to.equal('sendonly');
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(1);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
             done();
           });
         });
@@ -1377,12 +1377,12 @@ describe('Edge shim', () => {
             return pc.createOffer({offerToReceiveVideo: true});
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(3);
-            expect(SDPUtils.getKind(sections[1])).to.equal('audio');
-            expect(SDPUtils.getDirection(sections[1])).to.equal('sendrecv');
-            expect(SDPUtils.getKind(sections[2])).to.equal('video');
-            expect(SDPUtils.getDirection(sections[2])).to.equal('recvonly');
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(2);
+            expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+            expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
+            expect(SDPUtils.getKind(sections[1])).to.equal('video');
+            expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
             done();
           });
         });
@@ -1396,9 +1396,9 @@ describe('Edge shim', () => {
             return pc.createOffer();
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(2);
-            expect(SDPUtils.getKind(sections[1])).to.equal('video');
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(1);
+            expect(SDPUtils.getKind(sections[0])).to.equal('video');
             done();
           });
         });
@@ -1413,10 +1413,10 @@ describe('Edge shim', () => {
             return pc.createOffer({offerToReceiveAudio: true});
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(3);
-            expect(SDPUtils.getKind(sections[1])).to.equal('video');
-            expect(SDPUtils.getKind(sections[2])).to.equal('audio');
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(2);
+            expect(SDPUtils.getKind(sections[0])).to.equal('video');
+            expect(SDPUtils.getKind(sections[1])).to.equal('audio');
             done();
           });
         });
@@ -1432,10 +1432,10 @@ describe('Edge shim', () => {
             return pc.createOffer();
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(3);
-            expect(SDPUtils.getKind(sections[1])).to.equal('audio');
-            expect(SDPUtils.getKind(sections[2])).to.equal('video');
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(2);
+            expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+            expect(SDPUtils.getKind(sections[1])).to.equal('video');
             done();
           });
         });
@@ -1454,11 +1454,11 @@ describe('Edge shim', () => {
             return pc.createOffer();
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(4);
-            expect(SDPUtils.getKind(sections[1])).to.equal('audio');
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(3);
+            expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+            expect(SDPUtils.getKind(sections[1])).to.equal('video');
             expect(SDPUtils.getKind(sections[2])).to.equal('video');
-            expect(SDPUtils.getKind(sections[3])).to.equal('video');
             done();
           });
         });
@@ -1475,9 +1475,9 @@ describe('Edge shim', () => {
             return pc.createOffer();
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(2);
-            expect(SDPUtils.getDirection(sections[1])).to.equal('sendrecv');
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(1);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
             done();
           });
         });
@@ -1492,9 +1492,9 @@ describe('Edge shim', () => {
             return pc.createOffer({offerToReceiveAudio: false});
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(2);
-            expect(SDPUtils.getDirection(sections[1])).to.equal('sendonly');
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(1);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
             done();
           });
         });
@@ -1509,12 +1509,12 @@ describe('Edge shim', () => {
             return pc.createOffer({offerToReceiveVideo: true});
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(3);
-            expect(SDPUtils.getKind(sections[1])).to.equal('audio');
-            expect(SDPUtils.getDirection(sections[1])).to.equal('sendrecv');
-            expect(SDPUtils.getKind(sections[2])).to.equal('video');
-            expect(SDPUtils.getDirection(sections[2])).to.equal('recvonly');
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(2);
+            expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+            expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
+            expect(SDPUtils.getKind(sections[1])).to.equal('video');
+            expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
             done();
           });
         });
@@ -1528,9 +1528,9 @@ describe('Edge shim', () => {
             return pc.createOffer();
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(2);
-            expect(SDPUtils.getKind(sections[1])).to.equal('video');
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(1);
+            expect(SDPUtils.getKind(sections[0])).to.equal('video');
             done();
           });
         });
@@ -1545,10 +1545,10 @@ describe('Edge shim', () => {
             return pc.createOffer({offerToReceiveAudio: true});
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(3);
-            expect(SDPUtils.getKind(sections[1])).to.equal('video');
-            expect(SDPUtils.getKind(sections[2])).to.equal('audio');
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(2);
+            expect(SDPUtils.getKind(sections[0])).to.equal('video');
+            expect(SDPUtils.getKind(sections[1])).to.equal('audio');
             done();
           });
         });
@@ -1566,10 +1566,10 @@ describe('Edge shim', () => {
             return pc.createOffer();
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(3);
-            expect(SDPUtils.getKind(sections[1])).to.equal('audio');
-            expect(SDPUtils.getKind(sections[2])).to.equal('video');
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(2);
+            expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+            expect(SDPUtils.getKind(sections[1])).to.equal('video');
             done();
           });
         });
@@ -1592,11 +1592,11 @@ describe('Edge shim', () => {
             return pc.createOffer();
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(4);
-            expect(SDPUtils.getKind(sections[1])).to.equal('audio');
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(3);
+            expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+            expect(SDPUtils.getKind(sections[1])).to.equal('video');
             expect(SDPUtils.getKind(sections[2])).to.equal('video');
-            expect(SDPUtils.getKind(sections[3])).to.equal('video');
             done();
           });
         });
@@ -1612,9 +1612,9 @@ describe('Edge shim', () => {
             return pc.createOffer();
           })
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            expect(sections.length).to.equal(2);
-            const msid = SDPUtils.parseMsid(sections[1]);
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(1);
+            const msid = SDPUtils.parseMsid(sections[0]);
             expect(msid.stream).to.equal('-');
           });
         });
@@ -1637,10 +1637,10 @@ describe('Edge shim', () => {
           }
           pc.createOffer()
           .then((offer) => {
-            const sections = SDPUtils.splitSections(offer.sdp);
-            const candidates = SDPUtils.matchPrefix(sections[1],
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            const candidates = SDPUtils.matchPrefix(sections[0],
                 'a=candidate:');
-            const end = SDPUtils.matchPrefix(sections[1],
+            const end = SDPUtils.matchPrefix(sections[0],
                 'a=end-of-candidates');
             expect(candidates.length).to.be.above(0);
             expect(end.length).to.equal(1);
@@ -1699,8 +1699,8 @@ describe('Edge shim', () => {
         .then((answer) => pc.setLocalDescription(answer))
         .then(() => pc.createOffer())
         .then((offer) => {
-          const sections = SDPUtils.splitSections(offer.sdp);
-          expect(SDPUtils.getMid(sections[1])).to.equal('audio1');
+          const sections = SDPUtils.getMediaSections(offer.sdp);
+          expect(SDPUtils.getMid(sections[0])).to.equal('audio1');
         });
       });
 
@@ -1927,8 +1927,8 @@ describe('Edge shim', () => {
         return pc.createAnswer();
       })
       .then((answer) => {
-        const sections = SDPUtils.splitSections(answer.sdp);
-        const rejected = SDPUtils.isRejected(sections[1]);
+        const sections = SDPUtils.getMediaSections(answer.sdp);
+        const rejected = SDPUtils.isRejected(sections[0]);
         expect(rejected).to.equal(true);
         done();
       });
@@ -1950,8 +1950,8 @@ describe('Edge shim', () => {
           return pc.createAnswer();
         })
         .then((answer) => {
-          const sections = SDPUtils.splitSections(answer.sdp);
-          const rejected = SDPUtils.isRejected(sections[1]);
+          const sections = SDPUtils.getMediaSections(answer.sdp);
+          const rejected = SDPUtils.isRejected(sections[0]);
           expect(rejected).to.equal(true);
           done();
         });
@@ -1996,9 +1996,9 @@ describe('Edge shim', () => {
           return pc.createAnswer();
         })
         .then((answer) => {
-          const sections = SDPUtils.splitSections(answer.sdp);
-          expect(sections.length).to.equal(2);
-          expect(SDPUtils.getDirection(sections[1])).to.equal('inactive');
+          const sections = SDPUtils.getMediaSections(answer.sdp);
+          expect(sections.length).to.equal(1);
+          expect(SDPUtils.getDirection(sections[0])).to.equal('inactive');
           done();
         });
       });
@@ -2014,8 +2014,8 @@ describe('Edge shim', () => {
             return pc.createAnswer();
           })
           .then((answer) => {
-            const sections = SDPUtils.splitSections(answer.sdp);
-            expect(SDPUtils.getDirection(sections[1])).to.equal('sendrecv');
+            const sections = SDPUtils.getMediaSections(answer.sdp);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
             done();
           });
         });
@@ -2032,9 +2032,9 @@ describe('Edge shim', () => {
             return pc.createAnswer();
           })
           .then((answer) => {
-            const sections = SDPUtils.splitSections(answer.sdp);
-            expect(sections.length).to.equal(2);
-            expect(SDPUtils.getDirection(sections[1])).to.equal('sendonly');
+            const sections = SDPUtils.getMediaSections(answer.sdp);
+            expect(sections.length).to.equal(1);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
             done();
           });
         });
@@ -2051,8 +2051,8 @@ describe('Edge shim', () => {
             return pc.createAnswer();
           })
           .then((answer) => {
-            const sections = SDPUtils.splitSections(answer.sdp);
-            expect(SDPUtils.getDirection(sections[1])).to.equal('sendrecv');
+            const sections = SDPUtils.getMediaSections(answer.sdp);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
             done();
           });
         });
@@ -2068,9 +2068,9 @@ describe('Edge shim', () => {
             return pc.createAnswer();
           })
           .then((answer) => {
-            const sections = SDPUtils.splitSections(answer.sdp);
-            expect(sections.length).to.equal(2);
-            expect(SDPUtils.getDirection(sections[1])).to.equal('sendonly');
+            const sections = SDPUtils.getMediaSections(answer.sdp);
+            expect(sections.length).to.equal(1);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
             done();
           });
         });
@@ -2083,8 +2083,8 @@ describe('Edge shim', () => {
             return pc.createAnswer();
           })
           .then((answer) => {
-            const sections = SDPUtils.splitSections(answer.sdp);
-            expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+            const sections = SDPUtils.getMediaSections(answer.sdp);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
             done();
           });
         });
@@ -2096,8 +2096,8 @@ describe('Edge shim', () => {
             return pc.createAnswer();
           })
           .then((answer) => {
-            const sections = SDPUtils.splitSections(answer.sdp);
-            expect(SDPUtils.getDirection(sections[1])).to.equal('inactive');
+            const sections = SDPUtils.getMediaSections(answer.sdp);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('inactive');
             done();
           });
         });
@@ -2403,8 +2403,8 @@ describe('Edge shim', () => {
           return pc.createAnswer();
         })
         .then((answer) => {
-          const sections = SDPUtils.splitSections(answer.sdp);
-          expect(sections.length).to.equal(2);
+          const sections = SDPUtils.getMediaSections(answer.sdp);
+          expect(sections.length).to.equal(1);
           done();
         });
       });
@@ -2752,11 +2752,12 @@ describe('Edge shim', () => {
         return pc2.createOffer();
       })
       .then((offer) => {
-        const sections = SDPUtils.splitSections(offer.sdp);
+        const sections = SDPUtils.getMediaSections(offer.sdp);
+        expect(sections.length).to.equal(2);
         const audioEncodingParameters = SDPUtils.parseRtpEncodingParameters(
-            sections[1]);
+            sections[0]);
         const videoEncodingParameters = SDPUtils.parseRtpEncodingParameters(
-            sections[2]);
+            sections[1]);
         expect(audioEncodingParameters[0].ssrc).to.equal(2002);
         expect(videoEncodingParameters[0].ssrc).to.equal(4004);
         expect(videoEncodingParameters[0].rtx.ssrc).to.equal(4005);
@@ -2786,8 +2787,9 @@ describe('Edge shim', () => {
       .then(() => pc1.setRemoteDescription(pc2.localDescription))
       .then(() => pc1.createAnswer())
       .then((answer) => {
-        const sections = SDPUtils.splitSections(answer.sdp);
-        const setupLine = SDPUtils.matchPrefix(sections[1], 'a=setup:');
+        const sections = SDPUtils.getMediaSections(answer.sdp);
+        expect(sections.length).to.equal(2);
+        const setupLine = SDPUtils.matchPrefix(sections[0], 'a=setup:');
         expect(setupLine[0]).to.equal('a=setup:passive');
         done();
       });
@@ -3136,9 +3138,9 @@ describe('Edge shim', () => {
         return pc.createOffer();
       })
       .then((offer) => {
-        const sections = SDPUtils.splitSections(offer.sdp);
-        expect(sections).to.have.length(2);
-        expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+        const sections = SDPUtils.getMediaSections(offer.sdp);
+        expect(sections).to.have.length(1);
+        expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
       });
     });
 
@@ -3182,9 +3184,9 @@ describe('Edge shim', () => {
           return pc.createOffer();
         })
         .then((offer) => {
-          const sections = SDPUtils.splitSections(offer.sdp);
-          expect(sections).to.have.length(2);
-          expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+          const sections = SDPUtils.getMediaSections(offer.sdp);
+          expect(sections).to.have.length(1);
+          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
         });
       });
     });
