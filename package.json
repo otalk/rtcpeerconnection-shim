@@ -21,7 +21,7 @@
     "node": ">=6.0.0"
   },
   "dependencies": {
-    "sdp": "^2.2.0"
+    "sdp": "^2.6.0"
   },
   "devDependencies": {
     "brfs": "^1.4.3",
