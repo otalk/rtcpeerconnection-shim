@@ -36,7 +36,7 @@ function writeMediaSection(transceiver, caps, type, stream, dtlsRole) {
 
   if (transceiver.rtpSender) {
     var trackId = transceiver.rtpSender._initialTrackId ||
-        SDPUtils.generateIdentifier();
+        transceiver.rtpSender.track.id;
     transceiver.rtpSender._initialTrackId = trackId;
     // spec.
     var msid = 'msid:' + (stream ? stream.id : '-') + ' ' +
