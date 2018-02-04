@@ -35,14 +35,18 @@ function writeMediaSection(transceiver, caps, type, stream, dtlsRole) {
   }
 
   if (transceiver.rtpSender) {
+    var trackId = transceiver.rtpSender._initialTrackId ||
+        SDPUtils.generateIdentifier();
+    transceiver.rtpSender._initialTrackId = trackId;
     // spec.
     var msid = 'msid:' + (stream ? stream.id : '-') + ' ' +
-        transceiver.rtpSender.track.id + '\r\n';
+        trackId + '\r\n';
     sdp += 'a=' + msid;
-
-    // for Chrome.
+    // for Chrome. Legacy should no longer be required.
     sdp += 'a=ssrc:' + transceiver.sendEncodingParameters[0].ssrc +
         ' ' + msid;
+
+    // RTX
     if (transceiver.sendEncodingParameters[0].rtx) {
       sdp += 'a=ssrc:' + transceiver.sendEncodingParameters[0].rtx.ssrc +
           ' ' + msid;

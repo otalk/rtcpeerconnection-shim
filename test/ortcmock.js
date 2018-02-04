@@ -231,5 +231,9 @@ module.exports = function(window) {
   RTCRtpSender.prototype.getStats = function() {
     return Promise.resolve({});
   };
+  RTCRtpSender.prototype.replaceTrack = function(withTrack) {
+    this.track = withTrack;
+    return Promise.resolve();
+  };
   window.RTCRtpSender = RTCRtpSender;
 };
