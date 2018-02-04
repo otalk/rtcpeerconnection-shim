@@ -601,15 +601,17 @@ module.exports = function(window, edgeVersion) {
       }
 
       // update local description.
-      var sections = SDPUtils.splitSections(pc.localDescription.sdp);
+      var sections = SDPUtils.getMediaSections(pc.localDescription.sdp);
       if (!end) {
-        sections[event.candidate.sdpMLineIndex + 1] +=
+        sections[event.candidate.sdpMLineIndex] +=
             'a=' + event.candidate.candidate + '\r\n';
       } else {
-        sections[event.candidate.sdpMLineIndex + 1] +=
+        sections[event.candidate.sdpMLineIndex] +=
             'a=end-of-candidates\r\n';
       }
-      pc.localDescription.sdp = sections.join('');
+      pc.localDescription.sdp =
+          SDPUtils.getDescription(pc.localDescription.sdp) +
+          sections.join('');
       var complete = pc.transceivers.every(function(transceiver) {
         return transceiver.iceGatherer &&
             transceiver.iceGatherer.state === 'completed';
@@ -1444,8 +1446,8 @@ module.exports = function(window, edgeVersion) {
         return t.mid;
       }).join(' ') + '\r\n';
     }
-    var mediaSectionsInOffer = SDPUtils.splitSections(
-        pc.remoteDescription.sdp).length - 1;
+    var mediaSectionsInOffer = SDPUtils.getMediaSections(
+        pc.remoteDescription.sdp).length;
     pc.transceivers.forEach(function(transceiver, sdpMLineIndex) {
       if (sdpMLineIndex + 1 > mediaSectionsInOffer) {
         return;
@@ -1522,9 +1524,11 @@ module.exports = function(window, edgeVersion) {
             continue;
           }
           pc.transceivers[j].iceTransport.addRemoteCandidate({});
-          sections = SDPUtils.splitSections(pc.remoteDescription.sdp);
-          sections[j + 1] += 'a=end-of-candidates\r\n';
-          pc.remoteDescription.sdp = sections.join('');
+          sections = SDPUtils.getMediaSections(pc.remoteDescription.sdp);
+          sections[j] += 'a=end-of-candidates\r\n';
+          pc.remoteDescription.sdp =
+              SDPUtils.getDescription(pc.remoteDescription.sdp) +
+              sections.join('');
           if (pc.usingBundle) {
             break;
           }
@@ -1569,8 +1573,8 @@ module.exports = function(window, edgeVersion) {
           if (candidateString.indexOf('a=') === 0) {
             candidateString = candidateString.substr(2);
           }
-          sections = SDPUtils.splitSections(pc.remoteDescription.sdp);
-          sections[sdpMLineIndex + 1] += 'a=' +
+          sections = SDPUtils.getMediaSections(pc.remoteDescription.sdp);
+          sections[sdpMLineIndex] += 'a=' +
               (cand.type ? candidateString : 'end-of-candidates')
               + '\r\n';
           pc.remoteDescription.sdp = sections.join('');
