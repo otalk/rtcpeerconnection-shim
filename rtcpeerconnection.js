@@ -784,7 +784,7 @@ module.exports = function(window, edgeVersion) {
         var rejected = SDPUtils.isRejected(mediaSection) &&
             SDPUtils.matchPrefix(mediaSection, 'a=bundle-only').length === 0;
 
-        if (!rejected && !transceiver.isDatachannel) {
+        if (!rejected && !transceiver.rejected) {
           var remoteIceParameters = SDPUtils.getIceParameters(
               mediaSection, sessionpart);
           var remoteDtlsParameters = SDPUtils.getDtlsParameters(
@@ -881,14 +881,9 @@ module.exports = function(window, edgeVersion) {
       var mid = SDPUtils.getMid(mediaSection) || SDPUtils.generateIdentifier();
 
       // Reject datachannels which are not implemented yet.
-      if (kind === 'application' && protocol === 'DTLS/SCTP') {
-        pc.transceivers[sdpMLineIndex] = {
-          mid: mid,
-          isDatachannel: true
-        };
-        return;
-      }
-      if (rejected) {
+      if ((kind === 'application' && protocol === 'DTLS/SCTP') || rejected) {
+        // TODO: this is dangerous in the case where a non-rejected m-line
+        //     becomes rejected.
         pc.transceivers[sdpMLineIndex] = {
           mid: mid,
           kind: kind,
@@ -1472,15 +1467,18 @@ module.exports = function(window, edgeVersion) {
       if (sdpMLineIndex + 1 > mediaSectionsInOffer) {
         return;
       }
-      if (transceiver.isDatachannel) {
-        sdp += 'm=application 0 DTLS/SCTP 5000\r\n' +
-            'c=IN IP4 0.0.0.0\r\n' +
-            'a=mid:' + transceiver.mid + '\r\n';
-        return;
-      }
       if (transceiver.rejected) {
-        sdp += 'm=' + transceiver.kind + ' 0 UDP/TLS/RTP/SAVPF\r\n' +
-            'c=IN IP4 0.0.0.0\r\n' +
+        if (transceiver.kind === 'application') {
+          sdp += 'm=application 0 DTLS/SCTP 5000\r\n';
+        } else if (transceiver.kind === 'audio') {
+          sdp += 'm=audio 0 UDP/TLS/RTP/SAVPF 0\r\n' +
+              'a=rtpmap:0 PCMU/8000\r\n';
+        } else if (transceiver.kind === 'video') {
+          sdp += 'm=video 0 UDP/TLS/RTP/SAVPF 120\r\n' +
+              'a=rtpmap:120 VP8/90000\r\n';
+        }
+        sdp += 'c=IN IP4 0.0.0.0\r\n' +
+            'a=inactive\r\n' +
             'a=mid:' + transceiver.mid + '\r\n';
         return;
       }
@@ -1546,7 +1544,7 @@ module.exports = function(window, edgeVersion) {
             'Can not add ICE candidate without a remote description'));
       } else if (!candidate || candidate.candidate === '') {
         for (var j = 0; j < pc.transceivers.length; j++) {
-          if (pc.transceivers[j].isDatachannel) {
+          if (pc.transceivers[j].rejected) {
             continue;
           }
           pc.transceivers[j].iceTransport.addRemoteCandidate({});
@@ -1571,7 +1569,7 @@ module.exports = function(window, edgeVersion) {
         }
         var transceiver = pc.transceivers[sdpMLineIndex];
         if (transceiver) {
-          if (transceiver.isDatachannel) {
+          if (transceiver.rejected) {
             return resolve();
           }
           var cand = Object.keys(candidate.candidate).length > 0 ?
