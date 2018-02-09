@@ -2312,6 +2312,23 @@ describe('Edge shim', () => {
       });
     });
 
+    describe('after an offer containing a rejected mline', () => {
+      it('rejects the m-line in the answer', () => {
+        const sdp = SDP_BOILERPLATE +
+            MINIMAL_AUDIO_MLINE.replace('m=audio 9', 'm=audio 0');
+        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          const sections = SDPUtils.getMediaSections(answer.sdp);
+          expect(sections.length).to.equal(1);
+          expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+          expect(SDPUtils.isRejected(sections[0])).to.equal(true);
+        });
+      });
+    });
+
     describe('rtcp-rsize is', () => {
       const sdp = SDP_BOILERPLATE +
           'm=video 9 UDP/TLS/RTP/SAVPF 102\r\n' +

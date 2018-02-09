@@ -888,6 +888,14 @@ module.exports = function(window, edgeVersion) {
         };
         return;
       }
+      if (rejected) {
+        pc.transceivers[sdpMLineIndex] = {
+          mid: mid,
+          kind: kind,
+          rejected: true
+        };
+        return;
+      }
 
       var transceiver;
       var iceGatherer;
@@ -1466,6 +1474,12 @@ module.exports = function(window, edgeVersion) {
       }
       if (transceiver.isDatachannel) {
         sdp += 'm=application 0 DTLS/SCTP 5000\r\n' +
+            'c=IN IP4 0.0.0.0\r\n' +
+            'a=mid:' + transceiver.mid + '\r\n';
+        return;
+      }
+      if (transceiver.rejected) {
+        sdp += 'm=' + transceiver.kind + ' 0 UDP/TLS/RTP/SAVPF\r\n' +
             'c=IN IP4 0.0.0.0\r\n' +
             'a=mid:' + transceiver.mid + '\r\n';
         return;
