@@ -720,6 +720,8 @@ module.exports = function(window, edgeVersion) {
       }
       if (transceiver.recvEncodingParameters.length) {
         params.encodings = transceiver.recvEncodingParameters;
+      } else {
+        params.encodings = [{}];
       }
       params.rtcp = {
         compound: transceiver.rtcpParameters.compound

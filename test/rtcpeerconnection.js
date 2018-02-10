@@ -723,6 +723,38 @@ describe('Edge shim', () => {
       });
     });
 
+    describe('when called with an offer without an a=ssrc line', () => {
+      const sdp = SDP_BOILERPLATE +
+          'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n' +
+          'c=IN IP4 0.0.0.0\r\n' +
+          'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+          'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+          'a=ice-pwd:' + ICEPWD + '\r\n' +
+          'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+          'a=setup:actpass\r\n' +
+          'a=mid:audio1\r\n' +
+          'a=sendonly\r\n' +
+          'a=rtcp-mux\r\n' +
+          'a=rtcp-rsize\r\n' +
+          'a=rtpmap:111 opus/48000/2\r\n';
+      beforeEach(() => {
+        sinon.spy(window.RTCRtpReceiver.prototype, 'receive');
+      });
+      afterEach(() => {
+        window.RTCRtpReceiver.prototype.receive.restore();
+      });
+
+      it('calls RTCRtpReceiver.recv with encodings set to [{}]', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          const receiver = pc.getReceivers()[0];
+          expect(receiver.receive).to.have.been.calledWith(
+            sinon.match({encodings: [{}]})
+          );
+        });
+      });
+    });
+
     // TODO: add a test for recvonly to show it doesn't trigger the callback.
     //   probably easiest done using a sinon.stub
     //
