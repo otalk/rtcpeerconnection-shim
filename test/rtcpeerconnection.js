@@ -1886,6 +1886,15 @@ describe('Edge shim', () => {
       });
     });
 
+    it('throws an InvalidStateError when called in the wrong ' +
+        'signalingstate', (done) => {
+      pc.createAnswer()
+      .catch((e) => {
+        expect(e.name).to.equal('InvalidStateError');
+        done();
+      });
+    });
+
     it('uses payload types of offerer', (done) => {
       const sdp = SDP_BOILERPLATE +
           'm=audio 9 UDP/TLS/RTP/SAVPF 98\r\n' +

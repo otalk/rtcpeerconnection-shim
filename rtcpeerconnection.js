@@ -1445,6 +1445,12 @@ module.exports = function(window, edgeVersion) {
           'Can not call createAnswer after close'));
     }
 
+    if (!(pc.signalingState === 'have-remote-offer' ||
+        pc.signalingState === 'have-local-pranswer')) {
+      return Promise.reject(makeError('InvalidStateError',
+          'Can not call createAnswer in signalingState ' + pc.signalingState));
+    }
+
     var sdp = SDPUtils.writeSessionBoilerplate(pc._sdpSessionId,
         pc._sdpSessionVersion++);
     if (pc.usingBundle) {
