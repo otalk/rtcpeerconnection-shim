@@ -3490,6 +3490,49 @@ describe('Edge shim', () => {
     });
   });
 
+  describe('_updateIceConnectionState', () => {
+    let pc;
+    beforeEach(() => {
+      pc = new RTCPeerConnection();
+      return pc.createOffer({offerToReceiveAudio: 1});
+    });
+    afterEach(() => {
+      pc.close();
+    });
+
+    it('calls both event and oicenconnectionstatechange', () => {
+      pc.iceConnectionState = 'weird state';
+
+      const stub = sinon.stub();
+      pc.oniceconnectionstatechange = stub;
+      pc.addEventListener('iceconnectionstatechange', stub);
+
+      pc._updateIceConnectionState();
+
+      expect(stub).to.have.been.calledTwice();
+      expect(pc.iceConnectionState).to.equal('new');
+    });
+
+    describe('emits connectionstatechange when ice is', () => {
+      ['checking', 'connected', 'completed', 'disconnected', 'failed']
+      .forEach(state => {
+        it(state, () => {
+          const transceiver = pc.transceivers[0];
+          const iceTransport = transceiver.iceTransport;
+          iceTransport.state = state;
+
+          const stub = sinon.stub();
+          pc.oniceconnectionstatechange = stub;
+
+          iceTransport.onicestatechange();
+
+          expect(stub).to.have.been.calledOnce();
+          expect(pc.iceConnectionState).to.equal(state);
+        });
+      });
+    });
+  });
+
   describe('_updateConnectionState', () => {
     let pc;
     beforeEach(() => {
@@ -3500,34 +3543,34 @@ describe('Edge shim', () => {
       pc.close();
     });
 
-    it('calls both event and oniceconnectionstatechange', () => {
-      pc.iceConnectionState = 'weird state';
+    it('calls both event and onconnectionstatechange', () => {
+      pc.connectionState = 'weird state';
 
       const stub = sinon.stub();
-      pc.oniceconnectionstatechange = stub;
-      pc.addEventListener('iceconnectionstatechange', stub);
+      pc.onconnectionstatechange = stub;
+      pc.addEventListener('connectionstatechange', stub);
 
       pc._updateConnectionState();
 
       expect(stub).to.have.been.calledTwice();
-      expect(pc.iceConnectionState).to.equal('new');
+      expect(pc.connectionState).to.equal('new');
     });
 
-    it('does not emit iceconnectionstatechange when just the ' +
+    it('does not emit connectionstatechange when just the ' +
        'ice connection changes', () => {
       const transceiver = pc.transceivers[0];
       const iceTransport = transceiver.iceTransport;
       iceTransport.state = 'connected';
 
       const stub = sinon.stub();
-      pc.oniceconnectionstatechange = stub;
-      pc.addEventListener('iceconnectionstatechange', stub);
+      pc.onconnectionstatechange = stub;
+      pc.addEventListener('connectionstatechange', stub);
 
       iceTransport.onicestatechange();
       expect(stub).not.to.have.been.calledWith();
     });
 
-    it('emits iceconnectionstatechange when ice and dtls are connected', () => {
+    it('emits connectionstatechange when ice and dtls are connected', () => {
       const transceiver = pc.transceivers[0];
       const iceTransport = transceiver.iceTransport;
       iceTransport.state = 'connected';
@@ -3536,12 +3579,12 @@ describe('Edge shim', () => {
       dtlsTransport.state = 'connected';
 
       const stub = sinon.stub();
-      pc.oniceconnectionstatechange = stub;
+      pc.onconnectionstatechange = stub;
 
       dtlsTransport.ondtlsstatechange();
 
       expect(stub).to.have.been.calledOnce();
-      expect(pc.iceConnectionState).to.equal('connected');
+      expect(pc.connectionState).to.equal('connected');
     });
 
     it('changes the connection state to failed when there ' +
@@ -3550,16 +3593,16 @@ describe('Edge shim', () => {
       const dtlsTransport = transceiver.dtlsTransport;
 
       const stub = sinon.stub();
-      pc.oniceconnectionstatechange = stub;
+      pc.onconnectionstatechange = stub;
 
       dtlsTransport.onerror();
       expect(stub).to.have.been.calledOnce();
-      expect(pc.iceConnectionState).to.equal('failed');
+      expect(pc.connectionState).to.equal('failed');
     });
 
     it('changes the connection state to disconnected when the ICE ' +
         'connection disconnects', () => {
-      pc.iceConnectionState = 'connected';
+      pc.connectionState = 'connected';
 
       const transceiver = pc.transceivers[0];
       const iceTransport = transceiver.iceTransport;
@@ -3569,7 +3612,7 @@ describe('Edge shim', () => {
       dtlsTransport.state = 'connected';
 
       const stub = sinon.stub();
-      pc.oniceconnectionstatechange = stub;
+      pc.onconnectionstatechange = stub;
 
       iceTransport.onicestatechange();
 
