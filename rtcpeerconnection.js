@@ -368,8 +368,8 @@ module.exports = function(window, edgeVersion) {
   };
 
   // internal helper to create a transceiver object.
-  // (whih is not yet the same as the WebRTC 1.0 transceiver)
-  RTCPeerConnection.prototype._createTransceiver = function(kind) {
+  // (which is not yet the same as the WebRTC 1.0 transceiver)
+  RTCPeerConnection.prototype._createTransceiver = function(kind, doNotAdd) {
     var hasBundleTransport = this.transceivers.length > 0;
     var transceiver = {
       track: null,
@@ -396,7 +396,9 @@ module.exports = function(window, edgeVersion) {
       transceiver.iceTransport = transports.iceTransport;
       transceiver.dtlsTransport = transports.dtlsTransport;
     }
-    this.transceivers.push(transceiver);
+    if (!doNotAdd) {
+      this.transceivers.push(transceiver);
+    }
     return transceiver;
   };
 
@@ -890,6 +892,12 @@ module.exports = function(window, edgeVersion) {
           rejected: true
         };
         return;
+      }
+
+      if (!rejected && pc.transceivers[sdpMLineIndex] &&
+          pc.transceivers[sdpMLineIndex].rejected) {
+        // recycle a rejected transceiver.
+        pc.transceivers[sdpMLineIndex] = pc._createTransceiver(kind, true);
       }
 
       var transceiver;

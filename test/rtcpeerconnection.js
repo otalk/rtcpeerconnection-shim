@@ -966,6 +966,27 @@ describe('Edge shim', () => {
           });
         });
       });
+
+      describe('going from rejected to non-rejected', () => {
+        it('triggers ontrack', (done) => {
+          pc.onaddstream = sinon.stub();
+          pc.ontrack = sinon.stub();
+          pc.setRemoteDescription({type: 'offer',
+              sdp: sdp.replace('m=audio 9', 'm=audio 0')})
+          .then(() => {
+            return pc.setRemoteDescription({type: 'offer',
+                sdp: sdp});
+          })
+          .then(() => {
+            window.setTimeout(() => {
+              expect(pc.onaddstream).to.have.been.calledOnce();
+              expect(pc.ontrack).to.have.been.calledOnce();
+              done();
+            });
+            clock.tick(500);
+          });
+        });
+      });
     });
 
     describe('when rtcp-rsize is', () => {
