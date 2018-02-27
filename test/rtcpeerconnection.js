@@ -966,6 +966,27 @@ describe('Edge shim', () => {
           });
         });
       });
+
+      describe('going from rejected to non-rejected', () => {
+        it('triggers ontrack', (done) => {
+          pc.onaddstream = sinon.stub();
+          pc.ontrack = sinon.stub();
+          pc.setRemoteDescription({type: 'offer',
+              sdp: sdp.replace('m=audio 9', 'm=audio 0')})
+          .then(() => {
+            return pc.setRemoteDescription({type: 'offer',
+                sdp: sdp});
+          })
+          .then(() => {
+            window.setTimeout(() => {
+              expect(pc.onaddstream).to.have.been.calledOnce();
+              expect(pc.ontrack).to.have.been.calledOnce();
+              done();
+            });
+            clock.tick(500);
+          });
+        });
+      });
     });
 
     describe('when rtcp-rsize is', () => {
@@ -2308,6 +2329,23 @@ describe('Edge shim', () => {
         .then((answer) => {
           expect(answer.sdp).not.to.contain('a=ssrc-group:FID ');
           done();
+        });
+      });
+    });
+
+    describe('after an offer containing a rejected mline', () => {
+      it('rejects the m-line in the answer', () => {
+        const sdp = SDP_BOILERPLATE +
+            MINIMAL_AUDIO_MLINE.replace('m=audio 9', 'm=audio 0');
+        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          const sections = SDPUtils.getMediaSections(answer.sdp);
+          expect(sections.length).to.equal(1);
+          expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+          expect(SDPUtils.isRejected(sections[0])).to.equal(true);
         });
       });
     });
