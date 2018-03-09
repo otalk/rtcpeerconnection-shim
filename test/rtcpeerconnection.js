@@ -374,6 +374,33 @@ describe('Edge shim', () => {
           clock.tick(500);
         });
       });
+
+      it('does not serialize extra parameters in ' +
+          'RTCICECandidate.toJSON', (done) => {
+        const candidates = [];
+        pc.onicecandidate = (e) => {
+          candidates.push(e.candidate);
+        };
+        pc.onicegatheringstatechange = () => {
+          if (pc.iceGatheringState === 'complete') {
+            const reserialized = JSON.parse(JSON.stringify(candidates[0]));
+            expect(reserialized.candidate).to.be.a('string');
+            expect(reserialized.usernameFragment).to.be.a('string');
+            expect(reserialized.sdpMid).to.be.a('string');
+            expect(reserialized.sdpMLineIndex).to.equal(0);
+            expect(Object.keys(reserialized)).to.have.length(4);
+            done();
+          }
+        };
+        pc.createOffer({offerToReceiveAudio: true})
+        .then(offer => pc.setLocalDescription(offer))
+        .then(() => {
+          window.setTimeout(() => {
+            clock.tick(500);
+          });
+          clock.tick(0);
+        });
+      });
     });
 
     describe('after setRemoteDescription', () => {
