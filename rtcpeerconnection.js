@@ -610,10 +610,22 @@ module.exports = function(window, edgeVersion) {
         }
         // RTCIceCandidate doesn't have a component, needs to be added
         cand.component = 1;
+        // also the usernameFragment. TODO: update SDP to take both variants.
+        cand.ufrag = iceGatherer.getLocalParameters().usernameFragment;
+
         var serializedCandidate = SDPUtils.writeCandidate(cand);
         event.candidate = Object.assign(event.candidate,
             SDPUtils.parseCandidate(serializedCandidate));
+
         event.candidate.candidate = serializedCandidate;
+        event.candidate.toJSON = function() {
+          return {
+            candidate: event.candidate.candidate,
+            sdpMid: event.candidate.sdpMid,
+            sdpMLineIndex: event.candidate.sdpMLineIndex,
+            usernameFragment: event.candidate.usernameFragment
+          };
+        };
       }
 
       // update local description.
