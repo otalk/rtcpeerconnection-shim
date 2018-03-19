@@ -2650,7 +2650,8 @@ describe('Edge shim', () => {
     it('adds the candidate to the remote description', (done) => {
       pc.addIceCandidate({sdpMid, candidate: candidateString})
       .then(() => {
-        expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+        const sections = SDPUtils.getMediaSections(pc.remoteDescription.sdp);
+        expect(SDPUtils.matchPrefix(sections[0],
             'a=candidate:')).to.have.length(1);
         done();
       });
