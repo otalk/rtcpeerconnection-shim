@@ -1669,7 +1669,9 @@ module.exports = function(window, edgeVersion) {
           sections[sdpMLineIndex] += 'a=' +
               (cand.type ? candidateString : 'end-of-candidates')
               + '\r\n';
-          pc.remoteDescription.sdp = sections.join('');
+          pc.remoteDescription.sdp =
+              SDPUtils.getDescription(pc.remoteDescription.sdp) +
+              sections.join('');
         } else {
           return reject(makeError('OperationError',
               'Can not add ICE candidate'));
