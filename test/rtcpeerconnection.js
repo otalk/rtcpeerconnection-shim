@@ -3522,6 +3522,15 @@ describe('Edge shim', () => {
         done();
       });
     });
+
+    it('hyphenates stats', () => {
+      return pc.getStats()
+      .then(stats => {
+        let hasOutbound = false;
+        stats.forEach(stat => hasOutbound |= (stat.type === 'outbound-rtp'));
+        expect(hasOutbound).to.equal(1); // |= changes to 1.
+      });
+    });
   });
 
   describe('RTCIceCandidate contains a port property in', () => {
