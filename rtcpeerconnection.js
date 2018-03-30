@@ -1691,7 +1691,24 @@ module.exports = function(window, edgeVersion) {
     });
   };
 
-  RTCPeerConnection.prototype.getStats = function() {
+  RTCPeerConnection.prototype.getStats = function(selector) {
+    if (selector && selector instanceof window.MediaStreamTrack) {
+      var senderOrReceiver = null;
+      this.transceivers.forEach(function(transceiver) {
+        if (transceiver.rtpSender &&
+            transceiver.rtpSender.track === selector) {
+          senderOrReceiver = transceiver.rtpSender;
+        } else if (transceiver.rtpReceiver &&
+            transceiver.rtpReceiver.track === selector) {
+          senderOrReceiver = transceiver.rtpReceiver;
+        }
+      });
+      if (!senderOrReceiver) {
+        throw makeError('InvalidAccessError', 'Invalid selector.');
+      }
+      return senderOrReceiver.getStats();
+    }
+
     var promises = [];
     this.transceivers.forEach(function(transceiver) {
       ['rtpSender', 'rtpReceiver', 'iceGatherer', 'iceTransport',

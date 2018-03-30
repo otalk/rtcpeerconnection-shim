@@ -3531,6 +3531,37 @@ describe('Edge shim', () => {
         expect(hasOutbound).to.equal(1); // |= changes to 1.
       });
     });
+
+    describe('with a track selector', () => {
+      it('calls getStats on the sender', () => {
+        const sender = pc.getSenders()[0];
+        sinon.spy(sender, 'getStats');
+        return pc.getStats(sender.track)
+        .then(() => {
+          expect(sender.getStats).to.have.been.calledOnce();
+        });
+      });
+      it('calls getStats on the receiver', () => {
+        const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+        let receiver;
+        return pc.setRemoteDescription({type: 'offer', sdp})
+        .then(() => {
+          receiver = pc.getReceivers()[0];
+          sinon.spy(receiver, 'getStats');
+          return pc.getStats(receiver.track);
+        })
+        .then(() => {
+          expect(receiver.getStats).to.have.been.calledOnce();
+        });
+      });
+      it('throws an InvalidAccessError if the track is not assocіated', () => {
+        const getStats = () => {
+          pc.getStats(new window.MediaStreamTrack());
+        };
+        expect(getStats).to.throw()
+            .that.has.property('name').that.equals('InvalidAccessError');
+      });
+    });
   });
 
   describe('RTCIceCandidate contains a port property in', () => {
