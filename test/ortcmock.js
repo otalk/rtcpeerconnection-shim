@@ -229,7 +229,7 @@ module.exports = function(window) {
 
   RTCRtpSender.getCapabilities = getCapabilities;
   RTCRtpSender.prototype.getStats = function() {
-    return Promise.resolve({});
+    return Promise.resolve({123: {type: 'outboundrtp', id: 123}});
   };
   RTCRtpSender.prototype.replaceTrack = function(withTrack) {
     this.track = withTrack;
