@@ -221,10 +221,20 @@ module.exports = function(window) {
     this.track = track;
     this.transport = transport;
   };
-  RTCRtpSender.prototype.send = function() {};
+  RTCRtpSender.prototype.send = function() {
+    return Promise.resolve();
+  };
   RTCRtpSender.prototype.stop = function() {};
   RTCRtpSender.prototype.setTransport = function(transport) {
     this.transport = transport;
+  };
+  RTCRtpSender.prototype.setTrack = function(track) {
+    this.track = track;
+    return Promise.resolve();
+  };
+  RTCRtpSender.prototype.replaceTrack = function(track) {
+    this.track = track;
+    return Promise.resolve();
   };
 
   RTCRtpSender.getCapabilities = getCapabilities;
@@ -236,4 +246,13 @@ module.exports = function(window) {
     return Promise.resolve();
   };
   window.RTCRtpSender = RTCRtpSender;
+
+  // http://draft.ortc.org/#rtcdtmfsender*
+  const RTCDtmfSender = function(sender) {
+    this.sender = sender;
+    this.toneBuffer = '';
+    this.canInsertDTMF = true;
+  };
+  RTCDtmfSender.prototype.insertDTMF = function() {};
+  window.RTCDtmfSender = RTCDtmfSender;
 };
