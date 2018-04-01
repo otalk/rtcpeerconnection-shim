@@ -161,7 +161,7 @@ module.exports = function(window) {
           {type: 'nack', parameter: 'pli'}
       ]
     };
-    var rtx = {
+    var vp8rtx = {
       name: 'rtx',
       kind: 'video',
       clockRate: 90000,
@@ -169,16 +169,28 @@ module.exports = function(window) {
       numChannels: 1,
       parameters: {apt: 100}
     };
+    var h264 = {
+      name: 'h264',
+      kind: 'video',
+      clockRate: 90000,
+      preferredPayloadType: 100,
+      numChannels: 1,
+      rtcpFeedback: [
+          {type: 'nack', parameter: ''},
+          {type: 'nack', parameter: 'pli'}
+      ],
+      parameters: []
+    };
     var codecs;
     switch (kind) {
       case 'audio':
         codecs = [opus];
         break;
       case 'video':
-        codecs = [vp8, rtx];
+        codecs = [vp8, vp8rtx, h264];
         break;
       default:
-        codecs = [opus, vp8, rtx];
+        codecs = [opus, vp8, vp8rtx, h264];
         break;
     }
     var headerExtensions;

@@ -1392,7 +1392,7 @@ module.exports = function(window, edgeVersion) {
       localCapabilities.codecs.forEach(function(codec) {
         // work around https://bugs.chromium.org/p/webrtc/issues/detail?id=6552
         // by adding level-asymmetry-allowed=1
-        if (codec.name === 'H264' &&
+        if (codec.name.toLowerCase() === 'h264' &&
             codec.parameters['level-asymmetry-allowed'] === undefined) {
           codec.parameters['level-asymmetry-allowed'] = '1';
         }
