@@ -78,45 +78,6 @@ function writeMediaSection(transceiver, caps, type, stream, dtlsRole) {
   return sdp;
 }
 
-// Edge does not like
-// 1) stun: filtered after 14393 unless ?transport=udp is present
-// 2) turn: that does not have all of turn:host:port?transport=udp
-// 3) turn: with ipv6 addresses
-// 4) turn: occurring muliple times
-function filterIceServers(iceServers, edgeVersion) {
-  var hasTurn = false;
-  iceServers = JSON.parse(JSON.stringify(iceServers));
-  return iceServers.filter(function(server) {
-    if (server && (server.urls || server.url)) {
-      var urls = server.urls || server.url;
-      if (server.url && !server.urls) {
-        console.warn('RTCIceServer.url is deprecated! Use urls instead.');
-      }
-      var isString = typeof urls === 'string';
-      if (isString) {
-        urls = [urls];
-      }
-      urls = urls.filter(function(url) {
-        var validTurn = url.indexOf('turn:') === 0 &&
-            url.indexOf('transport=udp') !== -1 &&
-            url.indexOf('turn:[') === -1 &&
-            !hasTurn;
-
-        if (validTurn) {
-          hasTurn = true;
-          return true;
-        }
-        return url.indexOf('stun:') === 0 && edgeVersion >= 14393 &&
-            url.indexOf('?transport=udp') === -1;
-      });
-
-      delete server.url;
-      server.urls = isString ? urls[0] : urls;
-      return !!urls.length;
-    }
-  });
-}
-
 // Determines the intersection of local and remote capabilities.
 function getCommonCapabilities(localCapabilities, remoteCapabilities) {
   var commonCapabilities = {
@@ -310,7 +271,8 @@ module.exports = function(window, edgeVersion) {
         break;
     }
 
-    config.iceServers = filterIceServers(config.iceServers || [], edgeVersion);
+    config.iceServers = util.filterIceServers(config.iceServers || [],
+        edgeVersion);
 
     this._iceGatherers = [];
     if (config.iceCandidatePoolSize) {
