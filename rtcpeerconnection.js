@@ -10,6 +10,7 @@
 
 var SDPUtils = require('sdp');
 var shimSenderWithTrackOrKind = require('./rtcrtpsender');
+var util = require('./util');
 
 function fixStatsType(stat) {
   return {
@@ -226,21 +227,6 @@ function maybeAddCandidate(iceTransport, candidate) {
   return !alreadyAdded;
 }
 
-
-function makeError(name, description) {
-  var e = new Error(description);
-  e.name = name;
-  // legacy error codes from https://heycam.github.io/webidl/#idl-DOMException-error-names
-  e.code = {
-    NotSupportedError: 9,
-    InvalidStateError: 11,
-    InvalidAccessError: 15,
-    TypeError: undefined,
-    OperationError: undefined
-  }[name];
-  return e;
-}
-
 module.exports = function(window, edgeVersion) {
   // https://w3c.github.io/mediacapture-main/#mediastream
   // Helper function to add the track to the stream and
@@ -299,7 +285,7 @@ module.exports = function(window, edgeVersion) {
 
     this.usingBundle = config.bundlePolicy === 'max-bundle';
     if (config.rtcpMuxPolicy === 'negotiate') {
-      throw(makeError('NotSupportedError',
+      throw(util.makeError('NotSupportedError',
           'rtcpMuxPolicy \'negotiate\' is not supported'));
     } else if (!config.rtcpMuxPolicy) {
       config.rtcpMuxPolicy = 'require';
@@ -428,7 +414,7 @@ module.exports = function(window, edgeVersion) {
 
   RTCPeerConnection.prototype.addTrack = function(track, stream) {
     if (this._isClosed) {
-      throw makeError('InvalidStateError',
+      throw util.makeError('InvalidStateError',
           'Attempted to call addTrack on a closed peerconnection.');
     }
 
@@ -437,7 +423,7 @@ module.exports = function(window, edgeVersion) {
     });
 
     if (alreadyExists) {
-      throw makeError('InvalidAccessError', 'Track already exists.');
+      throw util.makeError('InvalidAccessError', 'Track already exists.');
     }
 
     var transceiver;
@@ -488,7 +474,7 @@ module.exports = function(window, edgeVersion) {
 
   RTCPeerConnection.prototype.removeTrack = function(sender) {
     if (this._isClosed) {
-      throw makeError('InvalidStateError',
+      throw util.makeError('InvalidStateError',
           'Attempted to call removeTrack on a closed peerconnection.');
     }
 
@@ -502,7 +488,7 @@ module.exports = function(window, edgeVersion) {
     });
 
     if (!transceiver) {
-      throw makeError('InvalidAccessError',
+      throw util.makeError('InvalidAccessError',
           'Sender was not created by this connection.');
     }
     var stream = transceiver.stream;
@@ -779,13 +765,13 @@ module.exports = function(window, edgeVersion) {
 
     // Note: pranswer is not supported.
     if (['offer', 'answer'].indexOf(description.type) === -1) {
-      return Promise.reject(makeError('TypeError',
+      return Promise.reject(util.makeError('TypeError',
           'Unsupported type "' + description.type + '"'));
     }
 
     if (!isActionAllowedInSignalingState('setLocalDescription',
         description.type, pc.signalingState) || pc._isClosed) {
-      return Promise.reject(makeError('InvalidStateError',
+      return Promise.reject(util.makeError('InvalidStateError',
           'Can not set local ' + description.type +
           ' in state ' + pc.signalingState));
     }
@@ -876,13 +862,13 @@ module.exports = function(window, edgeVersion) {
 
     // Note: pranswer is not supported.
     if (['offer', 'answer'].indexOf(description.type) === -1) {
-      return Promise.reject(makeError('TypeError',
+      return Promise.reject(util.makeError('TypeError',
           'Unsupported type "' + description.type + '"'));
     }
 
     if (!isActionAllowedInSignalingState('setRemoteDescription',
         description.type, pc.signalingState) || pc._isClosed) {
-      return Promise.reject(makeError('InvalidStateError',
+      return Promise.reject(util.makeError('InvalidStateError',
           'Can not set remote ' + description.type +
           ' in state ' + pc.signalingState));
     }
@@ -1352,7 +1338,7 @@ module.exports = function(window, edgeVersion) {
     var pc = this;
 
     if (pc._isClosed) {
-      return Promise.reject(makeError('InvalidStateError',
+      return Promise.reject(util.makeError('InvalidStateError',
           'Can not call createOffer after close'));
     }
 
@@ -1531,13 +1517,13 @@ module.exports = function(window, edgeVersion) {
     var pc = this;
 
     if (pc._isClosed) {
-      return Promise.reject(makeError('InvalidStateError',
+      return Promise.reject(util.makeError('InvalidStateError',
           'Can not call createAnswer after close'));
     }
 
     if (!(pc.signalingState === 'have-remote-offer' ||
         pc.signalingState === 'have-local-pranswer')) {
-      return Promise.reject(makeError('InvalidStateError',
+      return Promise.reject(util.makeError('InvalidStateError',
           'Can not call createAnswer in signalingState ' + pc.signalingState));
     }
 
@@ -1627,7 +1613,7 @@ module.exports = function(window, edgeVersion) {
     // TODO: needs to go into ops queue.
     return new Promise(function(resolve, reject) {
       if (!pc.remoteDescription) {
-        return reject(makeError('InvalidStateError',
+        return reject(util.makeError('InvalidStateError',
             'Can not add ICE candidate without a remote description'));
       } else if (!candidate || candidate.candidate === '') {
         for (var j = 0; j < pc.transceivers.length; j++) {
@@ -1674,7 +1660,7 @@ module.exports = function(window, edgeVersion) {
           if (sdpMLineIndex === 0 || (sdpMLineIndex > 0 &&
               transceiver.iceTransport !== pc.transceivers[0].iceTransport)) {
             if (!maybeAddCandidate(transceiver.iceTransport, cand)) {
-              return reject(makeError('OperationError',
+              return reject(util.makeError('OperationError',
                   'Can not add ICE candidate'));
             }
           }
@@ -1692,7 +1678,7 @@ module.exports = function(window, edgeVersion) {
               SDPUtils.getDescription(pc.remoteDescription.sdp) +
               sections.join('');
         } else {
-          return reject(makeError('OperationError',
+          return reject(util.makeError('OperationError',
               'Can not add ICE candidate'));
         }
       }
@@ -1713,7 +1699,7 @@ module.exports = function(window, edgeVersion) {
         }
       });
       if (!senderOrReceiver) {
-        throw makeError('InvalidAccessError', 'Invalid selector.');
+        throw util.makeError('InvalidAccessError', 'Invalid selector.');
       }
       return senderOrReceiver.getStats();
     }
