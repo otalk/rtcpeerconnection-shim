@@ -7,6 +7,7 @@
  */
 /* eslint-env node */
 'use strict';
+var util = require('./util');
 
 /* a wrapper around Edge's RTCRtpSender that does a lazy construct of
  * of the native sender when all the required parameters (track and
@@ -39,9 +40,8 @@ module.exports = function(window) {
       if (this._dtmf === undefined) {
         if (this.kind === 'audio') {
           if (!this._sender) {
-            var e = new Error('Can not access dtmf in this state');
-            e.name = 'InvalidStateError';
-            throw(e);
+            throw(util.makeError('InvalidStateError',
+                'Can not access dtmf in this state'));
           } else {
             this._dtmf = new window.RTCDtmfSender(this._sender);
           }
@@ -109,9 +109,8 @@ module.exports = function(window) {
     if (this._sender) {
       return this._sender.send(parameters);
     }
-    var e = new Error('Can not call send in this state');
-    e.name = 'InvalidStateError';
-    return Promise.reject(e);
+    return Promise.reject(util.makeError('InvalidStateError',
+        'Can not call send in this state'));
   };
 
   RTCRtpSender.prototype.stop = function() {
@@ -124,9 +123,8 @@ module.exports = function(window) {
     if (this._sender) {
       return this._sender.getStats();
     }
-    var e = new Error('Can not call getStats in this state');
-    e.name = 'InvalidStateError';
-    return Promise.reject(e);
+    return Promise.reject(util.makeError('InvalidStateError',
+        'Can not call send in this state'));
   };
   return RTCRtpSender;
 };
