@@ -1154,7 +1154,7 @@ module.exports = function(window, edgeVersion) {
     // check whether addIceCandidate({}) was called within four seconds after
     // setRemoteDescription.
     window.setTimeout(function() {
-      if (!(pc && pc.transceivers)) {
+      if (!(pc && pc.transceivers) || pc._isClosed) {
         return;
       }
       pc.transceivers.forEach(function(transceiver) {

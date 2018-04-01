@@ -1204,6 +1204,42 @@ describe('Edge shim', () => {
         done();
       });
     });
+
+    describe('simulates end-of-candidates from remote', () => {
+      let clock;
+      before(() => {
+        clock = sinon.useFakeTimers();
+      });
+      after(() => {
+        clock.restore();
+      });
+
+      it('with a timeout', () => {
+        const sdp = SDP_BOILERPLATE +
+            MINIMAL_AUDIO_MLINE +
+            'a=candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host\r\n';
+        return pc.setRemoteDescription({type: 'offer', sdp})
+        .then(() => {
+          const receiver = pc.getReceivers()[0];
+          const dtlsTransport = receiver.transport;
+          const iceTransport = dtlsTransport.transport;
+          const spy = sinon.spy(iceTransport, 'addRemoteCandidate');
+          clock.tick(10000);
+          expect(spy).to.have.been.calledWith({});
+        });
+      });
+
+      it('does nothing when the peerconnection is already closed', () => {
+        const sdp = SDP_BOILERPLATE +
+            MINIMAL_AUDIO_MLINE +
+            'a=candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host\r\n';
+        return pc.setRemoteDescription({type: 'offer', sdp})
+        .then(() => {
+          pc.close();
+          clock.tick(10000);
+        });
+      });
+    });
   });
 
   describe('createOffer', () => {

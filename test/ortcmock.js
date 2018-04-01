@@ -98,9 +98,6 @@ module.exports = function(window) {
     if (Object.keys(remoteCandidate).length) {
       this._remoteCandidates.push(remoteCandidate);
     }
-    if (this.state === 'new') {
-      this.state = 'completed'; // TODO: not accurate, should go to checking.
-    }
   };
   RTCIceTransport.prototype.setRemoteCandidates = function(remoteCandidates) {
     this._remoteCandidates = remoteCandidates;
