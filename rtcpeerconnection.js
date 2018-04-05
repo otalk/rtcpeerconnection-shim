@@ -542,7 +542,7 @@ module.exports = function(window, edgeVersion) {
       return;
     }
     var bufferedCandidateEvents =
-      this.transceivers[sdpMLineIndex].bufferedCandidateEvents;
+      this.transceivers[sdpMLineIndex].bufferedCandidateEvents || [];
     this.transceivers[sdpMLineIndex].bufferedCandidateEvents = null;
     iceGatherer.removeEventListener('localcandidate',
       this.transceivers[sdpMLineIndex].bufferCandidates);
