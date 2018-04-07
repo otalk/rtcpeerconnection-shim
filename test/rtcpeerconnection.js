@@ -39,6 +39,7 @@ const MINIMAL_AUDIO_MLINE =
     'a=rtcp-mux\r\n' +
     'a=rtcp-rsize\r\n' +
     'a=rtpmap:111 opus/48000/2\r\n' +
+    'a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level\r\n' +
     'a=ssrc:1001 cname:some\r\n';
 
 // this detects that we are not running in a browser.
