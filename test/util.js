@@ -8,8 +8,11 @@
 /* eslint-env node */
 'use strict';
 
+const EventEmitter = require('events');
+
 const chai = require('chai');
 const expect = chai.expect;
+const sinon = require('sinon');
 chai.use(require('dirty-chai'));
 chai.use(require('sinon-chai'));
 
@@ -113,6 +116,65 @@ describe('Utility functions', () => {
           {urls: ['turn:stun.l.google.com:19301?transport=udp']}
         ]);
       });
+    });
+  });
+
+  describe('aliases for event listeners', () => {
+    function Event(type) {
+      this.type = type;
+    }
+    function SomeObject() {
+      this._emitter = new EventEmitter();
+    }
+    SomeObject.prototype.addEventListener = function() {
+      return this._emitter.addListener.apply(this._emitter, arguments);
+    };
+
+    SomeObject.prototype.removeEventListener = function() {
+      return this._emitter.removeListener.apply(this._emitter, arguments);
+    };
+
+    SomeObject.prototype.dispatchEvent = function(ev) {
+      this._emitter.emit(ev.type, ev);
+      if (this['on' + ev.type]) {
+        this['on' + ev.type](ev);
+      }
+    };
+
+    it('does not interfere for unaliased events', () => {
+      const obj = new SomeObject();
+      const stub = sinon.stub();
+      util.aliasEventListener(obj, 'oldname', 'newname');
+      obj.addEventListener('somethingelse', stub);
+      obj.dispatchEvent(new Event('somethingelse'));
+      expect(stub).to.have.been.called();
+    });
+
+    it('allows aliasing an event listener', () => {
+      const obj = new SomeObject();
+      util.aliasEventListener(obj, 'oldname', 'newname');
+      const stub = sinon.stub();
+      obj.addEventListener('newname', stub);
+      obj.dispatchEvent(new Event('oldname'));
+      expect(stub).to.have.been.called();
+    });
+
+    it('allows setting a onalias', () => {
+      const obj = new SomeObject();
+      util.aliasEventListener(obj, 'oldname', 'newname');
+      obj.onnewname = sinon.stub();
+      obj.dispatchEvent(new Event('oldname'));
+      expect(obj.onnewname).to.have.been.called();
+    });
+
+    it('removing onalias removes the event listener', () => {
+      const obj = new SomeObject();
+      util.aliasEventListener(obj, 'oldname', 'newname');
+      obj.onnewname = sinon.stub();
+
+      const spy = sinon.spy(obj, 'removeEventListener');
+      obj.onnewname = null;
+      expect(spy).to.have.been.called();
     });
   });
 });

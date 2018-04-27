@@ -59,5 +59,33 @@ module.exports = {
         return !!urls.length;
       }
     });
+  },
+
+  /* creates an alias name for an event listener */
+  aliasEventListener: function(obj, eventName, alias) {
+    ['addEventListener', 'removeEventListener'].forEach(function(method) {
+      var nativeMethod = obj[method];
+      obj[method] = function(nativeEventName, cb) {
+        if (nativeEventName !== alias) {
+          return nativeMethod.apply(this, arguments);
+        }
+        return nativeMethod.apply(this, [eventName, cb]);
+      };
+    });
+
+    Object.defineProperty(obj, 'on' + alias, {
+      get: function() {
+        return this['_on' + alias];
+      },
+      set: function(cb) {
+        if (this['_on' + alias]) {
+          this.removeEventListener(alias, this['_on' + alias]);
+          delete this['_on' + alias];
+        }
+        if (cb) {
+          this.addEventListener(alias, this['_on' + alias] = cb);
+        }
+      }
+    });
   }
 };
