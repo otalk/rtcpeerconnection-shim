@@ -113,6 +113,7 @@ module.exports = function(window) {
   RTCIceTransport.prototype.getStats = function() {
     return Promise.resolve({});
   };
+  RTCIceTransport.prototype.getNominatedCandidatePair = function() {};
   window.RTCIceTransport = RTCIceTransport;
 
   const RTCDtlsTransport = function(transport) {
