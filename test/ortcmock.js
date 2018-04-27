@@ -33,10 +33,13 @@ module.exports = function(window) {
     this.component = 'rtp';
 
     this._emitter = new EventEmitter();
-    this.addEventListener = this._emitter.addListener.bind(this);
-    this.removeEventListener = this._emitter.removeListener.bind(this);
+    this.addEventListener = this._emitter.addListener.bind(this._emitter);
+    this.removeEventListener = this._emitter.removeListener.bind(this._emitter);
     this.dispatchEvent = (ev) => {
       this._emitter.emit(ev.type, ev);
+      if (this['on' + ev.type]) {
+        this['on' + ev.type](ev);
+      }
     };
 
     let candidates = [
@@ -52,14 +55,12 @@ module.exports = function(window) {
     ];
     this._emittedCandidates = [];
     let emitCandidate = () => {
-      let e = new Event('RTCIceGatherEvent');
+      let e = new Event('localcandidate');
       e.candidate = candidates.shift();
       if (Object.keys(e.candidate).length) {
         this._emittedCandidates.push(e.candidate);
       }
-      if (this.onlocalcandidate) {
-        this.onlocalcandidate(e);
-      }
+      this.dispatchEvent(e);
       if (candidates.length) {
         setTimeout(emitCandidate, 50);
       }
