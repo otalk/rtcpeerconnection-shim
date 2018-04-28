@@ -10,6 +10,7 @@
 
 var SDPUtils = require('sdp');
 var shimSenderWithTrackOrKind = require('./rtcrtpsender');
+var shimIceGatherer = require('./rtcicegatherer');
 var util = require('./util');
 
 function fixStatsType(stat) {
@@ -217,6 +218,9 @@ function fireAddTrack(pc, track, receiver, streams) {
 module.exports = function(window, edgeVersion) {
   if (window.RTCRtpSender) { // wrap native RTCRtpSender.
     window.RTCRtpSender = shimSenderWithTrackOrKind(window);
+  }
+  if (window.RTCIceGatherer) { // wrap native RTCIceGatherer.
+    window.RTCIceGatherer = shimIceGatherer(window);
   }
   var RTCPeerConnection = function(config) {
     var pc = this;
@@ -505,7 +509,6 @@ module.exports = function(window, edgeVersion) {
 
   RTCPeerConnection.prototype._createIceGatherer = function(sdpMLineIndex,
       usingBundle) {
-    var pc = this;
     if (usingBundle && sdpMLineIndex > 0) {
       return this.transceivers[0].iceGatherer;
     } else if (this._iceGatherers.length) {
@@ -515,22 +518,6 @@ module.exports = function(window, edgeVersion) {
       iceServers: this._config.iceServers,
       gatherPolicy: this._config.iceTransportPolicy
     });
-    Object.defineProperty(iceGatherer, 'state',
-        {value: 'new', writable: true}
-    );
-
-    this.transceivers[sdpMLineIndex].bufferedCandidateEvents = [];
-    this.transceivers[sdpMLineIndex].bufferCandidates = function(event) {
-      var end = !event.candidate || Object.keys(event.candidate).length === 0;
-      // polyfill since RTCIceGatherer.state is not implemented in
-      // Edge 10547 yet.
-      iceGatherer.state = end ? 'completed' : 'gathering';
-      if (pc.transceivers[sdpMLineIndex].bufferedCandidateEvents !== null) {
-        pc.transceivers[sdpMLineIndex].bufferedCandidateEvents.push(event);
-      }
-    };
-    iceGatherer.addEventListener('localcandidate',
-      this.transceivers[sdpMLineIndex].bufferCandidates);
     return iceGatherer;
   };
 
@@ -541,11 +528,6 @@ module.exports = function(window, edgeVersion) {
     if (iceGatherer.onlocalcandidate) {
       return;
     }
-    var bufferedCandidateEvents =
-      this.transceivers[sdpMLineIndex].bufferedCandidateEvents || [];
-    this.transceivers[sdpMLineIndex].bufferedCandidateEvents = null;
-    iceGatherer.removeEventListener('localcandidate',
-      this.transceivers[sdpMLineIndex].bufferCandidates);
     iceGatherer.onlocalcandidate = function(evt) {
       if (pc.usingBundle && sdpMLineIndex > 0) {
         // if we know that we use bundle we can drop candidates with
@@ -559,16 +541,7 @@ module.exports = function(window, edgeVersion) {
       var cand = evt.candidate;
       // Edge emits an empty object for RTCIceCandidateComplete‥
       var end = !cand || Object.keys(cand).length === 0;
-      if (end) {
-        // polyfill since RTCIceGatherer.state is not implemented in
-        // Edge 10547 yet.
-        if (iceGatherer.state === 'new' || iceGatherer.state === 'gathering') {
-          iceGatherer.state = 'completed';
-        }
-      } else {
-        if (iceGatherer.state === 'new') {
-          iceGatherer.state = 'gathering';
-        }
+      if (!end) {
         // RTCIceCandidate doesn't have a component, needs to be added
         cand.component = 1;
         // also the usernameFragment. TODO: update SDP to take both variants.
@@ -603,7 +576,7 @@ module.exports = function(window, edgeVersion) {
           sections.join('');
       var complete = pc.transceivers.every(function(transceiver) {
         return transceiver.iceGatherer &&
-            transceiver.iceGatherer.state === 'completed';
+            transceiver.iceGatherer.state === 'complete';
       });
 
       if (pc.iceGatheringState !== 'gathering') {
@@ -624,10 +597,16 @@ module.exports = function(window, edgeVersion) {
     };
 
     // emit already gathered candidates.
+    var gatheredCandidates = iceGatherer.getLocalCandidates();
+    var isComplete = iceGatherer.state === 'complete';
     window.setTimeout(function() {
-      bufferedCandidateEvents.forEach(function(e) {
-        iceGatherer.onlocalcandidate(e);
-      });
+      if (!iceGatherer.onlocalcandidate) {
+        return;
+      }
+      gatheredCandidates.forEach(iceGatherer.onlocalcandidate);
+      if (isComplete) {
+        iceGatherer.onlocalcandidate({candidate: {}});
+      }
     }, 0);
   };
 
@@ -1462,7 +1441,7 @@ module.exports = function(window, edgeVersion) {
           sdp += 'a=' + SDPUtils.writeCandidate(cand) + '\r\n';
         });
 
-        if (transceiver.iceGatherer.state === 'completed') {
+        if (transceiver.iceGatherer.state === 'complete') {
           sdp += 'a=end-of-candidates\r\n';
         }
       }
