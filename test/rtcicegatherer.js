@@ -53,21 +53,21 @@ describe('RTCIceGatherer wrapper', () => {
     });
   });
 
-  describe('icegatheringstatechange event', () => {
+  describe('statechange event', () => {
     it('is emitted', () => {
       const g = new window.RTCIceGatherer(options);
       const stub = sinon.stub();
-      g.addEventListener('icegatheringstatechange', stub);
-      g.onicegatheringstatechange = sinon.stub();
+      g.addEventListener('statechange', stub);
+      g.onstatechange = sinon.stub();
       clock.tick(500);
       expect(stub).to.have.been.called();
-      expect(g.onicegatheringstatechange).to.have.been.called();
+      expect(g.onstatechange).to.have.been.called();
     });
 
     it('goes to gathering and complete', () => {
       const g = new window.RTCIceGatherer(options);
       const states = [];
-      g.addEventListener('icegatheringstatechange', () => states.push(g.state));
+      g.addEventListener('statechange', () => states.push(g.state));
       clock.tick(500);
       expect(states).to.deep.equal(['gathering', 'complete']);
     });

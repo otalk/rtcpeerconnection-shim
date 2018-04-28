@@ -23,10 +23,10 @@ module.exports = function(window) {
       var end = !candidate || Object.keys(candidate).length === 0;
       if (end) {
         gatherer.state = 'complete';
-        gatherer.dispatchEvent(new Event('icegatheringstatechange'));
+        gatherer.dispatchEvent(new Event('statechange'));
       } else if (gatherer.state === 'new') {
         gatherer.state = 'gathering';
-        gatherer.dispatchEvent(new Event('icegatheringstatechange'));
+        gatherer.dispatchEvent(new Event('statechange'));
       }
     });
     return gatherer;
