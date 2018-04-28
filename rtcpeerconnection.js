@@ -11,6 +11,7 @@
 var SDPUtils = require('sdp');
 var shimSenderWithTrackOrKind = require('./rtcrtpsender');
 var shimIceGatherer = require('./rtcicegatherer');
+var shimIceTransport = require('./rtcicetransport');
 var util = require('./util');
 
 function fixStatsType(stat) {
@@ -222,6 +223,10 @@ module.exports = function(window, edgeVersion) {
   if (window.RTCIceGatherer) { // wrap native RTCIceGatherer.
     window.RTCIceGatherer = shimIceGatherer(window);
   }
+  if (window.RTCIceTransport) { // wrap native RTCIceTransport.
+    window.RTCIceTransport = shimIceTransport(window);
+  }
+
   var RTCPeerConnection = function(config) {
     var pc = this;
 
@@ -614,10 +619,10 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype._createIceAndDtlsTransports = function() {
     var pc = this;
     var iceTransport = new window.RTCIceTransport(null);
-    iceTransport.onicestatechange = function() {
+    iceTransport.addEventListener('statechange', function() {
       pc._updateIceConnectionState();
       pc._updateConnectionState();
-    };
+    });
 
     var dtlsTransport = new window.RTCDtlsTransport(iceTransport);
     dtlsTransport.ondtlsstatechange = function() {
@@ -645,11 +650,8 @@ module.exports = function(window, edgeVersion) {
       delete iceGatherer.onlocalcandidate;
       delete this.transceivers[sdpMLineIndex].iceGatherer;
     }
-    var iceTransport = this.transceivers[sdpMLineIndex].iceTransport;
-    if (iceTransport) {
-      delete iceTransport.onicestatechange;
-      delete this.transceivers[sdpMLineIndex].iceTransport;
-    }
+    delete this.transceivers[sdpMLineIndex].iceTransport;
+
     var dtlsTransport = this.transceivers[sdpMLineIndex].dtlsTransport;
     if (dtlsTransport) {
       delete dtlsTransport.ondtlsstatechange;

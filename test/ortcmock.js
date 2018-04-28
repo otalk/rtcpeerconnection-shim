@@ -33,14 +33,6 @@ module.exports = function(window) {
     this.component = 'rtp';
 
     this._emitter = new EventEmitter();
-    this.addEventListener = this._emitter.addListener.bind(this._emitter);
-    this.removeEventListener = this._emitter.removeListener.bind(this._emitter);
-    this.dispatchEvent = (ev) => {
-      this._emitter.emit(ev.type, ev);
-      if (this['on' + ev.type]) {
-        this['on' + ev.type](ev);
-      }
-    };
 
     let candidates = [
       {
@@ -68,6 +60,20 @@ module.exports = function(window) {
     setTimeout(emitCandidate, 50);
   };
 
+  RTCIceGatherer.prototype.addEventListener = function() {
+    return this._emitter.addListener.apply(this._emitter, arguments);
+  };
+
+  RTCIceGatherer.prototype.removeEventListener = function() {
+    return this._emitter.removeListener.apply(this._emitter, arguments);
+  };
+
+  RTCIceGatherer.prototype.dispatchEvent = function(ev) {
+    this._emitter.emit(ev.type, ev);
+    if (this['on' + ev.type]) {
+      this['on' + ev.type](ev);
+    }
+  };
   RTCIceGatherer.prototype.getLocalCandidates = function() {
     return this._emittedCandidates;
   };
@@ -83,12 +89,28 @@ module.exports = function(window) {
   };
   window.RTCIceGatherer = RTCIceGatherer;
 
-  const RTCIceTransport = function() {
+  const RTCIceTransport = function(iceGatherer) {
+    this.iceGatherer = iceGatherer;
+
     this._remoteCandidates = [];
     this.state = 'new';
+
+    this._emitter = new EventEmitter();
+  };
+  RTCIceTransport.prototype.addEventListener = function() {
+    return this._emitter.addListener.apply(this._emitter, arguments);
+  };
+  RTCIceTransport.prototype.removeEventListener = function() {
+    return this._emitter.removeListener.apply(this._emitter, arguments);
+  };
+  RTCIceTransport.prototype.dispatchEvent = function(ev) {
+    this._emitter.emit(ev.type, ev);
+    if (this['on' + ev.type]) {
+      this['on' + ev.type](ev);
+    }
   };
   RTCIceTransport.prototype.start = function(gatherer, parameters, role) {
-    this._gatherer = gatherer;
+    this.iceGatherer = gatherer;
     this._remoteParameters = parameters;
     this._role = role || 'controlled';
     if (this._remoteCandidates.length > 0) {
