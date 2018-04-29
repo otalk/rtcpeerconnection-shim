@@ -16,8 +16,30 @@ chai.use(require('sinon-chai'));
 const util = require('../util');
 
 describe('Utility functions', () => {
-  const defaultVersion = 15025;
+  describe('makeError', () => {
+    it('returns an error object', () => {
+      const err = util.makeError('name', 'description');
+      expect(err).to.be.instanceOf(Error);
+    });
+
+    it('sets the error name', () => {
+      const err = util.makeError('name', 'description');
+      expect(err.name).to.equal('name');
+    });
+
+    it('sets the error message', () => {
+      const err = util.makeError('name', 'description');
+      expect(err.message).to.equal('description');
+    });
+
+    it('sets the legacy error code for some errors', () => {
+      const err = util.makeError('NotSupportedError', 'description');
+      expect(err.code).to.equal(9);
+    });
+  });
+
   describe('filtering of STUN and TURN servers', () => {
+    const defaultVersion = 15025;
     it('converts legacy url member to urls', () => {
       const result = util.filterIceServers([
         {url: 'stun:stun.l.google.com'}
