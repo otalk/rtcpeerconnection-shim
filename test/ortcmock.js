@@ -141,6 +141,22 @@ module.exports = function(window) {
   const RTCDtlsTransport = function(transport) {
     this.transport = transport;
     this.state = 'new';
+
+    this._emitter = new EventEmitter();
+  };
+  RTCDtlsTransport.prototype.addEventListener = function() {
+    return this._emitter.addListener.apply(this._emitter, arguments);
+  };
+
+  RTCDtlsTransport.prototype.removeEventListener = function() {
+    return this._emitter.removeListener.apply(this._emitter, arguments);
+  };
+
+  RTCDtlsTransport.prototype.dispatchEvent = function(ev) {
+    this._emitter.emit(ev.type, ev);
+    if (this['on' + ev.type]) {
+      this['on' + ev.type](ev);
+    }
   };
   RTCDtlsTransport.prototype.start = function() {
     this.state = 'connected'; // TODO: not accurate.

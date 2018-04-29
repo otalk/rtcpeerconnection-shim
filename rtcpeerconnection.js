@@ -12,6 +12,7 @@ var SDPUtils = require('sdp');
 var shimSenderWithTrackOrKind = require('./rtcrtpsender');
 var shimIceGatherer = require('./rtcicegatherer');
 var shimIceTransport = require('./rtcicetransport');
+var shimDtlsTransport = require('./rtcdtlstransport');
 var util = require('./util');
 
 function fixStatsType(stat) {
@@ -225,6 +226,9 @@ module.exports = function(window, edgeVersion) {
   }
   if (window.RTCIceTransport) { // wrap native RTCIceTransport.
     window.RTCIceTransport = shimIceTransport(window);
+  }
+  if (window.RTCDtlsTransport) { // wrap native RTCDtlsTransport.
+    window.RTCDtlsTransport = shimDtlsTransport(window);
   }
 
   var RTCPeerConnection = function(config) {
@@ -625,15 +629,15 @@ module.exports = function(window, edgeVersion) {
     });
 
     var dtlsTransport = new window.RTCDtlsTransport(iceTransport);
-    dtlsTransport.ondtlsstatechange = function() {
+    dtlsTransport.addEventListener('statechange', function() {
       pc._updateConnectionState();
-    };
-    dtlsTransport.onerror = function() {
+    });
+    dtlsTransport.addEventListener('error', function() {
       // onerror does not set state to failed by itself.
       Object.defineProperty(dtlsTransport, 'state',
           {value: 'failed', writable: true});
       pc._updateConnectionState();
-    };
+    });
 
     return {
       iceTransport: iceTransport,
@@ -652,12 +656,7 @@ module.exports = function(window, edgeVersion) {
     }
     delete this.transceivers[sdpMLineIndex].iceTransport;
 
-    var dtlsTransport = this.transceivers[sdpMLineIndex].dtlsTransport;
-    if (dtlsTransport) {
-      delete dtlsTransport.ondtlsstatechange;
-      delete dtlsTransport.onerror;
-      delete this.transceivers[sdpMLineIndex].dtlsTransport;
-    }
+    delete this.transceivers[sdpMLineIndex].dtlsTransport;
   };
 
   // Start the RTP Sender and Receiver for a transceiver.

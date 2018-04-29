@@ -3656,7 +3656,7 @@ describe('Edge shim', () => {
       const stub = sinon.stub();
       pc.onconnectionstatechange = stub;
 
-      dtlsTransport.ondtlsstatechange();
+      dtlsTransport.dispatchEvent(new Event('dtlsstatechange'));
 
       expect(stub).to.have.been.calledOnce();
       expect(pc.connectionState).to.equal('connected');
@@ -3670,7 +3670,7 @@ describe('Edge shim', () => {
       const stub = sinon.stub();
       pc.onconnectionstatechange = stub;
 
-      dtlsTransport.onerror();
+      dtlsTransport.dispatchEvent(new Event('error'));
       expect(stub).to.have.been.calledOnce();
       expect(pc.connectionState).to.equal('failed');
     });
