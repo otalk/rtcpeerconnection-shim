@@ -3599,7 +3599,7 @@ describe('Edge shim', () => {
           const stub = sinon.stub();
           pc.oniceconnectionstatechange = stub;
 
-          iceTransport.onicestatechange();
+          iceTransport.dispatchEvent(new Event('icestatechange'));
 
           expect(stub).to.have.been.calledOnce();
           expect(pc.iceConnectionState).to.equal(state);
@@ -3641,7 +3641,7 @@ describe('Edge shim', () => {
       pc.onconnectionstatechange = stub;
       pc.addEventListener('connectionstatechange', stub);
 
-      iceTransport.onicestatechange();
+      iceTransport.dispatchEvent(new Event('icestatechange'));
       expect(stub).not.to.have.been.calledWith();
     });
 
@@ -3656,7 +3656,7 @@ describe('Edge shim', () => {
       const stub = sinon.stub();
       pc.onconnectionstatechange = stub;
 
-      dtlsTransport.ondtlsstatechange();
+      dtlsTransport.dispatchEvent(new Event('dtlsstatechange'));
 
       expect(stub).to.have.been.calledOnce();
       expect(pc.connectionState).to.equal('connected');
@@ -3670,7 +3670,7 @@ describe('Edge shim', () => {
       const stub = sinon.stub();
       pc.onconnectionstatechange = stub;
 
-      dtlsTransport.onerror();
+      dtlsTransport.dispatchEvent(new Event('error'));
       expect(stub).to.have.been.calledOnce();
       expect(pc.connectionState).to.equal('failed');
     });
@@ -3689,7 +3689,7 @@ describe('Edge shim', () => {
       const stub = sinon.stub();
       pc.onconnectionstatechange = stub;
 
-      iceTransport.onicestatechange();
+      iceTransport.dispatchEvent(new Event('icestatechange'));
 
       expect(stub).to.have.been.calledOnce();
       expect(pc.iceConnectionState).to.equal('disconnected');
