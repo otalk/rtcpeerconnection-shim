@@ -417,8 +417,8 @@ describe('Edge shim', () => {
       });
 
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      it('starts the ice transport', (done) => {
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      it('starts the ice transport', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
           return pc.createAnswer();
         })
@@ -436,7 +436,6 @@ describe('Edge shim', () => {
               password: '' + ICEPWD + ''
             })
           );
-          done();
         });
       });
 
@@ -467,8 +466,8 @@ describe('Edge shim', () => {
         });
       });
 
-      it('sets the RTPSender transport', (done) => {
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      it('sets the RTPSender transport', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
           return navigator.mediaDevices.getUserMedia({audio: true});
         })
@@ -483,7 +482,6 @@ describe('Edge shim', () => {
           const sender = pc.getSenders()[0];
           expect(sender.setTransport).to.have.been.calledOnce();
           expect(sender.transport).not.to.equal(null);
-          done();
         });
       });
     });
@@ -752,8 +750,8 @@ describe('Edge shim', () => {
           'a=rtpmap:111 opus/48000/2\r\n' +
           'a=ssrc:2002 msid:stream2 track2\r\n' +
           'a=ssrc:2002 cname:some\r\n';
-      it('disposes the second ice transport', (done) => {
-        navigator.mediaDevices.getUserMedia({audio: true, video: true})
+      it('disposes the second ice transport', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true, video: true})
         .then((stream) => {
           // this creates two transceivers with ice transports.
           pc.addStream(stream);
@@ -770,7 +768,6 @@ describe('Edge shim', () => {
           // the second ice transport should have been disposed.
           expect(senders[0].transport.transport).to
               .equal(senders[1].transport.transport);
-          done();
         });
       });
     });
@@ -1340,41 +1337,37 @@ describe('Edge shim', () => {
     });
 
     describe('when called with offerToReceiveAudio', () => {
-      it('= true the generated SDP should contain one audio m-line', (done) => {
-        pc.createOffer({offerToReceiveAudio: true})
+      it('= true the generated SDP should contain one audio m-line', () => {
+        return pc.createOffer({offerToReceiveAudio: true})
         .then((offer) => {
           const sections = SDPUtils.getMediaSections(offer.sdp);
           expect(sections.length).to.equal(1);
           expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
-          done();
         });
       });
 
       // probably legacy which was covered by the spec at some point.
-      it('= 2 the generated SDP should contain two audio m-lines', (done) => {
-        pc.createOffer({offerToReceiveAudio: 2})
+      it('= 2 the generated SDP should contain two audio m-lines', () => {
+        return pc.createOffer({offerToReceiveAudio: 2})
         .then((offer) => {
           const sections = SDPUtils.getMediaSections(offer.sdp);
           expect(sections.length).to.equal(2);
           expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
           expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
-          done();
         });
       });
 
-      it('= true the generated SDP should contain one audio m-line', (done) => {
-        pc.createOffer({offerToReceiveAudio: true})
+      it('= true the generated SDP should contain one audio m-line', () => {
+        return pc.createOffer({offerToReceiveAudio: true})
         .then((offer) => {
           const sections = SDPUtils.getMediaSections(offer.sdp);
           expect(sections.length).to.equal(1);
           expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
-          done();
         });
       });
 
-      it('= false the generated SDP should not offer to receive ' +
-          'audio', (done) => {
-        navigator.mediaDevices.getUserMedia({audio: true})
+      it('= false the generated SDP should not offer to receive audio', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true})
         .then((stream) => {
           pc.addStream(stream);
           return pc.createOffer({offerToReceiveAudio: false});
@@ -1383,58 +1376,52 @@ describe('Edge shim', () => {
           const sections = SDPUtils.getMediaSections(offer.sdp);
           expect(sections.length).to.equal(1);
           expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
-          done();
         });
       });
 
       it('= false and no local track the generated SDP should not ' +
-          'contain a m-line', (done) => {
+          'contain a m-line', () => {
         // see https://github.com/rtcweb-wg/jsep/issues/832
-        pc.createOffer({offerToReceiveAudio: false})
+        return pc.createOffer({offerToReceiveAudio: false})
         .then((offer) => {
           const sections = SDPUtils.getMediaSections(offer.sdp);
           expect(sections).to.have.length(0);
-          done();
         });
       });
     });
 
     describe('when called with offerToReceiveVideo', () => {
-      it('= true the generated SDP should contain one video m-line', (done) => {
-        pc.createOffer({offerToReceiveVideo: true})
+      it('= true the generated SDP should contain one video m-line', () => {
+        return pc.createOffer({offerToReceiveVideo: true})
         .then((offer) => {
           const sections = SDPUtils.getMediaSections(offer.sdp);
           expect(sections.length).to.equal(1);
           expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
-          done();
         });
       });
 
       // probably legacy which was covered by the spec at some point.
-      it('= 2 the generated SDP should contain two video m-lines', (done) => {
-        pc.createOffer({offerToReceiveVideo: 2})
+      it('= 2 the generated SDP should contain two video m-lines', () => {
+        return pc.createOffer({offerToReceiveVideo: 2})
         .then((offer) => {
           const sections = SDPUtils.getMediaSections(offer.sdp);
           expect(sections.length).to.equal(2);
           expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
           expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
-          done();
         });
       });
 
-      it('= true the generated SDP should contain one video m-line', (done) => {
-        pc.createOffer({offerToReceiveVideo: true})
+      it('= true the generated SDP should contain one video m-line', () => {
+        return pc.createOffer({offerToReceiveVideo: true})
         .then((offer) => {
           const sections = SDPUtils.getMediaSections(offer.sdp);
           expect(sections.length).to.equal(1);
           expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
-          done();
         });
       });
 
-      it('= false the generated SDP should not offer to receive ' +
-          'video', (done) => {
-        navigator.mediaDevices.getUserMedia({video: true})
+      it('= false the generated SDP should not offer to receive video', () => {
+        return navigator.mediaDevices.getUserMedia({video: true})
         .then((stream) => {
           pc.addStream(stream);
           return pc.createOffer({offerToReceiveVideo: false});
@@ -1443,26 +1430,25 @@ describe('Edge shim', () => {
           const sections = SDPUtils.getMediaSections(offer.sdp);
           expect(sections.length).to.equal(1);
           expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
-          done();
         });
       });
 
       it('= false and no local track the generated SDP should not ' +
-          'contain a m-line', (done) => {
+          'contain a m-line', () => {
         // see https://github.com/rtcweb-wg/jsep/issues/832
-        pc.createOffer({offerToReceiveVideo: false})
+        return pc.createOffer({offerToReceiveVideo: false})
         .then((offer) => {
           const sections = SDPUtils.getMediaSections(offer.sdp);
           expect(sections).to.have.length(0);
-          done();
         });
       });
     });
 
     describe('when called with offerToReceiveAudio and ' +
         'offerToReceiveVideo', () => {
-      it('the generated SDP should contain two m-lines', (done) => {
-        pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true})
+      it('the generated SDP should contain two m-lines', () => {
+        return pc.createOffer({offerToReceiveAudio: true,
+            offerToReceiveVideo: true})
         .then((offer) => {
           const sections = SDPUtils.getMediaSections(offer.sdp);
           expect(sections.length).to.equal(2);
@@ -1470,15 +1456,14 @@ describe('Edge shim', () => {
           expect(SDPUtils.getKind(sections[0])).to.equal('audio');
           expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
           expect(SDPUtils.getKind(sections[1])).to.equal('video');
-          done();
         });
       });
     });
 
     describe('when called after adding a stream', () => {
       describe('with an audio track', () => {
-        it('the generated SDP should contain an audio m-line', (done) => {
-          navigator.mediaDevices.getUserMedia({audio: true})
+        it('the generated SDP should contain an audio m-line', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true})
           .then((stream) => {
             pc.addStream(stream);
             return pc.createOffer();
@@ -1487,15 +1472,13 @@ describe('Edge shim', () => {
             const sections = SDPUtils.getMediaSections(offer.sdp);
             expect(sections.length).to.equal(1);
             expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
-            done();
           });
         });
       });
 
       describe('with an audio track not offering to receive audio', () => {
-        it('the generated SDP should contain a sendonly audio ' +
-            'm-line', (done) => {
-          navigator.mediaDevices.getUserMedia({audio: true})
+        it('the generated SDP should contain a sendonly audio m-line', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true})
           .then((stream) => {
             pc.addStream(stream);
             return pc.createOffer({offerToReceiveAudio: false});
@@ -1504,14 +1487,13 @@ describe('Edge shim', () => {
             const sections = SDPUtils.getMediaSections(offer.sdp);
             expect(sections.length).to.equal(1);
             expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
-            done();
           });
         });
       });
 
       describe('with an audio track and offering to receive video', () => {
-        it('the generated SDP should contain a recvonly m-line', (done) => {
-          navigator.mediaDevices.getUserMedia({audio: true})
+        it('the generated SDP should contain a recvonly m-line', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true})
           .then((stream) => {
             pc.addStream(stream);
             return pc.createOffer({offerToReceiveVideo: true});
@@ -1523,14 +1505,13 @@ describe('Edge shim', () => {
             expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
             expect(SDPUtils.getKind(sections[1])).to.equal('video');
             expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
-            done();
           });
         });
       });
 
       describe('with a video track', () => {
-        it('the generated SDP should contain an video m-line', (done) => {
-          navigator.mediaDevices.getUserMedia({video: true})
+        it('the generated SDP should contain an video m-line', () => {
+          return navigator.mediaDevices.getUserMedia({video: true})
           .then((stream) => {
             pc.addStream(stream);
             return pc.createOffer();
@@ -1539,15 +1520,14 @@ describe('Edge shim', () => {
             const sections = SDPUtils.getMediaSections(offer.sdp);
             expect(sections.length).to.equal(1);
             expect(SDPUtils.getKind(sections[0])).to.equal('video');
-            done();
           });
         });
       });
 
       describe('with a video track and offerToReceiveAudio', () => {
         it('the generated SDP should contain a video and an ' +
-            'audio m-line', (done) => {
-          navigator.mediaDevices.getUserMedia({video: true})
+            'audio m-line', () => {
+          return navigator.mediaDevices.getUserMedia({video: true})
           .then((stream) => {
             pc.addStream(stream);
             return pc.createOffer({offerToReceiveAudio: true});
@@ -1557,7 +1537,6 @@ describe('Edge shim', () => {
             expect(sections.length).to.equal(2);
             expect(SDPUtils.getKind(sections[0])).to.equal('video');
             expect(SDPUtils.getKind(sections[1])).to.equal('audio');
-            done();
           });
         });
       });
@@ -1565,8 +1544,8 @@ describe('Edge shim', () => {
 
       describe('with an audio track and a video track', () => {
         it('the generated SDP should contain an audio and video ' +
-            'm-line', (done) => {
-          navigator.mediaDevices.getUserMedia({audio: true, video: true})
+            'm-line', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true, video: true})
           .then((stream) => {
             pc.addStream(stream);
             return pc.createOffer();
@@ -1576,15 +1555,14 @@ describe('Edge shim', () => {
             expect(sections.length).to.equal(2);
             expect(SDPUtils.getKind(sections[0])).to.equal('audio');
             expect(SDPUtils.getKind(sections[1])).to.equal('video');
-            done();
           });
         });
       });
 
       describe('with an audio track and two video tracks', () => {
         it('the generated SDP should contain an audio and ' +
-            'video m-line', (done) => {
-          navigator.mediaDevices.getUserMedia({audio: true, video: true})
+            'video m-line', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true, video: true})
           .then((stream) => {
             pc.addStream(stream);
             return navigator.mediaDevices.getUserMedia({video: true});
@@ -1599,7 +1577,6 @@ describe('Edge shim', () => {
             expect(SDPUtils.getKind(sections[0])).to.equal('audio');
             expect(SDPUtils.getKind(sections[1])).to.equal('video');
             expect(SDPUtils.getKind(sections[2])).to.equal('video');
-            done();
           });
         });
       });
@@ -1607,9 +1584,8 @@ describe('Edge shim', () => {
 
     describe('when called after addTrack', () => {
       describe('with an audio track', () => {
-        it('the generated SDP should contain a sendrecv ' +
-           'audio m-line', (done) => {
-          navigator.mediaDevices.getUserMedia({audio: true})
+        it('the generated SDP should contain a sendrecv audio m-line', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true})
           .then((stream) => {
             pc.addTrack(stream.getAudioTracks()[0], stream);
             return pc.createOffer();
@@ -1618,15 +1594,14 @@ describe('Edge shim', () => {
             const sections = SDPUtils.getMediaSections(offer.sdp);
             expect(sections.length).to.equal(1);
             expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
-            done();
           });
         });
       });
 
       describe('with an audio track not offering to receive audio', () => {
         it('the generated SDP should contain a sendonly audio ' +
-            'm-line', (done) => {
-          navigator.mediaDevices.getUserMedia({audio: true})
+            'm-line', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true})
           .then((stream) => {
             pc.addTrack(stream.getAudioTracks()[0], stream);
             return pc.createOffer({offerToReceiveAudio: false});
@@ -1635,15 +1610,14 @@ describe('Edge shim', () => {
             const sections = SDPUtils.getMediaSections(offer.sdp);
             expect(sections.length).to.equal(1);
             expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
-            done();
           });
         });
       });
 
       describe('with an audio track and offering to receive video', () => {
         it('the generated SDP should contain a sendrecv audio m-line ' +
-           'and a recvonly video m-line', (done) => {
-          navigator.mediaDevices.getUserMedia({audio: true})
+           'and a recvonly video m-line', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true})
           .then((stream) => {
             pc.addTrack(stream.getAudioTracks()[0], stream);
             return pc.createOffer({offerToReceiveVideo: true});
@@ -1655,14 +1629,13 @@ describe('Edge shim', () => {
             expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
             expect(SDPUtils.getKind(sections[1])).to.equal('video');
             expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
-            done();
           });
         });
       });
 
       describe('with a video track', () => {
-        it('the generated SDP should contain an video m-line', (done) => {
-          navigator.mediaDevices.getUserMedia({video: true})
+        it('the generated SDP should contain an video m-line', () => {
+          return navigator.mediaDevices.getUserMedia({video: true})
           .then((stream) => {
             pc.addTrack(stream.getVideoTracks()[0], stream);
             return pc.createOffer();
@@ -1671,15 +1644,14 @@ describe('Edge shim', () => {
             const sections = SDPUtils.getMediaSections(offer.sdp);
             expect(sections.length).to.equal(1);
             expect(SDPUtils.getKind(sections[0])).to.equal('video');
-            done();
           });
         });
       });
 
       describe('with a video track and offerToReceiveAudio', () => {
         it('the generated SDP should contain a video and an ' +
-            'audio m-line', (done) => {
-          navigator.mediaDevices.getUserMedia({video: true})
+            'audio m-line', () => {
+          return navigator.mediaDevices.getUserMedia({video: true})
           .then((stream) => {
             pc.addTrack(stream.getVideoTracks()[0], stream);
             return pc.createOffer({offerToReceiveAudio: true});
@@ -1689,7 +1661,6 @@ describe('Edge shim', () => {
             expect(sections.length).to.equal(2);
             expect(SDPUtils.getKind(sections[0])).to.equal('video');
             expect(SDPUtils.getKind(sections[1])).to.equal('audio');
-            done();
           });
         });
       });
@@ -1697,8 +1668,8 @@ describe('Edge shim', () => {
 
       describe('with an audio track and a video track', () => {
         it('the generated SDP should contain an audio and video ' +
-            'm-line', (done) => {
-          navigator.mediaDevices.getUserMedia({audio: true, video: true})
+            'm-line', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true, video: true})
           .then((stream) => {
             stream.getTracks().forEach((track) => {
               pc.addTrack(track, stream);
@@ -1710,15 +1681,14 @@ describe('Edge shim', () => {
             expect(sections.length).to.equal(2);
             expect(SDPUtils.getKind(sections[0])).to.equal('audio');
             expect(SDPUtils.getKind(sections[1])).to.equal('video');
-            done();
           });
         });
       });
 
       describe('with an audio track and two video tracks', () => {
         it('the generated SDP should contain an audio and ' +
-            'two video m-lines', (done) => {
-          navigator.mediaDevices.getUserMedia({audio: true, video: true})
+            'two video m-lines', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true, video: true})
           .then((stream) => {
             stream.getTracks().forEach((track) => {
               pc.addTrack(track, stream);
@@ -1737,7 +1707,6 @@ describe('Edge shim', () => {
             expect(SDPUtils.getKind(sections[0])).to.equal('audio');
             expect(SDPUtils.getKind(sections[1])).to.equal('video');
             expect(SDPUtils.getKind(sections[2])).to.equal('video');
-            done();
           });
         });
       });
@@ -1888,8 +1857,8 @@ describe('Edge shim', () => {
     });
 
     describe('after replaceTrack', () => {
-      it('retains the original track id', (done) => {
-        navigator.mediaDevices.getUserMedia({audio: true})
+      it('retains the original track id', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true})
         .then((stream) => {
           pc.addTrack(stream.getAudioTracks()[0], stream);
           return pc.createOffer();
@@ -1905,7 +1874,6 @@ describe('Edge shim', () => {
           const newMsid = SDPUtils.parseMsid(offer.sdp);
           const existingMsid = SDPUtils.parseMsid(pc.localDescription.sdp);
           expect(newMsid.track).to.equal(existingMsid.track);
-          done();
         });
       });
     });
