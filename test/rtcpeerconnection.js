@@ -888,6 +888,61 @@ describe('Edge shim', () => {
       });
     });
 
+    describe('when called with an answer containing candidates', () => {
+      let pc2;
+      beforeEach(() => {
+        pc2 = new RTCPeerConnection();
+        sinon.spy(window.RTCIceTransport.prototype, 'addRemoteCandidate');
+        sinon.spy(window.RTCIceTransport.prototype, 'setRemoteCandidates');
+        return navigator.mediaDevices.getUserMedia({audio: true})
+          .then(stream => pc.addStream(stream))
+          .then(() => pc.createOffer())
+          .then((offer) => {
+            return Promise.all([
+              pc.setLocalDescription(offer),
+              pc2.setRemoteDescription(offer)
+            ]);
+          });
+      });
+      afterEach(() => {
+        if (pc2.signalingState !== 'closed') {
+          pc2.close();
+        }
+        window.RTCIceTransport.prototype.addRemoteCandidate.restore();
+        window.RTCIceTransport.prototype.setRemoteCandidates.restore();
+      });
+
+      const candidateString = 'a=candidate:702786350 1 udp 41819902 ' +
+          '8.8.8.8 60769 typ host';
+
+      it('adds the candidates to the ice transport', () => {
+        return pc2.createAnswer()
+        .then((answer) => {
+          answer.sdp += candidateString;
+          return pc.setRemoteDescription(answer);
+        })
+        .then(() => {
+          const sender = pc.getSenders()[0];
+          const iceTransport = sender.transport.transport;
+          expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
+        });
+      });
+
+      it('interprets end-of-candidates', () => {
+        return pc2.createAnswer()
+        .then((answer) => {
+          answer.sdp += candidateString + '\r\n';
+          answer.sdp += 'a=end-of-candidates\r\n';
+          return pc.setRemoteDescription(answer);
+        })
+        .then(() => {
+          const sender = pc.getSenders()[0];
+          const iceTransport = sender.transport.transport;
+          expect(iceTransport.setRemoteCandidates).to.have.been.calledOnce();
+        });
+      });
+    });
+
     describe('InvalidStateError is thrown when called with', () => {
       it('an answer in signalingState stable', () => {
         return pc.setRemoteDescription({type: 'answer'})
