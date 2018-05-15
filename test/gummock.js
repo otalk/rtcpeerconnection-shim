@@ -44,6 +44,9 @@ module.exports = function(window) {
       this._tracks.splice(idx, 1);
     }
   };
+  MediaStream.prototype.clone = function() {
+    return new MediaStream(this._tracks);
+  };
 
   window.MediaStream = MediaStream;
 

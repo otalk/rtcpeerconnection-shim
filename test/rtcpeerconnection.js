@@ -3780,11 +3780,27 @@ describe('Edge shim', () => {
     });
 
     it('clones the stream before addStream', () => {
-      navigator.mediaDevices.getUserMedia({video: true})
+      return navigator.mediaDevices.getUserMedia({video: true})
       .then((stream) => {
         stream.clone = sinon.stub().returns(stream);
         pc.addStream(stream);
         expect(stream.clone).to.have.been.calledOnce();
+      });
+    });
+
+    it('triggers the enabled event on the cloned track and sets enabled ' +
+       'when triggered on the original track', () => {
+      return navigator.mediaDevices.getUserMedia({video: true})
+      .then((originalStream) => {
+        const originalTrack = originalStream.getTracks()[0];
+        pc.addStream(originalStream);
+
+        const clonedTrack = pc.getLocalStreams()[0].getTracks()[0];
+        const e = new Event('MediaStreamTrackEvent');
+        e.type = 'enabled';
+        e.enabled = false;
+        originalTrack.dispatchEvent(e);
+        expect(clonedTrack.enabled).to.equal(false);
       });
     });
   });
