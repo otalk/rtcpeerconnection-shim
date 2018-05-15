@@ -238,21 +238,20 @@ describe('Edge shim', () => {
     });
 
 
-    it('changes the signalingState to have-local-offer', (done) => {
-      pc.createOffer({offerToReceiveAudio: true})
+    it('changes the signalingState to have-local-offer', () => {
+      return pc.createOffer({offerToReceiveAudio: true})
       .then((offer) => {
         return pc.setLocalDescription(offer);
       })
       .then(() => {
         expect(pc.localDescription.type).to.equal('offer');
         expect(pc.signalingState = 'have-local-offer');
-        done();
       });
     });
 
     it('calls the signalingstatechange event', () => {
       pc.onsignalingstatechange = sinon.stub();
-      pc.createOffer({offerToReceiveAudio: true})
+      return pc.createOffer({offerToReceiveAudio: true})
       .then((offer) => {
         return pc.setLocalDescription(offer);
       })
@@ -439,8 +438,8 @@ describe('Edge shim', () => {
         });
       });
 
-      it('starts the dtls transport', (done) => {
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      it('starts the dtls transport', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
           return pc.createAnswer();
         })
@@ -462,7 +461,6 @@ describe('Edge shim', () => {
               ])
             })
           );
-          done();
         });
       });
 
@@ -809,23 +807,21 @@ describe('Edge shim', () => {
     //
     describe('sets the canTrickleIceCandidates property', () => {
       it('to true when called with an offer that contains ' +
-          'a=ice-options:trickle', (done) => {
+          'a=ice-options:trickle', () => {
         const sdp = SDP_BOILERPLATE +
             'a=ice-options:trickle\r\n';
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
           expect(pc.canTrickleIceCandidates).to.equal(true);
-          done();
         });
       });
 
       it('to false when called with an offer that does not contain ' +
-          'a=ice-options:trickle', (done) => {
+          'a=ice-options:trickle', () => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
           expect(pc.canTrickleIceCandidates).to.equal(false);
-          done();
         });
       });
     });
@@ -844,46 +840,42 @@ describe('Edge shim', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           candidateString + '\r\n';
-      it('adds the candidates to the ice transport', (done) => {
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      it('adds the candidates to the ice transport', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
           const receiver = pc.getReceivers()[0];
           const iceTransport = receiver.transport.transport;
           expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
-          done();
         });
       });
 
-      it('interprets end-of-candidates', (done) => {
-        pc.setRemoteDescription({type: 'offer',
+      it('interprets end-of-candidates', () => {
+        return pc.setRemoteDescription({type: 'offer',
             sdp: sdp + 'a=end-of-candidates\r\n'
         })
         .then(() => {
           const receiver = pc.getReceivers()[0];
           const iceTransport = receiver.transport.transport;
           expect(iceTransport.setRemoteCandidates).to.have.been.calledOnce();
-          done();
         });
       });
 
       it('does not add the candidate in a subsequent offer ' +
-          'again', (done) => {
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          // call SRD again.
+          'again', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        .then(() => { // call SRD again.
           return pc.setRemoteDescription({type: 'offer', sdp: sdp});
         })
         .then(() => {
           const receiver = pc.getReceivers()[0];
           const iceTransport = receiver.transport.transport;
           expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
-          done();
         });
       });
 
       it('does not add the candidates when they are also supplied ' +
-          'with addIceCandidate', (done) => {
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+          'with addIceCandidate', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
           const receiver = pc.getReceivers()[0];
           const iceTransport = receiver.transport.transport;
@@ -892,22 +884,20 @@ describe('Edge shim', () => {
             candidate: candidateString})
           .catch(() => {});
           expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
-          done();
         });
       });
     });
 
     describe('InvalidStateError is thrown when called with', () => {
-      it('an answer in signalingState stable', (done) => {
-        pc.setRemoteDescription({type: 'answer'})
+      it('an answer in signalingState stable', () => {
+        return pc.setRemoteDescription({type: 'answer'})
         .catch((e) => {
           expect(e.name).to.equal('InvalidStateError');
-          done();
         });
       });
 
-      it('an offer in signalingState have-local-offer', (done) => {
-        pc.createOffer({offerToReceiveAudio: true})
+      it('an offer in signalingState have-local-offer', () => {
+        return pc.createOffer({offerToReceiveAudio: true})
         .then((offer) => {
           return pc.setLocalDescription(offer);
         })
@@ -916,7 +906,6 @@ describe('Edge shim', () => {
         })
         .catch((e) => {
           expect(e.name).to.equal('InvalidStateError');
-          done();
         });
       });
     });
@@ -1048,25 +1037,23 @@ describe('Edge shim', () => {
         window.RTCRtpReceiver.prototype.receive.restore();
       });
 
-      it('set RtpReceiver is called with compound set to false', (done) => {
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      it('set RtpReceiver is called with compound set to false', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
           const receiver = pc.getReceivers()[0];
           expect(receiver.receive).to.have.been.calledWith(
             sinon.match({rtcp: sinon.match({compound: false})})
           );
-          done();
         });
       });
-      it('not set RtpReceiver is called with compound set to true', (done) => {
-        pc.setRemoteDescription({type: 'offer',
+      it('not set RtpReceiver is called with compound set to true', () => {
+        return pc.setRemoteDescription({type: 'offer',
             sdp: sdp.replace('a=rtcp-rsize\r\n', '')})
         .then(() => {
           const receiver = pc.getReceivers()[0];
           expect(receiver.receive).to.have.been.calledWith(
             sinon.match({rtcp: sinon.match({compound: true})})
           );
-          done();
         });
       });
     });
@@ -1085,8 +1072,8 @@ describe('Edge shim', () => {
           'a=ice-lite\r\n' +
           MINIMAL_AUDIO_MLINE;
 
-      it('set the ice role to controlling', (done) => {
-        pc.setRemoteDescription({type: 'offer', sdp})
+      it('set the ice role to controlling', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           return pc.createAnswer();
         })
@@ -1103,12 +1090,11 @@ describe('Edge shim', () => {
             sinon.match.any,
             sinon.match('controlling')
           );
-          done();
         });
       });
 
-      it('sets the dtls role to server', (done) => {
-        pc.setRemoteDescription({type: 'offer', sdp})
+      it('sets the dtls role to server', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           return pc.createAnswer();
         })
@@ -1124,7 +1110,6 @@ describe('Edge shim', () => {
               role: 'server'
             })
           );
-          done();
         });
       });
     });
@@ -1137,7 +1122,7 @@ describe('Edge shim', () => {
         window.RTCIceTransport.prototype.setRemoteCandidates.restore();
       });
 
-      it('ignores extra candidates in a bundle answer', (done) => {
+      it('ignores extra candidates in a bundle answer', () => {
         const sdp = SDP_BOILERPLATE +
             'a=group:BUNDLE audio1 video1\r\n' +
             MINIMAL_AUDIO_MLINE +
@@ -1158,19 +1143,19 @@ describe('Edge shim', () => {
             'a=ssrc:1002 cname:some\r\n' +
             'a=candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host\r\n' +
             'a=end-of-candidates\r\n';
-        pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true})
+        return pc.createOffer({offerToReceiveAudio: true,
+            offerToReceiveVideo: true})
         .then(offer => pc.setLocalDescription(offer))
         .then(() => pc.setRemoteDescription({type: 'answer', sdp}))
         .then(() => {
           const receiver = pc.getReceivers()[0];
           const iceTransport = receiver.transport.transport;
           expect(iceTransport.setRemoteCandidates).to.have.been.calledOnce();
-          done();
         });
       });
     });
 
-    it('treats bundle-only m-lines as not rejected', (done) => {
+    it('treats bundle-only m-lines as not rejected', () => {
       const sdp = SDP_BOILERPLATE +
           'a=group:BUNDLE audio1 video1\r\n' +
           MINIMAL_AUDIO_MLINE +
@@ -1194,12 +1179,11 @@ describe('Edge shim', () => {
           'a=candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host\r\n' +
           'a=msid:stream1 videotrack\r\n' +
           'a=end-of-candidates\r\n';
-      pc.setRemoteDescription({type: 'offer', sdp})
+      return pc.setRemoteDescription({type: 'offer', sdp})
       .then(() => {
         const receivers = pc.getReceivers();
         expect(receivers).to.have.length(2);
         expect(receivers[1].track.id).to.equal('videotrack');
-        done();
       });
     });
 
