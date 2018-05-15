@@ -3614,6 +3614,20 @@ describe('Edge shim', () => {
       expect(pc.connectionState).to.equal('connected');
     });
 
+    it('changes the connection state to connecting when the dtls transports ' +
+       'start connecting', () => {
+      const transceiver = pc.transceivers[0];
+      const dtlsTransport = transceiver.dtlsTransport;
+      dtlsTransport.state = 'connecting';
+      const stub = sinon.stub();
+      pc.onconnectionstatechange = stub;
+
+      dtlsTransport.dispatchEvent(new Event('dtlsstatechange'));
+
+      expect(stub).to.have.been.calledOnce();
+      expect(pc.connectionState).to.equal('connecting');
+    });
+
     it('changes the connection state to failed when there ' +
        'was a DTLS error', () => {
       const transceiver = pc.transceivers[0];
