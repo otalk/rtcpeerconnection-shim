@@ -177,4 +177,33 @@ describe('Utility functions', () => {
       expect(spy).to.have.been.called();
     });
   });
+
+  describe('fixing stat type names', () => {
+    it('changes outboundrtp to outbound-rtp', () => {
+      expect(util.fixStatsType({type: 'outboundrtp'})).to.equal('outbound-rtp');
+    });
+
+    it('changes inboundrtp to inbound-rtp', () => {
+      expect(util.fixStatsType({type: 'inboundrtp'})).to.equal('inbound-rtp');
+    });
+
+    it('changes candidatepair to candidate-pair', () => {
+      expect(util.fixStatsType({type: 'candidatepair'}))
+        .to.equal('candidate-pair');
+    });
+
+    it('changes localcandidate to local-candidate', () => {
+      expect(util.fixStatsType({type: 'localcandidate'}))
+        .to.equal('local-candidate');
+    });
+
+    it('changes remotecandidate to remote-candidate', () => {
+      expect(util.fixStatsType({type: 'remote-candidate'}))
+        .to.equal('remote-candidate');
+    });
+
+    it('does not modify unknown types', () => {
+      expect(util.fixStatsType({type: 'something'})).to.equal('something');
+    });
+  });
 });

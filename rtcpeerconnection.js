@@ -15,16 +15,6 @@ var shimIceTransport = require('./rtcicetransport');
 var shimDtlsTransport = require('./rtcdtlstransport');
 var util = require('./util');
 
-function fixStatsType(stat) {
-  return {
-    inboundrtp: 'inbound-rtp',
-    outboundrtp: 'outbound-rtp',
-    candidatepair: 'candidate-pair',
-    localcandidate: 'local-candidate',
-    remotecandidate: 'remote-candidate'
-  }[stat.type] || stat.type;
-}
-
 function writeMediaSection(transceiver, caps, type, stream, dtlsRole) {
   var sdp = SDPUtils.writeRtpDescription(transceiver.kind, caps);
 
@@ -1678,7 +1668,7 @@ module.exports = function(window, edgeVersion) {
         .then(function(nativeStats) {
           var mapStats = new Map();
           Object.keys(nativeStats).forEach(function(id) {
-            nativeStats[id].type = fixStatsType(nativeStats[id]);
+            nativeStats[id].type = util.fixStatsType(nativeStats[id]);
             mapStats.set(id, nativeStats[id]);
           });
           return mapStats;

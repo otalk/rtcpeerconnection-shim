@@ -61,6 +61,17 @@ module.exports = {
     });
   },
 
+  /* fixes stat type names */
+  fixStatsType: function(stat) {
+    return {
+      inboundrtp: 'inbound-rtp',
+      outboundrtp: 'outbound-rtp',
+      candidatepair: 'candidate-pair',
+      localcandidate: 'local-candidate',
+      remotecandidate: 'remote-candidate'
+    }[stat.type] || stat.type;
+  },
+
   /* creates an alias name for an event listener */
   aliasEventListener: function(obj, eventName, alias) {
     ['addEventListener', 'removeEventListener'].forEach(function(method) {
