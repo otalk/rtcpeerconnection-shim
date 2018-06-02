@@ -119,8 +119,8 @@ module.exports = function(window, edgeVersion) {
 
     this.needNegotiation = false;
 
-    this.localStreams = [];
-    this.remoteStreams = [];
+    this._localStreams = [];
+    this._remoteStreams = [];
 
     this.localDescription = null;
     this.remoteDescription = null;
@@ -536,11 +536,11 @@ module.exports = function(window, edgeVersion) {
   };
 
   RTCPeerConnection.prototype.getLocalStreams = function() {
-    return this.localStreams;
+    return this._localStreams;
   };
 
   RTCPeerConnection.prototype.getRemoteStreams = function() {
-    return this.remoteStreams;
+    return this._remoteStreams;
   };
 
   RTCPeerConnection.prototype.addTrack = function(track, stream) {
@@ -570,8 +570,8 @@ module.exports = function(window, edgeVersion) {
 
     this._maybeFireNegotiationNeeded();
 
-    if (this.localStreams.indexOf(stream) === -1) {
-      this.localStreams.push(stream);
+    if (this._localStreams.indexOf(stream) === -1) {
+      this._localStreams.push(stream);
     }
 
     transceiver.track = track;
@@ -634,8 +634,8 @@ module.exports = function(window, edgeVersion) {
       return t.stream;
     });
     if (localStreams.indexOf(stream) === -1 &&
-        this.localStreams.indexOf(stream) > -1) {
-      this.localStreams.splice(this.localStreams.indexOf(stream), 1);
+        this._localStreams.indexOf(stream) > -1) {
+      this._localStreams.splice(this._localStreams.indexOf(stream), 1);
     }
 
     this._maybeFireNegotiationNeeded();
@@ -785,7 +785,7 @@ module.exports = function(window, edgeVersion) {
     }
 
     var streams = {};
-    pc.remoteStreams.forEach(function(stream) {
+    pc._remoteStreams.forEach(function(stream) {
       streams[stream.id] = stream;
     });
     var receiverList = [];
@@ -1075,8 +1075,8 @@ module.exports = function(window, edgeVersion) {
     Object.keys(streams).forEach(function(sid) {
       var stream = streams[sid];
       if (stream.getTracks().length) {
-        if (pc.remoteStreams.indexOf(stream) === -1) {
-          pc.remoteStreams.push(stream);
+        if (pc._remoteStreams.indexOf(stream) === -1) {
+          pc._remoteStreams.push(stream);
           var event = new Event('addstream');
           event.stream = stream;
           window.setTimeout(function() {
