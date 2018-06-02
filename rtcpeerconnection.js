@@ -16,17 +16,6 @@ var getCommonCapabilities = require('./getcommoncapabilities');
 var writeMediaSection = require('./writemediasection');
 var util = require('./util');
 
-function fireAddTrack(pc, track, receiver, streams) {
-  var trackEvent = new Event('track');
-  trackEvent.track = track;
-  trackEvent.receiver = receiver;
-  trackEvent.transceiver = {receiver: receiver};
-  trackEvent.streams = streams;
-  window.setTimeout(function() {
-    pc._dispatchEvent('track', trackEvent);
-  });
-}
-
 module.exports = function(window, edgeVersion) {
   if (window.RTCRtpSender) { // wrap native RTCRtpSender.
     window.RTCRtpSender = shimSenderWithTrackOrKind(window);
@@ -472,6 +461,19 @@ module.exports = function(window, edgeVersion) {
       this['on' + name](event);
     }
   };
+
+  RTCPeerConnection.prototype._emitTrack = function(track, receiver, streams) {
+    var pc = this;
+    var trackEvent = new Event('track');
+    trackEvent.track = track;
+    trackEvent.receiver = receiver;
+    trackEvent.transceiver = {receiver: receiver};
+    trackEvent.streams = streams;
+    window.setTimeout(function() {
+      pc._dispatchEvent('track', trackEvent);
+    });
+  };
+
 
   RTCPeerConnection.prototype.getConfiguration = function() {
     return this._config;
@@ -1032,7 +1034,7 @@ module.exports = function(window, edgeVersion) {
           if (stream.id !== item[2].id) {
             return;
           }
-          fireAddTrack(pc, track, receiver, [stream]);
+          pc._emitTrack(track, receiver, [stream]);
         });
       }
     });
@@ -1040,7 +1042,7 @@ module.exports = function(window, edgeVersion) {
       if (item[2]) {
         return;
       }
-      fireAddTrack(pc, item[0], item[1], []);
+      pc._emitTrack(item[0], item[1], []);
     });
 
     // check whether addIceCandidate({}) was called within four seconds after
