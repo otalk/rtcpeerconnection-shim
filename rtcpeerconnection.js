@@ -200,18 +200,6 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.onnegotiationneeded = null;
   RTCPeerConnection.prototype.ondatachannel = null;
 
-  RTCPeerConnection.prototype.getConfiguration = function() {
-    return this._config;
-  };
-
-  RTCPeerConnection.prototype.getLocalStreams = function() {
-    return this.localStreams;
-  };
-
-  RTCPeerConnection.prototype.getRemoteStreams = function() {
-    return this.remoteStreams;
-  };
-
   // internal helper to create a transceiver object.
   // (which is not yet the same as the WebRTC 1.0 transceiver)
   RTCPeerConnection.prototype._createTransceiver = function(kind, doNotAdd) {
@@ -246,135 +234,6 @@ module.exports = function(window, edgeVersion) {
     }
     return transceiver;
   };
-
-  RTCPeerConnection.prototype.addTrack = function(track, stream) {
-    if (this._isClosed) {
-      throw util.makeError('InvalidStateError',
-          'Attempted to call addTrack on a closed peerconnection.');
-    }
-
-    var alreadyExists = this.transceivers.find(function(s) {
-      return s.track === track;
-    });
-
-    if (alreadyExists) {
-      throw util.makeError('InvalidAccessError', 'Track already exists.');
-    }
-
-    var transceiver;
-    for (var i = 0; i < this.transceivers.length; i++) {
-      if (!this.transceivers[i].track &&
-          this.transceivers[i].kind === track.kind) {
-        transceiver = this.transceivers[i];
-      }
-    }
-    if (!transceiver) {
-      transceiver = this._createTransceiver(track.kind);
-    }
-
-    this._maybeFireNegotiationNeeded();
-
-    if (this.localStreams.indexOf(stream) === -1) {
-      this.localStreams.push(stream);
-    }
-
-    transceiver.track = track;
-    transceiver.stream = stream;
-    transceiver.rtpSender = new window.RTCRtpSender(track);
-    return transceiver.rtpSender;
-  };
-
-  RTCPeerConnection.prototype.addStream = function(stream) {
-    var pc = this;
-    if (edgeVersion >= 15025) {
-      stream.getTracks().forEach(function(track) {
-        pc.addTrack(track, stream);
-      });
-    } else {
-      // Clone is necessary for local demos mostly, attaching directly
-      // to two different senders does not work (build 10547).
-      // Fixed in 15025 (or earlier)
-      var clonedStream = stream.clone();
-      stream.getTracks().forEach(function(track, idx) {
-        var clonedTrack = clonedStream.getTracks()[idx];
-        track.addEventListener('enabled', function(event) {
-          clonedTrack.enabled = event.enabled;
-        });
-      });
-      clonedStream.getTracks().forEach(function(track) {
-        pc.addTrack(track, clonedStream);
-      });
-    }
-  };
-
-  RTCPeerConnection.prototype.removeTrack = function(sender) {
-    if (this._isClosed) {
-      throw util.makeError('InvalidStateError',
-          'Attempted to call removeTrack on a closed peerconnection.');
-    }
-
-    if (!(sender instanceof window.RTCRtpSender)) {
-      throw new TypeError('Argument 1 of RTCPeerConnection.removeTrack ' +
-          'does not implement interface RTCRtpSender.');
-    }
-
-    var transceiver = this.transceivers.find(function(t) {
-      return t.rtpSender === sender;
-    });
-
-    if (!transceiver) {
-      throw util.makeError('InvalidAccessError',
-          'Sender was not created by this connection.');
-    }
-    var stream = transceiver.stream;
-
-    transceiver.rtpSender.stop();
-    transceiver.rtpSender = null;
-    transceiver.track = null;
-    transceiver.stream = null;
-
-    // remove the stream from the set of local streams
-    var localStreams = this.transceivers.map(function(t) {
-      return t.stream;
-    });
-    if (localStreams.indexOf(stream) === -1 &&
-        this.localStreams.indexOf(stream) > -1) {
-      this.localStreams.splice(this.localStreams.indexOf(stream), 1);
-    }
-
-    this._maybeFireNegotiationNeeded();
-  };
-
-  RTCPeerConnection.prototype.removeStream = function(stream) {
-    var pc = this;
-    stream.getTracks().forEach(function(track) {
-      var sender = pc.getSenders().find(function(s) {
-        return s.track === track;
-      });
-      if (sender) {
-        pc.removeTrack(sender);
-      }
-    });
-  };
-
-  RTCPeerConnection.prototype.getSenders = function() {
-    return this.transceivers.filter(function(transceiver) {
-      return !!transceiver.rtpSender;
-    })
-    .map(function(transceiver) {
-      return transceiver.rtpSender;
-    });
-  };
-
-  RTCPeerConnection.prototype.getReceivers = function() {
-    return this.transceivers.filter(function(transceiver) {
-      return !!transceiver.rtpReceiver;
-    })
-    .map(function(transceiver) {
-      return transceiver.rtpReceiver;
-    });
-  };
-
 
   RTCPeerConnection.prototype._createIceGatherer = function(sdpMLineIndex,
       usingBundle) {
@@ -553,6 +412,263 @@ module.exports = function(window, edgeVersion) {
       }
       transceiver.rtpReceiver.receive(params);
     }
+  };
+
+  // Update the signaling state.
+  RTCPeerConnection.prototype._updateSignalingState = function(newState) {
+    this.signalingState = newState;
+    var event = new Event('signalingstatechange');
+    dispatchPeerConnectionEvent(this, 'signalingstatechange', event);
+  };
+
+  // Determine whether to fire the negotiationneeded event.
+  RTCPeerConnection.prototype._maybeFireNegotiationNeeded = function() {
+    var pc = this;
+    if (this.signalingState !== 'stable' || this.needNegotiation === true) {
+      return;
+    }
+    this.needNegotiation = true;
+    window.setTimeout(function() {
+      if (pc.needNegotiation) {
+        pc.needNegotiation = false;
+        var event = new Event('negotiationneeded');
+        dispatchPeerConnectionEvent(pc, 'negotiationneeded', event);
+      }
+    }, 0);
+  };
+
+  // Update the ice gathering state. See
+  // https://w3c.github.io/webrtc-pc/#update-the-ice-gathering-state
+  RTCPeerConnection.prototype._updateIceGatheringState = function(newState) {
+    if (newState === this.iceGatheringState) {
+      return;
+    }
+    this.iceGatheringState = newState;
+
+    var event = new Event('icegatheringstatechange');
+    dispatchPeerConnectionEvent(this, 'icegatheringstatechange', event);
+
+    if (newState === 'complete') {
+      dispatchPeerConnectionEvent(this, 'icecandidate',
+          new Event('icecandidate'));
+    }
+  };
+
+  // Update the ice connection state.
+  RTCPeerConnection.prototype._updateIceConnectionState = function() {
+    var newState;
+    var states = {
+      'new': 0,
+      closed: 0,
+      checking: 0,
+      connected: 0,
+      completed: 0,
+      disconnected: 0,
+      failed: 0
+    };
+    this.transceivers.forEach(function(transceiver) {
+      states[transceiver.iceTransport.state]++;
+    });
+
+    newState = 'new';
+    if (states.failed > 0) {
+      newState = 'failed';
+    } else if (states.checking > 0) {
+      newState = 'checking';
+    } else if (states.disconnected > 0) {
+      newState = 'disconnected';
+    } else if (states.new > 0) {
+      newState = 'new';
+    } else if (states.connected > 0) {
+      newState = 'connected';
+    } else if (states.completed > 0) {
+      newState = 'completed';
+    }
+
+    if (newState !== this.iceConnectionState) {
+      this.iceConnectionState = newState;
+      var event = new Event('iceconnectionstatechange');
+      dispatchPeerConnectionEvent(this, 'iceconnectionstatechange', event);
+    }
+  };
+
+  // Update the connection state.
+  RTCPeerConnection.prototype._updateConnectionState = function() {
+    var newState;
+    var states = {
+      'new': 0,
+      closed: 0,
+      connecting: 0,
+      connected: 0,
+      completed: 0,
+      disconnected: 0,
+      failed: 0
+    };
+    this.transceivers.forEach(function(transceiver) {
+      states[transceiver.iceTransport.state]++;
+      states[transceiver.dtlsTransport.state]++;
+    });
+    // ICETransport.completed and connected are the same for this purpose.
+    states.connected += states.completed;
+
+    newState = 'new';
+    if (states.failed > 0) {
+      newState = 'failed';
+    } else if (states.connecting > 0) {
+      newState = 'connecting';
+    } else if (states.disconnected > 0) {
+      newState = 'disconnected';
+    } else if (states.new > 0) {
+      newState = 'new';
+    } else if (states.connected > 0) {
+      newState = 'connected';
+    }
+
+    if (newState !== this.connectionState) {
+      this.connectionState = newState;
+      var event = new Event('connectionstatechange');
+      dispatchPeerConnectionEvent(this, 'connectionstatechange', event);
+    }
+  };
+
+  RTCPeerConnection.prototype.getConfiguration = function() {
+    return this._config;
+  };
+
+  RTCPeerConnection.prototype.getLocalStreams = function() {
+    return this.localStreams;
+  };
+
+  RTCPeerConnection.prototype.getRemoteStreams = function() {
+    return this.remoteStreams;
+  };
+
+  RTCPeerConnection.prototype.addTrack = function(track, stream) {
+    if (this._isClosed) {
+      throw util.makeError('InvalidStateError',
+          'Attempted to call addTrack on a closed peerconnection.');
+    }
+
+    var alreadyExists = this.transceivers.find(function(s) {
+      return s.track === track;
+    });
+
+    if (alreadyExists) {
+      throw util.makeError('InvalidAccessError', 'Track already exists.');
+    }
+
+    var transceiver;
+    for (var i = 0; i < this.transceivers.length; i++) {
+      if (!this.transceivers[i].track &&
+          this.transceivers[i].kind === track.kind) {
+        transceiver = this.transceivers[i];
+      }
+    }
+    if (!transceiver) {
+      transceiver = this._createTransceiver(track.kind);
+    }
+
+    this._maybeFireNegotiationNeeded();
+
+    if (this.localStreams.indexOf(stream) === -1) {
+      this.localStreams.push(stream);
+    }
+
+    transceiver.track = track;
+    transceiver.stream = stream;
+    transceiver.rtpSender = new window.RTCRtpSender(track);
+    return transceiver.rtpSender;
+  };
+
+  RTCPeerConnection.prototype.addStream = function(stream) {
+    var pc = this;
+    if (edgeVersion >= 15025) {
+      stream.getTracks().forEach(function(track) {
+        pc.addTrack(track, stream);
+      });
+    } else {
+      // Clone is necessary for local demos mostly, attaching directly
+      // to two different senders does not work (build 10547).
+      // Fixed in 15025 (or earlier)
+      var clonedStream = stream.clone();
+      stream.getTracks().forEach(function(track, idx) {
+        var clonedTrack = clonedStream.getTracks()[idx];
+        track.addEventListener('enabled', function(event) {
+          clonedTrack.enabled = event.enabled;
+        });
+      });
+      clonedStream.getTracks().forEach(function(track) {
+        pc.addTrack(track, clonedStream);
+      });
+    }
+  };
+
+  RTCPeerConnection.prototype.removeTrack = function(sender) {
+    if (this._isClosed) {
+      throw util.makeError('InvalidStateError',
+          'Attempted to call removeTrack on a closed peerconnection.');
+    }
+
+    if (!(sender instanceof window.RTCRtpSender)) {
+      throw new TypeError('Argument 1 of RTCPeerConnection.removeTrack ' +
+          'does not implement interface RTCRtpSender.');
+    }
+
+    var transceiver = this.transceivers.find(function(t) {
+      return t.rtpSender === sender;
+    });
+
+    if (!transceiver) {
+      throw util.makeError('InvalidAccessError',
+          'Sender was not created by this connection.');
+    }
+    var stream = transceiver.stream;
+
+    transceiver.rtpSender.stop();
+    transceiver.rtpSender = null;
+    transceiver.track = null;
+    transceiver.stream = null;
+
+    // remove the stream from the set of local streams
+    var localStreams = this.transceivers.map(function(t) {
+      return t.stream;
+    });
+    if (localStreams.indexOf(stream) === -1 &&
+        this.localStreams.indexOf(stream) > -1) {
+      this.localStreams.splice(this.localStreams.indexOf(stream), 1);
+    }
+
+    this._maybeFireNegotiationNeeded();
+  };
+
+  RTCPeerConnection.prototype.removeStream = function(stream) {
+    var pc = this;
+    stream.getTracks().forEach(function(track) {
+      var sender = pc.getSenders().find(function(s) {
+        return s.track === track;
+      });
+      if (sender) {
+        pc.removeTrack(sender);
+      }
+    });
+  };
+
+  RTCPeerConnection.prototype.getSenders = function() {
+    return this.transceivers.filter(function(transceiver) {
+      return !!transceiver.rtpSender;
+    })
+    .map(function(transceiver) {
+      return transceiver.rtpSender;
+    });
+  };
+
+  RTCPeerConnection.prototype.getReceivers = function() {
+    return this.transceivers.filter(function(transceiver) {
+      return !!transceiver.rtpReceiver;
+    })
+    .map(function(transceiver) {
+      return transceiver.rtpReceiver;
+    });
   };
 
   RTCPeerConnection.prototype.setLocalDescription = function(description) {
@@ -1028,123 +1144,6 @@ module.exports = function(window, edgeVersion) {
     // FIXME: clean up tracks, local streams, remote streams, etc
     this._isClosed = true;
     this._updateSignalingState('closed');
-  };
-
-  // Update the signaling state.
-  RTCPeerConnection.prototype._updateSignalingState = function(newState) {
-    this.signalingState = newState;
-    var event = new Event('signalingstatechange');
-    dispatchPeerConnectionEvent(this, 'signalingstatechange', event);
-  };
-
-  // Determine whether to fire the negotiationneeded event.
-  RTCPeerConnection.prototype._maybeFireNegotiationNeeded = function() {
-    var pc = this;
-    if (this.signalingState !== 'stable' || this.needNegotiation === true) {
-      return;
-    }
-    this.needNegotiation = true;
-    window.setTimeout(function() {
-      if (pc.needNegotiation) {
-        pc.needNegotiation = false;
-        var event = new Event('negotiationneeded');
-        dispatchPeerConnectionEvent(pc, 'negotiationneeded', event);
-      }
-    }, 0);
-  };
-
-  // Update the ice gathering state. See
-  // https://w3c.github.io/webrtc-pc/#update-the-ice-gathering-state
-  RTCPeerConnection.prototype._updateIceGatheringState = function(newState) {
-    if (newState === this.iceGatheringState) {
-      return;
-    }
-    this.iceGatheringState = newState;
-
-    var event = new Event('icegatheringstatechange');
-    dispatchPeerConnectionEvent(this, 'icegatheringstatechange', event);
-
-    if (newState === 'complete') {
-      dispatchPeerConnectionEvent(this, 'icecandidate',
-          new Event('icecandidate'));
-    }
-  };
-
-  // Update the ice connection state.
-  RTCPeerConnection.prototype._updateIceConnectionState = function() {
-    var newState;
-    var states = {
-      'new': 0,
-      closed: 0,
-      checking: 0,
-      connected: 0,
-      completed: 0,
-      disconnected: 0,
-      failed: 0
-    };
-    this.transceivers.forEach(function(transceiver) {
-      states[transceiver.iceTransport.state]++;
-    });
-
-    newState = 'new';
-    if (states.failed > 0) {
-      newState = 'failed';
-    } else if (states.checking > 0) {
-      newState = 'checking';
-    } else if (states.disconnected > 0) {
-      newState = 'disconnected';
-    } else if (states.new > 0) {
-      newState = 'new';
-    } else if (states.connected > 0) {
-      newState = 'connected';
-    } else if (states.completed > 0) {
-      newState = 'completed';
-    }
-
-    if (newState !== this.iceConnectionState) {
-      this.iceConnectionState = newState;
-      var event = new Event('iceconnectionstatechange');
-      dispatchPeerConnectionEvent(this, 'iceconnectionstatechange', event);
-    }
-  };
-
-  // Update the connection state.
-  RTCPeerConnection.prototype._updateConnectionState = function() {
-    var newState;
-    var states = {
-      'new': 0,
-      closed: 0,
-      connecting: 0,
-      connected: 0,
-      completed: 0,
-      disconnected: 0,
-      failed: 0
-    };
-    this.transceivers.forEach(function(transceiver) {
-      states[transceiver.iceTransport.state]++;
-      states[transceiver.dtlsTransport.state]++;
-    });
-    // ICETransport.completed and connected are the same for this purpose.
-    states.connected += states.completed;
-
-    newState = 'new';
-    if (states.failed > 0) {
-      newState = 'failed';
-    } else if (states.connecting > 0) {
-      newState = 'connecting';
-    } else if (states.disconnected > 0) {
-      newState = 'disconnected';
-    } else if (states.new > 0) {
-      newState = 'new';
-    } else if (states.connected > 0) {
-      newState = 'connected';
-    }
-
-    if (newState !== this.connectionState) {
-      this.connectionState = newState;
-      var event = new Event('connectionstatechange');
-      dispatchPeerConnectionEvent(this, 'connectionstatechange', event);
-    }
   };
 
   RTCPeerConnection.prototype.createOffer = function() {
