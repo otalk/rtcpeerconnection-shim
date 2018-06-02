@@ -71,6 +71,16 @@ function writeMediaSection(transceiver, caps, type, stream, dtlsRole) {
   return sdp;
 }
 
+function dispatchPeerConnectionEvent(pc, name, event) {
+  if (pc._isClosed) {
+    return;
+  }
+  pc.dispatchEvent(event);
+  if (typeof pc['on' + name] === 'function') {
+    pc['on' + name](event);
+  }
+}
+
 function fireAddTrack(pc, track, receiver, streams) {
   var trackEvent = new Event('track');
   trackEvent.track = track;
@@ -78,7 +88,7 @@ function fireAddTrack(pc, track, receiver, streams) {
   trackEvent.transceiver = {receiver: receiver};
   trackEvent.streams = streams;
   window.setTimeout(function() {
-    pc._dispatchEvent('track', trackEvent);
+    dispatchPeerConnectionEvent(pc, 'track', trackEvent);
   });
 }
 
@@ -190,19 +200,9 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.onnegotiationneeded = null;
   RTCPeerConnection.prototype.ondatachannel = null;
 
-  RTCPeerConnection.prototype._dispatchEvent = function(name, event) {
-    if (this._isClosed) {
-      return;
-    }
-    this.dispatchEvent(event);
-    if (typeof this['on' + name] === 'function') {
-      this['on' + name](event);
-    }
-  };
-
   RTCPeerConnection.prototype._emitGatheringStateChange = function() {
     var event = new Event('icegatheringstatechange');
-    this._dispatchEvent('icegatheringstatechange', event);
+    dispatchPeerConnectionEvent(this, 'icegatheringstatechange', event);
   };
 
   RTCPeerConnection.prototype.getConfiguration = function() {
@@ -461,10 +461,11 @@ module.exports = function(window, edgeVersion) {
       // Emit candidate. Also emit null candidate when all gatherers are
       // complete.
       if (!end) {
-        pc._dispatchEvent('icecandidate', event);
+        dispatchPeerConnectionEvent(pc, 'icecandidate', event);
       }
       if (complete) {
-        pc._dispatchEvent('icecandidate', new Event('icecandidate'));
+        dispatchPeerConnectionEvent(pc, 'icecandidate',
+            new Event('icecandidate'));
         pc.iceGatheringState = 'complete';
         pc._emitGatheringStateChange();
       }
@@ -976,7 +977,7 @@ module.exports = function(window, edgeVersion) {
           var event = new Event('addstream');
           event.stream = stream;
           window.setTimeout(function() {
-            pc._dispatchEvent('addstream', event);
+            dispatchPeerConnectionEvent(pc, 'addstream', event);
           });
         }
 
@@ -1046,7 +1047,7 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype._updateSignalingState = function(newState) {
     this.signalingState = newState;
     var event = new Event('signalingstatechange');
-    this._dispatchEvent('signalingstatechange', event);
+    dispatchPeerConnectionEvent(this, 'signalingstatechange', event);
   };
 
   // Determine whether to fire the negotiationneeded event.
@@ -1060,7 +1061,7 @@ module.exports = function(window, edgeVersion) {
       if (pc.needNegotiation) {
         pc.needNegotiation = false;
         var event = new Event('negotiationneeded');
-        pc._dispatchEvent('negotiationneeded', event);
+        dispatchPeerConnectionEvent(pc, 'negotiationneeded', event);
       }
     }, 0);
   };
@@ -1099,7 +1100,7 @@ module.exports = function(window, edgeVersion) {
     if (newState !== this.iceConnectionState) {
       this.iceConnectionState = newState;
       var event = new Event('iceconnectionstatechange');
-      this._dispatchEvent('iceconnectionstatechange', event);
+      dispatchPeerConnectionEvent(this, 'iceconnectionstatechange', event);
     }
   };
 
@@ -1138,7 +1139,7 @@ module.exports = function(window, edgeVersion) {
     if (newState !== this.connectionState) {
       this.connectionState = newState;
       var event = new Event('connectionstatechange');
-      this._dispatchEvent('connectionstatechange', event);
+      dispatchPeerConnectionEvent(this, 'connectionstatechange', event);
     }
   };
 
