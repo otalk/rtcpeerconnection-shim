@@ -98,5 +98,70 @@ module.exports = {
         }
       }
     });
+  },
+
+  shimLegacyCallbacks: function(RTCPeerConnection) {
+    var methods = ['createOffer', 'createAnswer'];
+    methods.forEach(function(method) {
+      var nativeMethod = RTCPeerConnection.prototype[method];
+      RTCPeerConnection.prototype[method] = function() {
+        var args = arguments;
+        if (typeof args[0] === 'function' ||
+            typeof args[1] === 'function') { // legacy
+          return nativeMethod.apply(this, [arguments[2]])
+          .then(function(description) {
+            if (typeof args[0] === 'function') {
+              args[0].apply(null, [description]);
+            }
+          }, function(error) {
+            if (typeof args[1] === 'function') {
+              args[1].apply(null, [error]);
+            }
+          });
+        }
+        return nativeMethod.apply(this, arguments);
+      };
+    });
+
+    methods = ['setLocalDescription', 'setRemoteDescription',
+        'addIceCandidate'];
+    methods.forEach(function(method) {
+      var nativeMethod = RTCPeerConnection.prototype[method];
+      RTCPeerConnection.prototype[method] = function() {
+        var args = arguments;
+        if (typeof args[1] === 'function' ||
+            typeof args[2] === 'function') { // legacy
+          return nativeMethod.apply(this, arguments)
+          .then(function() {
+            if (typeof args[1] === 'function') {
+              args[1].apply(null);
+            }
+          }, function(error) {
+            if (typeof args[2] === 'function') {
+              args[2].apply(null, [error]);
+            }
+          });
+        }
+        return nativeMethod.apply(this, arguments);
+      };
+    });
+
+    // getStats is special. It doesn't have a spec legacy method yet we support
+    // getStats(something, cb) without error callbacks.
+    ['getStats'].forEach(function(method) {
+      var nativeMethod = RTCPeerConnection.prototype[method];
+      RTCPeerConnection.prototype[method] = function() {
+        var args = arguments;
+        if (typeof args[1] === 'function') {
+          return nativeMethod.apply(this, arguments)
+          .then(function() {
+            if (typeof args[1] === 'function') {
+              args[1].apply(null);
+            }
+          });
+        }
+        return nativeMethod.apply(this, arguments);
+      };
+    });
   }
 };
