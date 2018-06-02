@@ -113,6 +113,7 @@ module.exports = {
         {track: track}));
   },
 
+  /* adds a candidate to an iceTransport unless already added */
   maybeAddCandidate: function(iceTransport, candidate) {
     // Edge's internal representation adds some fields therefore
     // not all fieldѕ are taken into account.
@@ -131,6 +132,21 @@ module.exports = {
     return !alreadyAdded;
   },
 
+  /* checks if action (e.g. SLD) with type is allowed in signalingState */
+  isActionAllowedInSignalingState: function(action, type, signalingState) {
+    return {
+      offer: {
+        setLocalDescription: ['stable', 'have-local-offer'],
+        setRemoteDescription: ['stable', 'have-remote-offer']
+      },
+      answer: {
+        setLocalDescription: ['have-remote-offer', 'have-local-pranswer'],
+        setRemoteDescription: ['have-local-offer', 'have-remote-pranswer']
+      }
+    }[type][action].indexOf(signalingState) !== -1;
+  },
+
+  /* shims legacy callsback style */
   shimLegacyCallbacks: function(RTCPeerConnection) {
     var methods = ['createOffer', 'createAnswer'];
     methods.forEach(function(method) {

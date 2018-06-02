@@ -71,20 +71,6 @@ function writeMediaSection(transceiver, caps, type, stream, dtlsRole) {
   return sdp;
 }
 
-// is action=setLocalDescription with type allowed in signalingState
-function isActionAllowedInSignalingState(action, type, signalingState) {
-  return {
-    offer: {
-      setLocalDescription: ['stable', 'have-local-offer'],
-      setRemoteDescription: ['stable', 'have-remote-offer']
-    },
-    answer: {
-      setLocalDescription: ['have-remote-offer', 'have-local-pranswer'],
-      setRemoteDescription: ['have-local-offer', 'have-remote-pranswer']
-    }
-  }[type][action].indexOf(signalingState) !== -1;
-}
-
 function fireAddTrack(pc, track, receiver, streams) {
   var trackEvent = new Event('track');
   trackEvent.track = track;
@@ -590,7 +576,7 @@ module.exports = function(window, edgeVersion) {
           'Unsupported type "' + description.type + '"'));
     }
 
-    if (!isActionAllowedInSignalingState('setLocalDescription',
+    if (!util.isActionAllowedInSignalingState('setLocalDescription',
         description.type, pc.signalingState) || pc._isClosed) {
       return Promise.reject(util.makeError('InvalidStateError',
           'Can not set local ' + description.type +
@@ -687,7 +673,7 @@ module.exports = function(window, edgeVersion) {
           'Unsupported type "' + description.type + '"'));
     }
 
-    if (!isActionAllowedInSignalingState('setRemoteDescription',
+    if (!util.isActionAllowedInSignalingState('setRemoteDescription',
         description.type, pc.signalingState) || pc._isClosed) {
       return Promise.reject(util.makeError('InvalidStateError',
           'Can not set remote ' + description.type +
