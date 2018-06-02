@@ -567,7 +567,7 @@ describe('Edge shim', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
       it('triggers onaddstream', (done) => {
-        pc.onaddstream = function(event) {
+        pc.onaddstream = (event) => {
           const stream = event.stream;
           expect(stream.getTracks().length).to.equal(1);
           expect(stream.getTracks()[0].kind).to.equal('audio');
@@ -578,7 +578,7 @@ describe('Edge shim', () => {
       });
 
       it('emits a addstream event', (done) => {
-        pc.addEventListener('addstream', function(event) {
+        pc.addEventListener('addstream', (event) => {
           const stream = event.stream;
           expect(stream.getTracks().length).to.equal(1);
           expect(stream.getTracks()[0].kind).to.equal('audio');
@@ -589,7 +589,7 @@ describe('Edge shim', () => {
       });
 
       it('triggers ontrack', (done) => {
-        pc.ontrack = function(event) {
+        pc.ontrack = (event) => {
           expect(event.track.kind).to.equal('audio');
           expect(event.receiver);
           expect(event.streams.length).to.equal(1);
@@ -600,7 +600,7 @@ describe('Edge shim', () => {
       });
 
       it('emits a track event', (done) => {
-        pc.addEventListener('track', function(event) {
+        pc.addEventListener('track', (event) => {
           expect(event.track.kind).to.equal('audio');
           expect(event.receiver);
           expect(event.streams.length).to.equal(1);
@@ -644,7 +644,7 @@ describe('Edge shim', () => {
         });
 
         it('does trigger ontrack with an empty streams set', (done) => {
-          pc.addEventListener('track', function(event) {
+          pc.addEventListener('track', (event) => {
             expect(event.track.kind).to.equal('audio');
             expect(event.receiver);
             expect(event.streams.length).to.equal(0);
@@ -662,7 +662,7 @@ describe('Edge shim', () => {
           .replace('a=msid-semantics:WMS *\r\n', '');
 
       it('triggers onaddstream', (done) => {
-        pc.onaddstream = function(event) {
+        pc.onaddstream = (event) => {
           const stream = event.stream;
           expect(stream.getTracks().length).to.equal(1);
           expect(stream.getTracks()[0].kind).to.equal('audio');
@@ -673,7 +673,7 @@ describe('Edge shim', () => {
       });
 
       it('triggers ontrack', (done) => {
-        pc.ontrack = function(event) {
+        pc.ontrack = (event) => {
           expect(event.track.kind).to.equal('audio');
           expect(event).to.have.property('receiver');
           expect(event).to.have.property('transceiver');
@@ -705,7 +705,7 @@ describe('Edge shim', () => {
 
       it('triggers onaddstream twice', (done) => {
         let numStreams = 0;
-        pc.onaddstream = function(event) {
+        pc.onaddstream = (event) => {
           numStreams++;
           expect(event.stream.id).to.equal('stream' + numStreams);
           if (numStreams === 2) {
@@ -717,7 +717,7 @@ describe('Edge shim', () => {
 
       it('triggers ontrack twice', (done) => {
         let numTracks = 0;
-        pc.ontrack = function(event) {
+        pc.ontrack = (event) => {
           numTracks++;
           expect(event.streams[0].id).to.equal('stream' + numTracks);
           if (numTracks === 2) {
@@ -3497,7 +3497,7 @@ describe('Edge shim', () => {
     });
 
     it('calls the legacy success callback', (done) => {
-      pc.getStats(null, function() {
+      pc.getStats(null, () => {
         done();
       });
     });
