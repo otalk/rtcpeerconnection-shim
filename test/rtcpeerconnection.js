@@ -5,7 +5,6 @@
  *  that can be found in the LICENSE file in the root of the source
  *  tree.
  */
-/* eslint-env node */
 const chai = require('chai');
 const expect = chai.expect;
 const sinon = require('sinon');
