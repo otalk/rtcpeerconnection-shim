@@ -99,6 +99,38 @@ module.exports = {
     });
   },
 
+  /* adds the track to the stream and dispatches 'addtrack' */
+  addTrackToStreamAndFireEvent: function(track, stream) {
+    stream.addTrack(track);
+    stream.dispatchEvent(new window.MediaStreamTrackEvent('addtrack',
+        {track: track}));
+  },
+
+  /* adds the track from the stream and dispatches 'removetrack' */
+  removeTrackFromStreamAndFireEvent: function(track, stream) {
+    stream.removeTrack(track);
+    stream.dispatchEvent(new window.MediaStreamTrackEvent('removetrack',
+        {track: track}));
+  },
+
+  maybeAddCandidate: function(iceTransport, candidate) {
+    // Edge's internal representation adds some fields therefore
+    // not all fieldѕ are taken into account.
+    var alreadyAdded = iceTransport.getRemoteCandidates()
+        .find(function(remoteCandidate) {
+          return candidate.foundation === remoteCandidate.foundation &&
+              candidate.ip === remoteCandidate.ip &&
+              candidate.port === remoteCandidate.port &&
+              candidate.priority === remoteCandidate.priority &&
+              candidate.protocol === remoteCandidate.protocol &&
+              candidate.type === remoteCandidate.type;
+        });
+    if (!alreadyAdded) {
+      iceTransport.addRemoteCandidate(candidate);
+    }
+    return !alreadyAdded;
+  },
+
   shimLegacyCallbacks: function(RTCPeerConnection) {
     var methods = ['createOffer', 'createAnswer'];
     methods.forEach(function(method) {

@@ -162,39 +162,6 @@ function isActionAllowedInSignalingState(action, type, signalingState) {
   }[type][action].indexOf(signalingState) !== -1;
 }
 
-function maybeAddCandidate(iceTransport, candidate) {
-  // Edge's internal representation adds some fields therefore
-  // not all fieldѕ are taken into account.
-  var alreadyAdded = iceTransport.getRemoteCandidates()
-      .find(function(remoteCandidate) {
-        return candidate.foundation === remoteCandidate.foundation &&
-            candidate.ip === remoteCandidate.ip &&
-            candidate.port === remoteCandidate.port &&
-            candidate.priority === remoteCandidate.priority &&
-            candidate.protocol === remoteCandidate.protocol &&
-            candidate.type === remoteCandidate.type;
-      });
-  if (!alreadyAdded) {
-    iceTransport.addRemoteCandidate(candidate);
-  }
-  return !alreadyAdded;
-}
-
-// https://w3c.github.io/mediacapture-main/#mediastream
-// Helper function to add the track to the stream and
-// dispatch the event ourselves.
-function addTrackToStreamAndFireEvent(track, stream) {
-  stream.addTrack(track);
-  stream.dispatchEvent(new window.MediaStreamTrackEvent('addtrack',
-      {track: track}));
-}
-
-function removeTrackFromStreamAndFireEvent(track, stream) {
-  stream.removeTrack(track);
-  stream.dispatchEvent(new window.MediaStreamTrackEvent('removetrack',
-      {track: track}));
-}
-
 function fireAddTrack(pc, track, receiver, streams) {
   var trackEvent = new Event('track');
   trackEvent.track = track;
@@ -927,7 +894,7 @@ module.exports = function(window, edgeVersion) {
             transceiver.iceTransport.setRemoteCandidates(cands);
           } else {
             cands.forEach(function(candidate) {
-              maybeAddCandidate(transceiver.iceTransport, candidate);
+              util.maybeAddCandidate(transceiver.iceTransport, candidate);
             });
           }
         }
@@ -982,7 +949,7 @@ module.exports = function(window, edgeVersion) {
               stream = streams.default;
             }
             if (stream) {
-              addTrackToStreamAndFireEvent(track, stream);
+              util.addTrackToStreamAndFireEvent(track, stream);
               transceiver.associatedRemoteMediaStreams.push(stream);
             }
             receiverList.push([track, rtpReceiver, stream]);
@@ -993,7 +960,7 @@ module.exports = function(window, edgeVersion) {
               return t.id === transceiver.rtpReceiver.track.id;
             });
             if (nativeTrack) {
-              removeTrackFromStreamAndFireEvent(nativeTrack, s);
+              util.removeTrackFromStreamAndFireEvent(nativeTrack, s);
             }
           });
           transceiver.associatedRemoteMediaStreams = [];
@@ -1032,7 +999,7 @@ module.exports = function(window, edgeVersion) {
             iceTransport.setRemoteCandidates(cands);
           } else {
             cands.forEach(function(candidate) {
-              maybeAddCandidate(transceiver.iceTransport, candidate);
+              util.maybeAddCandidate(transceiver.iceTransport, candidate);
             });
           }
         }
@@ -1062,13 +1029,14 @@ module.exports = function(window, edgeVersion) {
             if (!streams[remoteMsid.stream]) {
               streams[remoteMsid.stream] = new window.MediaStream();
             }
-            addTrackToStreamAndFireEvent(track, streams[remoteMsid.stream]);
+            util.addTrackToStreamAndFireEvent(track,
+                streams[remoteMsid.stream]);
             receiverList.push([track, rtpReceiver, streams[remoteMsid.stream]]);
           } else {
             if (!streams.default) {
               streams.default = new window.MediaStream();
             }
-            addTrackToStreamAndFireEvent(track, streams.default);
+            util.addTrackToStreamAndFireEvent(track, streams.default);
             receiverList.push([track, rtpReceiver, streams.default]);
           }
         } else {
@@ -1590,7 +1558,7 @@ module.exports = function(window, edgeVersion) {
           // ice transport. And avoid adding candidates added in the SDP.
           if (sdpMLineIndex === 0 || (sdpMLineIndex > 0 &&
               transceiver.iceTransport !== pc.transceivers[0].iceTransport)) {
-            if (!maybeAddCandidate(transceiver.iceTransport, cand)) {
+            if (!util.maybeAddCandidate(transceiver.iceTransport, cand)) {
               return reject(util.makeError('OperationError',
                   'Can not add ICE candidate'));
             }
