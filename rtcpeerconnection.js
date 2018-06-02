@@ -30,6 +30,9 @@ module.exports = function(window, edgeVersion) {
     window.RTCDtlsTransport = shimDtlsTransport(window);
   }
 
+  // fix ORTC getStats. Should be moved to adapter.js some day?
+  util.fixORTCGetStats(window);
+
   var RTCPeerConnection = function(config) {
     var pc = this;
 
@@ -1482,9 +1485,6 @@ module.exports = function(window, edgeVersion) {
 
   // legacy callback shims. Should be moved to adapter.js some day?
   util.shimLegacyCallbacks(RTCPeerConnection);
-
-  // fix ORTC getStats. Should be moved to adapter.js some day?
-  util.fixORTCGetStats(window);
 
   return RTCPeerConnection;
 };
