@@ -1532,29 +1532,11 @@ module.exports = function(window, edgeVersion) {
     });
   };
 
-  // fix low-level stat names and return Map instead of object.
-  var ortcObjects = ['RTCRtpSender', 'RTCRtpReceiver', 'RTCIceGatherer',
-    'RTCIceTransport', 'RTCDtlsTransport'];
-  ortcObjects.forEach(function(ortcObjectName) {
-    var obj = window[ortcObjectName];
-    if (obj && obj.prototype && obj.prototype.getStats) {
-      var nativeGetstats = obj.prototype.getStats;
-      obj.prototype.getStats = function() {
-        return nativeGetstats.apply(this)
-        .then(function(nativeStats) {
-          var mapStats = new Map();
-          Object.keys(nativeStats).forEach(function(id) {
-            nativeStats[id].type = util.fixStatsType(nativeStats[id]);
-            mapStats.set(id, nativeStats[id]);
-          });
-          return mapStats;
-        });
-      };
-    }
-  });
-
-  // legacy callback shims. Should be moved to adapter.js some days.
+  // legacy callback shims. Should be moved to adapter.js some day?
   util.shimLegacyCallbacks(RTCPeerConnection);
+
+  // fix ORTC getStats. Should be moved to adapter.js some day?
+  util.fixORTCGetStats(window);
 
   return RTCPeerConnection;
 };

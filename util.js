@@ -7,7 +7,19 @@
  */
 'use strict';
 
+/* fixes stat type names */
+function fixStatsType(stat) {
+  return {
+    inboundrtp: 'inbound-rtp',
+    outboundrtp: 'outbound-rtp',
+    candidatepair: 'candidate-pair',
+    localcandidate: 'local-candidate',
+    remotecandidate: 'remote-candidate'
+  }[stat.type] || stat.type;
+}
+
 module.exports = {
+  fixStatsType: fixStatsType,
   makeError: function(name, description) {
     var e = new Error(description);
     e.name = name;
@@ -60,15 +72,28 @@ module.exports = {
     });
   },
 
-  /* fixes stat type names */
-  fixStatsType: function(stat) {
-    return {
-      inboundrtp: 'inbound-rtp',
-      outboundrtp: 'outbound-rtp',
-      candidatepair: 'candidate-pair',
-      localcandidate: 'local-candidate',
-      remotecandidate: 'remote-candidate'
-    }[stat.type] || stat.type;
+  /* makes ORTC objects return a Map() with hyphenated stats names */
+  fixORTCGetStats: function(window) {
+    // fix low-level stat names and return Map instead of object.
+    var ortcObjects = ['RTCRtpSender', 'RTCRtpReceiver', 'RTCIceGatherer',
+      'RTCIceTransport', 'RTCDtlsTransport'];
+    ortcObjects.forEach(function(ortcObjectName) {
+      var obj = window[ortcObjectName];
+      if (obj && obj.prototype && obj.prototype.getStats) {
+        var nativeGetstats = obj.prototype.getStats;
+        obj.prototype.getStats = function() {
+          return nativeGetstats.apply(this)
+          .then(function(nativeStats) {
+            var mapStats = new Map();
+            Object.keys(nativeStats).forEach(function(id) {
+              nativeStats[id].type = fixStatsType(nativeStats[id]);
+              mapStats.set(id, nativeStats[id]);
+            });
+            return mapStats;
+          });
+        };
+      }
+    });
   },
 
   /* creates an alias name for an event listener */
