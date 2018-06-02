@@ -200,11 +200,6 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.onnegotiationneeded = null;
   RTCPeerConnection.prototype.ondatachannel = null;
 
-  RTCPeerConnection.prototype._emitGatheringStateChange = function() {
-    var event = new Event('icegatheringstatechange');
-    dispatchPeerConnectionEvent(this, 'icegatheringstatechange', event);
-  };
-
   RTCPeerConnection.prototype.getConfiguration = function() {
     return this._config;
   };
@@ -453,10 +448,7 @@ module.exports = function(window, edgeVersion) {
             transceiver.iceGatherer.state === 'complete';
       });
 
-      if (pc.iceGatheringState !== 'gathering') {
-        pc.iceGatheringState = 'gathering';
-        pc._emitGatheringStateChange();
-      }
+      pc._updateIceGatheringState('gathering');
 
       // Emit candidate. Also emit null candidate when all gatherers are
       // complete.
@@ -464,10 +456,7 @@ module.exports = function(window, edgeVersion) {
         dispatchPeerConnectionEvent(pc, 'icecandidate', event);
       }
       if (complete) {
-        dispatchPeerConnectionEvent(pc, 'icecandidate',
-            new Event('icecandidate'));
-        pc.iceGatheringState = 'complete';
-        pc._emitGatheringStateChange();
+        pc._updateIceGatheringState('complete');
       }
     };
 
@@ -1064,6 +1053,23 @@ module.exports = function(window, edgeVersion) {
         dispatchPeerConnectionEvent(pc, 'negotiationneeded', event);
       }
     }, 0);
+  };
+
+  // Update the ice gathering state. See
+  // https://w3c.github.io/webrtc-pc/#update-the-ice-gathering-state
+  RTCPeerConnection.prototype._updateIceGatheringState = function(newState) {
+    if (newState === this.iceGatheringState) {
+      return;
+    }
+    this.iceGatheringState = newState;
+
+    var event = new Event('icegatheringstatechange');
+    dispatchPeerConnectionEvent(this, 'icegatheringstatechange', event);
+
+    if (newState === 'complete') {
+      dispatchPeerConnectionEvent(this, 'icecandidate',
+          new Event('icecandidate'));
+    }
   };
 
   // Update the ice connection state.
