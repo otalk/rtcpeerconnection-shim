@@ -116,23 +116,33 @@ module.exports = function(window, edgeVersion) {
         });
 
     this.canTrickleIceCandidates = null;
-
-    this._needNegotiation = false;
-
-    this._localStreams = [];
-    this._remoteStreams = [];
-
     this.localDescription = null;
     this.remoteDescription = null;
-
     this.signalingState = 'stable';
     this.iceConnectionState = 'new';
     this.connectionState = 'new';
     this.iceGatheringState = 'new';
 
-    config = JSON.parse(JSON.stringify(config || {}));
+    // per-track iceGathers, iceTransports, dtlsTransports, rtpSenders, ...
+    // everything that is needed to describe a SDP m-line.
+    this._transceivers = [];
 
-    this._usingBundle = config.bundlePolicy === 'max-bundle';
+    this._sdpSessionId = SDPUtils.generateSessionId();
+    this._sdpSessionVersion = 0;
+
+    this._dtlsRole = undefined; // role for a=setup to use in answers.
+
+    this._isClosed = false;
+    this._needNegotiation = false;
+
+    this._localStreams = [];
+    this._remoteStreams = [];
+
+    this._usingBundle = config ? config.bundlePolicy === 'max-bundle' : false;
+    this._iceGatherers = [];
+
+    // process configuration.
+    config = JSON.parse(JSON.stringify(config || {}));
     if (config.rtcpMuxPolicy === 'negotiate') {
       throw(util.makeError('NotSupportedError',
           'rtcpMuxPolicy \'negotiate\' is not supported'));
@@ -162,7 +172,6 @@ module.exports = function(window, edgeVersion) {
     config.iceServers = util.filterIceServers(config.iceServers || [],
         edgeVersion);
 
-    this._iceGatherers = [];
     if (config.iceCandidatePoolSize) {
       for (var i = config.iceCandidatePoolSize; i > 0; i--) {
         this._iceGatherers.push(new window.RTCIceGatherer({
@@ -175,17 +184,6 @@ module.exports = function(window, edgeVersion) {
     }
 
     this._config = config;
-
-    // per-track iceGathers, iceTransports, dtlsTransports, rtpSenders, ...
-    // everything that is needed to describe a SDP m-line.
-    this._transceivers = [];
-
-    this._sdpSessionId = SDPUtils.generateSessionId();
-    this._sdpSessionVersion = 0;
-
-    this._dtlsRole = undefined; // role for a=setup to use in answers.
-
-    this._isClosed = false;
   };
 
   // set up event handlers on prototype
