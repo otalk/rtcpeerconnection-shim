@@ -464,10 +464,10 @@ module.exports = function(window, edgeVersion) {
         dispatchPeerConnectionEvent(pc, 'icecandidate', event);
       }
       if (complete) {
-        dispatchPeerConnectionEvent(pc, 'icecandidate',
-            new Event('icecandidate'));
         pc.iceGatheringState = 'complete';
         pc._emitGatheringStateChange();
+        dispatchPeerConnectionEvent(pc, 'icecandidate',
+            new Event('icecandidate'));
       }
     };
 
