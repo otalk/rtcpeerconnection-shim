@@ -117,7 +117,7 @@ module.exports = function(window, edgeVersion) {
 
     this.canTrickleIceCandidates = null;
 
-    this.needNegotiation = false;
+    this._needNegotiation = false;
 
     this._localStreams = [];
     this._remoteStreams = [];
@@ -424,13 +424,13 @@ module.exports = function(window, edgeVersion) {
   // Determine whether to fire the negotiationneeded event.
   RTCPeerConnection.prototype._maybeFireNegotiationNeeded = function() {
     var pc = this;
-    if (this.signalingState !== 'stable' || this.needNegotiation === true) {
+    if (this.signalingState !== 'stable' || this._needNegotiation === true) {
       return;
     }
-    this.needNegotiation = true;
+    this._needNegotiation = true;
     window.setTimeout(function() {
-      if (pc.needNegotiation) {
-        pc.needNegotiation = false;
+      if (pc._needNegotiation) {
+        pc._needNegotiation = false;
         var event = new Event('negotiationneeded');
         dispatchPeerConnectionEvent(pc, 'negotiationneeded', event);
       }
