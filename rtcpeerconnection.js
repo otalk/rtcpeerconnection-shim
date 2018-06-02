@@ -71,16 +71,6 @@ function writeMediaSection(transceiver, caps, type, stream, dtlsRole) {
   return sdp;
 }
 
-function dispatchPeerConnectionEvent(pc, name, event) {
-  if (pc._isClosed) {
-    return;
-  }
-  pc.dispatchEvent(event);
-  if (typeof pc['on' + name] === 'function') {
-    pc['on' + name](event);
-  }
-}
-
 function fireAddTrack(pc, track, receiver, streams) {
   var trackEvent = new Event('track');
   trackEvent.track = track;
@@ -88,7 +78,7 @@ function fireAddTrack(pc, track, receiver, streams) {
   trackEvent.transceiver = {receiver: receiver};
   trackEvent.streams = streams;
   window.setTimeout(function() {
-    dispatchPeerConnectionEvent(pc, 'track', trackEvent);
+    pc._dispatchEvent('track', trackEvent);
   });
 }
 
@@ -303,7 +293,7 @@ module.exports = function(window, edgeVersion) {
 
       if (!end) { // Emit candidate.
         pc._updateIceGatheringState('gathering');
-        dispatchPeerConnectionEvent(pc, 'icecandidate', event);
+        pc._dispatchEvent('icecandidate', event);
       }
 
       var complete = pc._transceivers.every(function(transceiver) {
@@ -416,7 +406,7 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype._updateSignalingState = function(newState) {
     this.signalingState = newState;
     var event = new Event('signalingstatechange');
-    dispatchPeerConnectionEvent(this, 'signalingstatechange', event);
+    this._dispatchEvent('signalingstatechange', event);
   };
 
   // Determine whether to fire the negotiationneeded event.
@@ -430,7 +420,7 @@ module.exports = function(window, edgeVersion) {
       if (pc._needNegotiation) {
         pc._needNegotiation = false;
         var event = new Event('negotiationneeded');
-        dispatchPeerConnectionEvent(pc, 'negotiationneeded', event);
+        pc._dispatchEvent('negotiationneeded', event);
       }
     }, 0);
   };
@@ -444,11 +434,10 @@ module.exports = function(window, edgeVersion) {
     this.iceGatheringState = newState;
 
     var event = new Event('icegatheringstatechange');
-    dispatchPeerConnectionEvent(this, 'icegatheringstatechange', event);
+    this._dispatchEvent('icegatheringstatechange', event);
 
     if (newState === 'complete') {
-      dispatchPeerConnectionEvent(this, 'icecandidate',
-          new Event('icecandidate'));
+      this._dispatchEvent('icecandidate', new Event('icecandidate'));
     }
   };
 
@@ -486,7 +475,7 @@ module.exports = function(window, edgeVersion) {
     if (newState !== this.iceConnectionState) {
       this.iceConnectionState = newState;
       var event = new Event('iceconnectionstatechange');
-      dispatchPeerConnectionEvent(this, 'iceconnectionstatechange', event);
+      this._dispatchEvent('iceconnectionstatechange', event);
     }
   };
 
@@ -525,7 +514,17 @@ module.exports = function(window, edgeVersion) {
     if (newState !== this.connectionState) {
       this.connectionState = newState;
       var event = new Event('connectionstatechange');
-      dispatchPeerConnectionEvent(this, 'connectionstatechange', event);
+      this._dispatchEvent('connectionstatechange', event);
+    }
+  };
+
+  RTCPeerConnection.prototype._dispatchEvent = function(name, event) {
+    if (this._isClosed) {
+      return;
+    }
+    this.dispatchEvent(event);
+    if (typeof this['on' + name] === 'function') {
+      this['on' + name](event);
     }
   };
 
@@ -1078,7 +1077,7 @@ module.exports = function(window, edgeVersion) {
           var event = new Event('addstream');
           event.stream = stream;
           window.setTimeout(function() {
-            dispatchPeerConnectionEvent(pc, 'addstream', event);
+            pc._dispatchEvent('addstream', event);
           });
         }
 
