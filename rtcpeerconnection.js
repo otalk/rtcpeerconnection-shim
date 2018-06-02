@@ -132,7 +132,7 @@ module.exports = function(window, edgeVersion) {
 
     config = JSON.parse(JSON.stringify(config || {}));
 
-    this.usingBundle = config.bundlePolicy === 'max-bundle';
+    this._usingBundle = config.bundlePolicy === 'max-bundle';
     if (config.rtcpMuxPolicy === 'negotiate') {
       throw(util.makeError('NotSupportedError',
           'rtcpMuxPolicy \'negotiate\' is not supported'));
@@ -221,7 +221,7 @@ module.exports = function(window, edgeVersion) {
       associatedRemoteMediaStreams: [],
       wantReceive: true
     };
-    if (this.usingBundle && hasBundleTransport) {
+    if (this._usingBundle && hasBundleTransport) {
       transceiver.iceTransport = this._transceivers[0].iceTransport;
       transceiver.dtlsTransport = this._transceivers[0].dtlsTransport;
     } else {
@@ -257,7 +257,7 @@ module.exports = function(window, edgeVersion) {
       return;
     }
     iceGatherer.onlocalcandidate = function(evt) {
-      if (pc.usingBundle && sdpMLineIndex > 0) {
+      if (pc._usingBundle && sdpMLineIndex > 0) {
         // if we know that we use bundle we can drop candidates with
         // ѕdpMLineIndex > 0. If we don't do this then our state gets
         // confused since we dispose the extra ice gatherer.
@@ -731,7 +731,7 @@ module.exports = function(window, edgeVersion) {
             remoteDtlsParameters.role = 'server';
           }
 
-          if (!pc.usingBundle || sdpMLineIndex === 0) {
+          if (!pc._usingBundle || sdpMLineIndex === 0) {
             pc._gather(transceiver.mid, sdpMLineIndex);
             if (iceTransport.state === 'new') {
               iceTransport.start(iceGatherer, remoteIceParameters,
@@ -795,7 +795,7 @@ module.exports = function(window, edgeVersion) {
         'a=ice-lite').length > 0;
     var usingBundle = SDPUtils.matchPrefix(sessionpart,
         'a=group:BUNDLE ').length > 0;
-    pc.usingBundle = usingBundle;
+    pc._usingBundle = usingBundle;
     var iceOptions = SDPUtils.matchPrefix(sessionpart,
         'a=ice-options:')[0];
     if (iceOptions) {
@@ -1227,7 +1227,7 @@ module.exports = function(window, edgeVersion) {
 
       if (!transceiver.iceGatherer) {
         transceiver.iceGatherer = pc._createIceGatherer(sdpMLineIndex,
-            pc.usingBundle);
+            pc._usingBundle);
       }
 
       var localCapabilities = window.RTCRtpSender.getCapabilities(kind);
@@ -1306,7 +1306,7 @@ module.exports = function(window, edgeVersion) {
       sdp += 'a=rtcp-rsize\r\n';
 
       if (transceiver.iceGatherer && pc.iceGatheringState !== 'new' &&
-          (sdpMLineIndex === 0 || !pc.usingBundle)) {
+          (sdpMLineIndex === 0 || !pc._usingBundle)) {
         transceiver.iceGatherer.getLocalCandidates().forEach(function(cand) {
           cand.component = 1;
           sdp += 'a=' + SDPUtils.writeCandidate(cand) + '\r\n';
@@ -1341,7 +1341,7 @@ module.exports = function(window, edgeVersion) {
 
     var sdp = SDPUtils.writeSessionBoilerplate(pc._sdpSessionId,
         pc._sdpSessionVersion++);
-    if (pc.usingBundle) {
+    if (pc._usingBundle) {
       sdp += 'a=group:BUNDLE ' + pc._transceivers.map(function(t) {
         return t.mid;
       }).join(' ') + '\r\n';
@@ -1438,7 +1438,7 @@ module.exports = function(window, edgeVersion) {
           pc.remoteDescription.sdp =
               SDPUtils.getDescription(pc.remoteDescription.sdp) +
               sections.join('');
-          if (pc.usingBundle) {
+          if (pc._usingBundle) {
             break;
           }
         }
