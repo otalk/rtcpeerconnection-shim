@@ -71,20 +71,6 @@ function writeMediaSection(transceiver, caps, type, stream, dtlsRole) {
   return sdp;
 }
 
-// is action=setLocalDescription with type allowed in signalingState
-function isActionAllowedInSignalingState(action, type, signalingState) {
-  return {
-    offer: {
-      setLocalDescription: ['stable', 'have-local-offer'],
-      setRemoteDescription: ['stable', 'have-remote-offer']
-    },
-    answer: {
-      setLocalDescription: ['have-remote-offer', 'have-local-pranswer'],
-      setRemoteDescription: ['have-local-offer', 'have-remote-pranswer']
-    }
-  }[type][action].indexOf(signalingState) !== -1;
-}
-
 function fireAddTrack(pc, track, receiver, streams) {
   var trackEvent = new Event('track');
   trackEvent.track = track;
@@ -590,7 +576,7 @@ module.exports = function(window, edgeVersion) {
           'Unsupported type "' + description.type + '"'));
     }
 
-    if (!isActionAllowedInSignalingState('setLocalDescription',
+    if (!util.isActionAllowedInSignalingState('setLocalDescription',
         description.type, pc.signalingState) || pc._isClosed) {
       return Promise.reject(util.makeError('InvalidStateError',
           'Can not set local ' + description.type +
@@ -687,7 +673,7 @@ module.exports = function(window, edgeVersion) {
           'Unsupported type "' + description.type + '"'));
     }
 
-    if (!isActionAllowedInSignalingState('setRemoteDescription',
+    if (!util.isActionAllowedInSignalingState('setRemoteDescription',
         description.type, pc.signalingState) || pc._isClosed) {
       return Promise.reject(util.makeError('InvalidStateError',
           'Can not set remote ' + description.type +
@@ -1546,29 +1532,11 @@ module.exports = function(window, edgeVersion) {
     });
   };
 
-  // fix low-level stat names and return Map instead of object.
-  var ortcObjects = ['RTCRtpSender', 'RTCRtpReceiver', 'RTCIceGatherer',
-    'RTCIceTransport', 'RTCDtlsTransport'];
-  ortcObjects.forEach(function(ortcObjectName) {
-    var obj = window[ortcObjectName];
-    if (obj && obj.prototype && obj.prototype.getStats) {
-      var nativeGetstats = obj.prototype.getStats;
-      obj.prototype.getStats = function() {
-        return nativeGetstats.apply(this)
-        .then(function(nativeStats) {
-          var mapStats = new Map();
-          Object.keys(nativeStats).forEach(function(id) {
-            nativeStats[id].type = util.fixStatsType(nativeStats[id]);
-            mapStats.set(id, nativeStats[id]);
-          });
-          return mapStats;
-        });
-      };
-    }
-  });
-
-  // legacy callback shims. Should be moved to adapter.js some days.
+  // legacy callback shims. Should be moved to adapter.js some day?
   util.shimLegacyCallbacks(RTCPeerConnection);
+
+  // fix ORTC getStats. Should be moved to adapter.js some day?
+  util.fixORTCGetStats(window);
 
   return RTCPeerConnection;
 };
