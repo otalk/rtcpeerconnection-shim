@@ -3598,7 +3598,7 @@ describe('Edge shim', () => {
       ['checking', 'connected', 'completed', 'disconnected', 'failed']
       .forEach(state => {
         it(state, () => {
-          const transceiver = pc.transceivers[0];
+          const transceiver = pc._transceivers[0];
           const iceTransport = transceiver.iceTransport;
           iceTransport.state = state;
 
@@ -3639,7 +3639,7 @@ describe('Edge shim', () => {
 
     it('does not emit connectionstatechange when just the ' +
        'ice connection changes', () => {
-      const transceiver = pc.transceivers[0];
+      const transceiver = pc._transceivers[0];
       const iceTransport = transceiver.iceTransport;
       iceTransport.state = 'connected';
 
@@ -3652,7 +3652,7 @@ describe('Edge shim', () => {
     });
 
     it('emits connectionstatechange when ice and dtls are connected', () => {
-      const transceiver = pc.transceivers[0];
+      const transceiver = pc._transceivers[0];
       const iceTransport = transceiver.iceTransport;
       iceTransport.state = 'connected';
 
@@ -3670,7 +3670,7 @@ describe('Edge shim', () => {
 
     it('changes the connection state to connecting when the dtls transports ' +
        'start connecting', () => {
-      const transceiver = pc.transceivers[0];
+      const transceiver = pc._transceivers[0];
       const dtlsTransport = transceiver.dtlsTransport;
       dtlsTransport.state = 'connecting';
       const stub = sinon.stub();
@@ -3684,7 +3684,7 @@ describe('Edge shim', () => {
 
     it('changes the connection state to failed when there ' +
        'was a DTLS error', () => {
-      const transceiver = pc.transceivers[0];
+      const transceiver = pc._transceivers[0];
       const dtlsTransport = transceiver.dtlsTransport;
 
       const stub = sinon.stub();
@@ -3699,7 +3699,7 @@ describe('Edge shim', () => {
         'connection disconnects', () => {
       pc.connectionState = 'connected';
 
-      const transceiver = pc.transceivers[0];
+      const transceiver = pc._transceivers[0];
       const iceTransport = transceiver.iceTransport;
       iceTransport.state = 'disconnected';
 
