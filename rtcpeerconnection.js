@@ -443,18 +443,16 @@ module.exports = function(window, edgeVersion) {
       pc.localDescription.sdp =
           SDPUtils.getDescription(pc.localDescription.sdp) +
           sections.join('');
+
+      if (!end) { // Emit candidate.
+        pc._updateIceGatheringState('gathering');
+        dispatchPeerConnectionEvent(pc, 'icecandidate', event);
+      }
+
       var complete = pc.transceivers.every(function(transceiver) {
         return transceiver.iceGatherer &&
             transceiver.iceGatherer.state === 'complete';
       });
-
-      pc._updateIceGatheringState('gathering');
-
-      // Emit candidate. Also emit null candidate when all gatherers are
-      // complete.
-      if (!end) {
-        dispatchPeerConnectionEvent(pc, 'icecandidate', event);
-      }
       if (complete) {
         pc._updateIceGatheringState('complete');
       }
