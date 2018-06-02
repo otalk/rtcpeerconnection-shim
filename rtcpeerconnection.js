@@ -25,7 +25,7 @@ function writeMediaSection(transceiver, caps, type, stream, dtlsRole) {
   // Map DTLS parameters to SDP.
   sdp += SDPUtils.writeDtlsParameters(
       transceiver.dtlsTransport.getLocalParameters(),
-      type === 'offer' ? 'actpass' : dtlsRole || 'active');
+      type === 'offer' ? 'actpass' : dtlsRole);
 
   sdp += 'a=mid:' + transceiver.mid + '\r\n';
 
