@@ -564,7 +564,7 @@ describe('Edge shim', () => {
 
     describe('when called with an offer containing a track', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
-          'a=ssrc:1001 msid:stream1 track1\r\n' +
+          'a=ssrc:1001 msid:stream1 track1\r\n';
       it('triggers onaddstream', (done) => {
         pc.onaddstream = (event) => {
           const stream = event.stream;
