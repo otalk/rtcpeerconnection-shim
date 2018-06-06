@@ -610,19 +610,14 @@ describe('Edge shim', () => {
       });
 
       it('triggers ontrack and track event before resolving', (done) => {
-        let clock = sinon.useFakeTimers();
         var trackEvent = sinon.stub();
         pc.addEventListener('track', trackEvent);
         pc.ontrack = sinon.stub();
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => {
-          window.setTimeout(() => {
-            expect(trackEvent).to.have.been.calledWith();
-            expect(pc.ontrack).to.have.been.calledWith();
-            clock.restore();
-            done();
-          }, 0);
-          clock.tick(500);
+          expect(trackEvent).to.have.been.calledWith();
+          expect(pc.ontrack).to.have.been.calledWith();
+          done();
         });
       });
 
