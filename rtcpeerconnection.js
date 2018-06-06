@@ -472,9 +472,7 @@ module.exports = function(window, edgeVersion) {
     trackEvent.receiver = receiver;
     trackEvent.transceiver = {receiver: receiver};
     trackEvent.streams = streams;
-    window.setTimeout(function() {
-      pc._dispatchEvent('track', trackEvent);
-    });
+    pc._dispatchEvent('track', trackEvent);
   };
 
 
@@ -1026,9 +1024,7 @@ module.exports = function(window, edgeVersion) {
           pc._remoteStreams.push(stream);
           var event = new Event('addstream');
           event.stream = stream;
-          window.setTimeout(function() {
-            pc._dispatchEvent('addstream', event);
-          });
+          pc._dispatchEvent('addstream', event);
         }
 
         receiverList.forEach(function(item) {
