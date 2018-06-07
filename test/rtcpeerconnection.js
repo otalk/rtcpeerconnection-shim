@@ -176,6 +176,16 @@ describe('Edge shim', () => {
       pc.close();
       expect(pc.onsignalingstatechange).not.to.have.been.calledWith();
     });
+
+    it('sets the iceConnectionState to closed', () => {
+      pc.close();
+      expect(pc.iceConnectionState).to.equal('closed');
+    });
+
+    it('sets the connectionState to closed', () => {
+      pc.close();
+      expect(pc.connectionState).to.equal('closed');
+    });
   });
 
   describe('setLocalDescription', () => {
