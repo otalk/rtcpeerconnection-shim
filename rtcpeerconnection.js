@@ -1087,6 +1087,8 @@ module.exports = function(window, edgeVersion) {
     // FIXME: clean up tracks, local streams, remote streams, etc
     this._isClosed = true;
     this._updateSignalingState('closed');
+    this.iceConnectionState = 'closed';
+    this.connectionState = 'closed';
   };
 
   RTCPeerConnection.prototype.createOffer = function() {
