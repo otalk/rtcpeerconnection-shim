@@ -283,8 +283,8 @@ module.exports = function(window, edgeVersion) {
     this.localStreams = [];
     this.remoteStreams = [];
 
-    this.localDescription = null;
-    this.remoteDescription = null;
+    this._localDescription = null;
+    this._remoteDescription = null;
 
     this.signalingState = 'stable';
     this.iceConnectionState = 'new';
@@ -347,6 +347,19 @@ module.exports = function(window, edgeVersion) {
 
     this._isClosed = false;
   };
+
+  Object.defineProperty(RTCPeerConnection.prototype, 'localDescription', {
+    configurable: true,
+    get: function() {
+      return this._localDescription;
+    }
+  });
+  Object.defineProperty(RTCPeerConnection.prototype, 'remoteDescription', {
+    configurable: true,
+    get: function() {
+      return this._remoteDescription;
+    }
+  });
 
   // set up event handlers on prototype
   RTCPeerConnection.prototype.onicecandidate = null;
@@ -639,7 +652,7 @@ module.exports = function(window, edgeVersion) {
       }
 
       // update local description.
-      var sections = SDPUtils.getMediaSections(pc.localDescription.sdp);
+      var sections = SDPUtils.getMediaSections(pc._localDescription.sdp);
       if (!end) {
         sections[event.candidate.sdpMLineIndex] +=
             'a=' + event.candidate.candidate + '\r\n';
@@ -647,8 +660,8 @@ module.exports = function(window, edgeVersion) {
         sections[event.candidate.sdpMLineIndex] +=
             'a=end-of-candidates\r\n';
       }
-      pc.localDescription.sdp =
-          SDPUtils.getDescription(pc.localDescription.sdp) +
+      pc._localDescription.sdp =
+          SDPUtils.getDescription(pc._localDescription.sdp) +
           sections.join('');
       var complete = pc.transceivers.every(function(transceiver) {
         return transceiver.iceGatherer &&
@@ -803,7 +816,7 @@ module.exports = function(window, edgeVersion) {
         pc._gather(transceiver.mid, sdpMLineIndex);
       });
     } else if (description.type === 'answer') {
-      sections = SDPUtils.splitSections(pc.remoteDescription.sdp);
+      sections = SDPUtils.splitSections(pc._remoteDescription.sdp);
       sessionpart = sections.shift();
       var isIceLite = SDPUtils.matchPrefix(sessionpart,
           'a=ice-lite').length > 0;
@@ -852,7 +865,7 @@ module.exports = function(window, edgeVersion) {
       });
     }
 
-    pc.localDescription = {
+    pc._localDescription = {
       type: description.type,
       sdp: description.sdp
     };
@@ -1156,7 +1169,7 @@ module.exports = function(window, edgeVersion) {
       pc._dtlsRole = description.type === 'offer' ? 'active' : 'passive';
     }
 
-    pc.remoteDescription = {
+    pc._remoteDescription = {
       type: description.type,
       sdp: description.sdp
     };
@@ -1540,7 +1553,7 @@ module.exports = function(window, edgeVersion) {
       }).join(' ') + '\r\n';
     }
     var mediaSectionsInOffer = SDPUtils.getMediaSections(
-        pc.remoteDescription.sdp).length;
+        pc._remoteDescription.sdp).length;
     pc.transceivers.forEach(function(transceiver, sdpMLineIndex) {
       if (sdpMLineIndex + 1 > mediaSectionsInOffer) {
         return;
@@ -1617,7 +1630,7 @@ module.exports = function(window, edgeVersion) {
 
     // TODO: needs to go into ops queue.
     return new Promise(function(resolve, reject) {
-      if (!pc.remoteDescription) {
+      if (!pc._remoteDescription) {
         return reject(makeError('InvalidStateError',
             'Can not add ICE candidate without a remote description'));
       } else if (!candidate || candidate.candidate === '') {
@@ -1626,10 +1639,10 @@ module.exports = function(window, edgeVersion) {
             continue;
           }
           pc.transceivers[j].iceTransport.addRemoteCandidate({});
-          sections = SDPUtils.getMediaSections(pc.remoteDescription.sdp);
+          sections = SDPUtils.getMediaSections(pc._remoteDescription.sdp);
           sections[j] += 'a=end-of-candidates\r\n';
-          pc.remoteDescription.sdp =
-              SDPUtils.getDescription(pc.remoteDescription.sdp) +
+          pc._remoteDescription.sdp =
+              SDPUtils.getDescription(pc._remoteDescription.sdp) +
               sections.join('');
           if (pc.usingBundle) {
             break;
@@ -1675,12 +1688,12 @@ module.exports = function(window, edgeVersion) {
           if (candidateString.indexOf('a=') === 0) {
             candidateString = candidateString.substr(2);
           }
-          sections = SDPUtils.getMediaSections(pc.remoteDescription.sdp);
+          sections = SDPUtils.getMediaSections(pc._remoteDescription.sdp);
           sections[sdpMLineIndex] += 'a=' +
               (cand.type ? candidateString : 'end-of-candidates')
               + '\r\n';
-          pc.remoteDescription.sdp =
-              SDPUtils.getDescription(pc.remoteDescription.sdp) +
+          pc._remoteDescription.sdp =
+              SDPUtils.getDescription(pc._remoteDescription.sdp) +
               sections.join('');
         } else {
           return reject(makeError('OperationError',
