@@ -42,13 +42,13 @@ module.exports = function(window, edgeVersion) {
           pc[method] = _eventTarget[method].bind(_eventTarget);
         });
 
-    this.canTrickleIceCandidates = null;
-    this.localDescription = null;
-    this.remoteDescription = null;
-    this.signalingState = 'stable';
-    this.iceConnectionState = 'new';
-    this.connectionState = 'new';
-    this.iceGatheringState = 'new';
+    this._canTrickleIceCandidates = null;
+    this._localDescription = null;
+    this._remoteDescription = null;
+    this._signalingState = 'stable';
+    this._iceConnectionState = 'new';
+    this._connectionState = 'new';
+    this._iceGatheringState = 'new';
 
     // per-track iceGathers, iceTransports, dtlsTransports, rtpSenders, ...
     // everything that is needed to describe a SDP m-line.
@@ -112,6 +112,18 @@ module.exports = function(window, edgeVersion) {
 
     this._config = config;
   };
+
+  // set up public properties on the prototype
+  ['localDescription', 'remoteDescription', 'signalingState',
+    'iceConnectionState', 'connectionState', 'iceGatheringState',
+    'canTrickleIceCandidates'].forEach(function(propertyName) {
+      Object.defineProperty(RTCPeerConnection.prototype, propertyName, {
+        configurable: true,
+        get: function() {
+          return this['_' + propertyName];
+        }
+      });
+    });
 
   // set up event handlers on prototype
   RTCPeerConnection.prototype.onicecandidate = null;
@@ -216,7 +228,7 @@ module.exports = function(window, edgeVersion) {
       }
 
       // update local description.
-      var sections = SDPUtils.getMediaSections(pc.localDescription.sdp);
+      var sections = SDPUtils.getMediaSections(pc._localDescription.sdp);
       if (!end) {
         sections[event.candidate.sdpMLineIndex] +=
             'a=' + event.candidate.candidate + '\r\n';
@@ -224,8 +236,8 @@ module.exports = function(window, edgeVersion) {
         sections[event.candidate.sdpMLineIndex] +=
             'a=end-of-candidates\r\n';
       }
-      pc.localDescription.sdp =
-          SDPUtils.getDescription(pc.localDescription.sdp) +
+      pc._localDescription.sdp =
+          SDPUtils.getDescription(pc._localDescription.sdp) +
           sections.join('');
 
       if (!end) { // Emit candidate.
@@ -341,7 +353,7 @@ module.exports = function(window, edgeVersion) {
 
   // Update the signaling state.
   RTCPeerConnection.prototype._updateSignalingState = function(newState) {
-    this.signalingState = newState;
+    this._signalingState = newState;
     var event = new Event('signalingstatechange');
     this._dispatchEvent('signalingstatechange', event);
   };
@@ -349,7 +361,7 @@ module.exports = function(window, edgeVersion) {
   // Determine whether to fire the negotiationneeded event.
   RTCPeerConnection.prototype._maybeFireNegotiationNeeded = function() {
     var pc = this;
-    if (this.signalingState !== 'stable' || this._needNegotiation === true) {
+    if (this._signalingState !== 'stable' || this._needNegotiation === true) {
       return;
     }
     this._needNegotiation = true;
@@ -365,10 +377,10 @@ module.exports = function(window, edgeVersion) {
   // Update the ice gathering state. See
   // https://w3c.github.io/webrtc-pc/#update-the-ice-gathering-state
   RTCPeerConnection.prototype._updateIceGatheringState = function(newState) {
-    if (newState === this.iceGatheringState) {
+    if (newState === this._iceGatheringState) {
       return;
     }
-    this.iceGatheringState = newState;
+    this._iceGatheringState = newState;
 
     var event = new Event('icegatheringstatechange');
     this._dispatchEvent('icegatheringstatechange', event);
@@ -409,8 +421,8 @@ module.exports = function(window, edgeVersion) {
       newState = 'completed';
     }
 
-    if (newState !== this.iceConnectionState) {
-      this.iceConnectionState = newState;
+    if (newState !== this._iceConnectionState) {
+      this._iceConnectionState = newState;
       var event = new Event('iceconnectionstatechange');
       this._dispatchEvent('iceconnectionstatechange', event);
     }
@@ -448,8 +460,8 @@ module.exports = function(window, edgeVersion) {
       newState = 'connected';
     }
 
-    if (newState !== this.connectionState) {
-      this.connectionState = newState;
+    if (newState !== this._connectionState) {
+      this._connectionState = newState;
       var event = new Event('connectionstatechange');
       this._dispatchEvent('connectionstatechange', event);
     }
@@ -626,10 +638,10 @@ module.exports = function(window, edgeVersion) {
     }
 
     if (!util.isActionAllowedInSignalingState('setLocalDescription',
-        description.type, pc.signalingState) || pc._isClosed) {
+        description.type, pc._signalingState) || pc._isClosed) {
       return Promise.reject(util.makeError('InvalidStateError',
           'Can not set local ' + description.type +
-          ' in state ' + pc.signalingState));
+          ' in state ' + pc._signalingState));
     }
 
     var sections;
@@ -648,7 +660,7 @@ module.exports = function(window, edgeVersion) {
         pc._gather(transceiver.mid, sdpMLineIndex);
       });
     } else if (description.type === 'answer') {
-      sections = SDPUtils.splitSections(pc.remoteDescription.sdp);
+      sections = SDPUtils.splitSections(pc._remoteDescription.sdp);
       sessionpart = sections.shift();
       var isIceLite = SDPUtils.matchPrefix(sessionpart,
           'a=ice-lite').length > 0;
@@ -700,7 +712,7 @@ module.exports = function(window, edgeVersion) {
       });
     }
 
-    pc.localDescription = {
+    pc._localDescription = {
       type: description.type,
       sdp: description.sdp
     };
@@ -723,10 +735,10 @@ module.exports = function(window, edgeVersion) {
     }
 
     if (!util.isActionAllowedInSignalingState('setRemoteDescription',
-        description.type, pc.signalingState) || pc._isClosed) {
+        description.type, pc._signalingState) || pc._isClosed) {
       return Promise.reject(util.makeError('InvalidStateError',
           'Can not set remote ' + description.type +
-          ' in state ' + pc.signalingState));
+          ' in state ' + pc._signalingState));
     }
 
     var streams = {};
@@ -744,10 +756,10 @@ module.exports = function(window, edgeVersion) {
     var iceOptions = SDPUtils.matchPrefix(sessionpart,
         'a=ice-options:')[0];
     if (iceOptions) {
-      pc.canTrickleIceCandidates = iceOptions.substr(14).split(' ')
+      pc._canTrickleIceCandidates = iceOptions.substr(14).split(' ')
           .indexOf('trickle') >= 0;
     } else {
-      pc.canTrickleIceCandidates = false;
+      pc._canTrickleIceCandidates = false;
     }
 
     sections.forEach(function(mediaSection, sdpMLineIndex) {
@@ -1008,7 +1020,7 @@ module.exports = function(window, edgeVersion) {
       pc._dtlsRole = description.type === 'offer' ? 'active' : 'passive';
     }
 
-    pc.remoteDescription = {
+    pc._remoteDescription = {
       type: description.type,
       sdp: description.sdp
     };
@@ -1087,8 +1099,8 @@ module.exports = function(window, edgeVersion) {
     // FIXME: clean up tracks, local streams, remote streams, etc
     this._isClosed = true;
     this._updateSignalingState('closed');
-    this.iceConnectionState = 'closed';
-    this.connectionState = 'closed';
+    this._iceConnectionState = 'closed';
+    this._connectionState = 'closed';
   };
 
   RTCPeerConnection.prototype.createOffer = function() {
@@ -1250,7 +1262,7 @@ module.exports = function(window, edgeVersion) {
           'offer', transceiver.stream, pc._dtlsRole);
       sdp += 'a=rtcp-rsize\r\n';
 
-      if (transceiver.iceGatherer && pc.iceGatheringState !== 'new' &&
+      if (transceiver.iceGatherer && pc._iceGatheringState !== 'new' &&
           (sdpMLineIndex === 0 || !pc._usingBundle)) {
         transceiver.iceGatherer.getLocalCandidates().forEach(function(cand) {
           cand.component = 1;
@@ -1278,10 +1290,10 @@ module.exports = function(window, edgeVersion) {
           'Can not call createAnswer after close'));
     }
 
-    if (!(pc.signalingState === 'have-remote-offer' ||
-        pc.signalingState === 'have-local-pranswer')) {
+    if (!(pc._signalingState === 'have-remote-offer' ||
+        pc._signalingState === 'have-local-pranswer')) {
       return Promise.reject(util.makeError('InvalidStateError',
-          'Can not call createAnswer in signalingState ' + pc.signalingState));
+          'Can not call createAnswer in signalingState ' + pc._signalingState));
     }
 
     var sdp = SDPUtils.writeSessionBoilerplate(pc._sdpSessionId,
@@ -1292,7 +1304,7 @@ module.exports = function(window, edgeVersion) {
       }).join(' ') + '\r\n';
     }
     var mediaSectionsInOffer = SDPUtils.getMediaSections(
-        pc.remoteDescription.sdp).length;
+        pc._remoteDescription.sdp).length;
     pc._transceivers.forEach(function(transceiver, sdpMLineIndex) {
       if (sdpMLineIndex + 1 > mediaSectionsInOffer) {
         return;
@@ -1369,7 +1381,7 @@ module.exports = function(window, edgeVersion) {
 
     // TODO: needs to go into ops queue.
     return new Promise(function(resolve, reject) {
-      if (!pc.remoteDescription) {
+      if (!pc._remoteDescription) {
         return reject(util.makeError('InvalidStateError',
             'Can not add ICE candidate without a remote description'));
       } else if (!candidate || candidate.candidate === '') {
@@ -1378,10 +1390,10 @@ module.exports = function(window, edgeVersion) {
             continue;
           }
           pc._transceivers[j].iceTransport.addRemoteCandidate({});
-          sections = SDPUtils.getMediaSections(pc.remoteDescription.sdp);
+          sections = SDPUtils.getMediaSections(pc._remoteDescription.sdp);
           sections[j] += 'a=end-of-candidates\r\n';
-          pc.remoteDescription.sdp =
-              SDPUtils.getDescription(pc.remoteDescription.sdp) +
+          pc._remoteDescription.sdp =
+              SDPUtils.getDescription(pc._remoteDescription.sdp) +
               sections.join('');
           if (pc._usingBundle) {
             break;
@@ -1427,12 +1439,12 @@ module.exports = function(window, edgeVersion) {
           if (candidateString.indexOf('a=') === 0) {
             candidateString = candidateString.substr(2);
           }
-          sections = SDPUtils.getMediaSections(pc.remoteDescription.sdp);
+          sections = SDPUtils.getMediaSections(pc._remoteDescription.sdp);
           sections[sdpMLineIndex] += 'a=' +
               (cand.type ? candidateString : 'end-of-candidates')
               + '\r\n';
-          pc.remoteDescription.sdp =
-              SDPUtils.getDescription(pc.remoteDescription.sdp) +
+          pc._remoteDescription.sdp =
+              SDPUtils.getDescription(pc._remoteDescription.sdp) +
               sections.join('');
         } else {
           return reject(util.makeError('OperationError',
