@@ -353,6 +353,9 @@ module.exports = function(window, edgeVersion) {
 
   // Update the signaling state.
   RTCPeerConnection.prototype._updateSignalingState = function(newState) {
+    if (newState === this._signalingState) {
+      return;
+    }
     this._signalingState = newState;
     var event = new Event('signalingstatechange');
     this._dispatchEvent('signalingstatechange', event);

@@ -1281,6 +1281,17 @@ describe('Edge shim', () => {
         });
       });
     });
+
+    it('does not call signalingstatechange again when ' +
+       'already in current state', () => {
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+      pc.onsignalingstatechange = sinon.stub();
+      return pc.setRemoteDescription({type: 'offer', sdp})
+      .then(() => pc.setRemoteDescription({type: 'offer', sdp}))
+      .then(() => {
+        expect(pc.onsignalingstatechange).to.have.been.calledOnce();
+      });
+    });
   });
 
   describe('createOffer', () => {
