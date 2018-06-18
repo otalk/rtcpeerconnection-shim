@@ -3587,7 +3587,7 @@ describe('Edge shim', () => {
     });
 
     it('calls both event and oicenconnectionstatechange', () => {
-      pc.iceConnectionState = 'weird state';
+      pc._iceConnectionState = 'weird state';
 
       const stub = sinon.stub();
       pc.oniceconnectionstatechange = stub;
@@ -3631,7 +3631,7 @@ describe('Edge shim', () => {
     });
 
     it('calls both event and onconnectionstatechange', () => {
-      pc.connectionState = 'weird state';
+      pc._connectionState = 'weird state';
 
       const stub = sinon.stub();
       pc.onconnectionstatechange = stub;
