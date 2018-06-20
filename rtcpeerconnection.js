@@ -126,16 +126,12 @@ module.exports = function(window, edgeVersion) {
     });
 
   // set up event handlers on prototype
-  RTCPeerConnection.prototype.onicecandidate = null;
-  RTCPeerConnection.prototype.onaddstream = null;
-  RTCPeerConnection.prototype.ontrack = null;
-  RTCPeerConnection.prototype.onremovestream = null;
-  RTCPeerConnection.prototype.onsignalingstatechange = null;
-  RTCPeerConnection.prototype.oniceconnectionstatechange = null;
-  RTCPeerConnection.prototype.onconnectionstatechange = null;
-  RTCPeerConnection.prototype.onicegatheringstatechange = null;
-  RTCPeerConnection.prototype.onnegotiationneeded = null;
-  RTCPeerConnection.prototype.ondatachannel = null;
+  ['icecandidate', 'addstream', 'removestream', 'track',
+    'signalingstatechange', 'iceconnectionstatechange',
+    'connectionstatechange', 'icegatheringstatechange',
+    'negotiationneeded', 'datachannel'].forEach(function(eventName) {
+      RTCPeerConnection.prototype['on' + eventName] = null;
+    });
 
   // internal helper to create a transceiver object.
   // (which is not yet the same as the WebRTC 1.0 transceiver)
