@@ -775,12 +775,14 @@ module.exports = function(window, edgeVersion) {
       var mid = SDPUtils.getMid(mediaSection) || SDPUtils.generateIdentifier();
 
       // Reject datachannels which are not implemented yet.
-      if ((kind === 'application' && protocol === 'DTLS/SCTP') || rejected) {
+      if (rejected || (kind === 'application' && (protocol === 'DTLS/SCTP' ||
+          protocol === 'UDP/DTLS/SCTP'))) {
         // TODO: this is dangerous in the case where a non-rejected m-line
         //     becomes rejected.
         pc._transceivers[sdpMLineIndex] = {
           mid: mid,
           kind: kind,
+          protocol: protocol,
           rejected: true
         };
         return;
@@ -1310,7 +1312,12 @@ module.exports = function(window, edgeVersion) {
       }
       if (transceiver.rejected) {
         if (transceiver.kind === 'application') {
-          sdp += 'm=application 0 DTLS/SCTP 5000\r\n';
+          if (transceiver.protocol === 'DTLS/SCTP') { // legacy fmt
+            sdp += 'm=application 0 DTLS/SCTP 5000\r\n';
+          } else {
+            sdp += 'm=application 0 ' + transceiver.protocol +
+                ' webrtc-datachannel\r\n';
+          }
         } else if (transceiver.kind === 'audio') {
           sdp += 'm=audio 0 UDP/TLS/RTP/SAVPF 0\r\n' +
               'a=rtpmap:0 PCMU/8000\r\n';
