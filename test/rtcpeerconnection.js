@@ -2046,7 +2046,7 @@ describe('Edge shim', () => {
       });
     });
 
-    describe('rejects a data channel', () => {
+    describe('rejects a legacy datachannel offer', () => {
       const sdp = SDP_BOILERPLATE +
           'm=application 9 DTLS/SCTP 5000\r\n' +
           'c=IN IP4 0.0.0.0\r\n' +
@@ -2080,6 +2080,28 @@ describe('Edge shim', () => {
       it('ignores end-of-candidates', () => {
         return pc.setRemoteDescription({type: 'offer', sdp: sdp})
         .then(() => pc.addIceCandidate());
+      });
+    });
+
+    describe('rejects a new-style datachannel offer', () => {
+      it('in setRemoteDescription', () => {
+        const sdp = SDP_BOILERPLATE +
+            'm=application 9 UDP/DTLS/SCTP webrtc-datachannel\r\n' +
+            'c=IN IP4 0.0.0.0\r\n' +
+            'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+            'a=ice-pwd:' + ICEPWD + '\r\n' +
+            'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+            'a=setup:actpass\r\n' +
+            'a=mid:data\r\n' +
+            'a=sctp-port:5000\r\n' +
+            'a=max-message-size:1073741823\r\n';
+        return pc.setRemoteDescription({type: 'offer', sdp})
+        .then(() => pc.createAnswer())
+        .then((answer) => {
+          const sections = SDPUtils.getMediaSections(answer.sdp);
+          const rejected = SDPUtils.isRejected(sections[0]);
+          expect(rejected).to.equal(true);
+        });
       });
     });
 
