@@ -38,9 +38,9 @@ module.exports = function(window, edgeVersion) {
 
     var _eventTarget = document.createDocumentFragment();
     ['addEventListener', 'removeEventListener', 'dispatchEvent']
-        .forEach(function(method) {
-          pc[method] = _eventTarget[method].bind(_eventTarget);
-        });
+      .forEach(function(method) {
+        pc[method] = _eventTarget[method].bind(_eventTarget);
+      });
 
     this._canTrickleIceCandidates = null;
     this._localDescription = null;
@@ -71,8 +71,8 @@ module.exports = function(window, edgeVersion) {
     // process configuration.
     config = JSON.parse(JSON.stringify(config || {}));
     if (config.rtcpMuxPolicy === 'negotiate') {
-      throw(util.makeError('NotSupportedError',
-          'rtcpMuxPolicy \'negotiate\' is not supported'));
+      throw util.makeError('NotSupportedError',
+        'rtcpMuxPolicy \'negotiate\' is not supported');
     } else if (!config.rtcpMuxPolicy) {
       config.rtcpMuxPolicy = 'require';
     }
@@ -97,7 +97,7 @@ module.exports = function(window, edgeVersion) {
     }
 
     config.iceServers = util.filterIceServers(config.iceServers || [],
-        edgeVersion);
+      edgeVersion);
 
     if (config.iceCandidatePoolSize) {
       for (var i = config.iceCandidatePoolSize; i > 0; i--) {
@@ -117,21 +117,21 @@ module.exports = function(window, edgeVersion) {
   ['localDescription', 'remoteDescription', 'signalingState',
     'iceConnectionState', 'connectionState', 'iceGatheringState',
     'canTrickleIceCandidates'].forEach(function(propertyName) {
-      Object.defineProperty(RTCPeerConnection.prototype, propertyName, {
-        configurable: true,
-        get: function() {
-          return this['_' + propertyName];
-        }
-      });
+    Object.defineProperty(RTCPeerConnection.prototype, propertyName, {
+      configurable: true,
+      get: function() {
+        return this['_' + propertyName];
+      }
     });
+  });
 
   // set up event handlers on prototype
   ['icecandidate', 'addstream', 'removestream', 'track',
     'signalingstatechange', 'iceconnectionstatechange',
     'connectionstatechange', 'icegatheringstatechange',
     'negotiationneeded', 'datachannel'].forEach(function(eventName) {
-      RTCPeerConnection.prototype['on' + eventName] = null;
-    });
+    RTCPeerConnection.prototype['on' + eventName] = null;
+  });
 
   // internal helper to create a transceiver object.
   // (which is not yet the same as the WebRTC 1.0 transceiver)
@@ -169,7 +169,7 @@ module.exports = function(window, edgeVersion) {
   };
 
   RTCPeerConnection.prototype._createIceGatherer = function(sdpMLineIndex,
-      usingBundle) {
+    usingBundle) {
     if (usingBundle && sdpMLineIndex > 0) {
       return this._transceivers[0].iceGatherer;
     } else if (this._iceGatherers.length) {
@@ -210,7 +210,7 @@ module.exports = function(window, edgeVersion) {
 
         var serializedCandidate = SDPUtils.writeCandidate(cand);
         event.candidate = Object.assign(event.candidate,
-            SDPUtils.parseCandidate(serializedCandidate));
+          SDPUtils.parseCandidate(serializedCandidate));
 
         event.candidate.candidate = serializedCandidate;
         event.candidate.toJSON = function() {
@@ -280,7 +280,7 @@ module.exports = function(window, edgeVersion) {
     dtlsTransport.addEventListener('error', function() {
       // onerror does not set state to failed by itself.
       Object.defineProperty(dtlsTransport, 'state',
-          {value: 'failed', writable: true});
+        {value: 'failed', writable: true});
       pc._updateConnectionState();
     });
 
@@ -293,7 +293,7 @@ module.exports = function(window, edgeVersion) {
   // Destroy ICE gatherer, ICE transport and DTLS transport.
   // Without triggering the callbacks.
   RTCPeerConnection.prototype._disposeIceAndDtlsTransports = function(
-      sdpMLineIndex) {
+    sdpMLineIndex) {
     var iceGatherer = this._transceivers[sdpMLineIndex].iceGatherer;
     if (iceGatherer) {
       delete iceGatherer.onlocalcandidate;
@@ -306,9 +306,9 @@ module.exports = function(window, edgeVersion) {
 
   // Start the RTP Sender and Receiver for a transceiver.
   RTCPeerConnection.prototype._transceive = function(transceiver,
-      send, recv) {
+    send, recv) {
     var params = getCommonCapabilities(transceiver.localCapabilities,
-        transceiver.remoteCapabilities);
+      transceiver.remoteCapabilities);
     if (send && transceiver.rtpSender) {
       params.encodings = transceiver.sendEncodingParameters;
       params.rtcp = {
@@ -502,7 +502,7 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.addTrack = function(track, stream) {
     if (this._isClosed) {
       throw util.makeError('InvalidStateError',
-          'Attempted to call addTrack on a closed peerconnection.');
+        'Attempted to call addTrack on a closed peerconnection.');
     }
 
     var alreadyExists = this._transceivers.find(function(s) {
@@ -562,7 +562,7 @@ module.exports = function(window, edgeVersion) {
   RTCPeerConnection.prototype.removeTrack = function(sender) {
     if (this._isClosed) {
       throw util.makeError('InvalidStateError',
-          'Attempted to call removeTrack on a closed peerconnection.');
+        'Attempted to call removeTrack on a closed peerconnection.');
     }
 
     if (!(sender instanceof window.RTCRtpSender)) {
@@ -576,7 +576,7 @@ module.exports = function(window, edgeVersion) {
 
     if (!transceiver) {
       throw util.makeError('InvalidAccessError',
-          'Sender was not created by this connection.');
+        'Sender was not created by this connection.');
     }
     var stream = transceiver.stream;
 
@@ -613,18 +613,18 @@ module.exports = function(window, edgeVersion) {
     return this._transceivers.filter(function(transceiver) {
       return !!transceiver.rtpSender;
     })
-    .map(function(transceiver) {
-      return transceiver.rtpSender;
-    });
+      .map(function(transceiver) {
+        return transceiver.rtpSender;
+      });
   };
 
   RTCPeerConnection.prototype.getReceivers = function() {
     return this._transceivers.filter(function(transceiver) {
       return !!transceiver.rtpReceiver;
     })
-    .map(function(transceiver) {
-      return transceiver.rtpReceiver;
-    });
+      .map(function(transceiver) {
+        return transceiver.rtpReceiver;
+      });
   };
 
   RTCPeerConnection.prototype.setLocalDescription = function(description) {
@@ -633,13 +633,13 @@ module.exports = function(window, edgeVersion) {
     // Note: pranswer is not supported.
     if (['offer', 'answer'].indexOf(description.type) === -1) {
       return Promise.reject(util.makeError('TypeError',
-          'Unsupported type "' + description.type + '"'));
+        'Unsupported type "' + description.type + '"'));
     }
 
     if (!util.isActionAllowedInSignalingState('setLocalDescription',
-        description.type, pc._signalingState) || pc._isClosed) {
+      description.type, pc._signalingState) || pc._isClosed) {
       return Promise.reject(util.makeError('InvalidStateError',
-          'Can not set local ' + description.type +
+        'Can not set local ' + description.type +
           ' in state ' + pc._signalingState));
     }
 
@@ -662,7 +662,7 @@ module.exports = function(window, edgeVersion) {
       sections = SDPUtils.splitSections(pc._remoteDescription.sdp);
       sessionpart = sections.shift();
       var isIceLite = SDPUtils.matchPrefix(sessionpart,
-          'a=ice-lite').length > 0;
+        'a=ice-lite').length > 0;
       sections.forEach(function(mediaSection, sdpMLineIndex) {
         var transceiver = pc._transceivers[sdpMLineIndex];
         var iceGatherer = transceiver.iceGatherer;
@@ -680,9 +680,9 @@ module.exports = function(window, edgeVersion) {
             transceiver.rtpSender.setTransport(transceiver.dtlsTransport);
           }
           var remoteIceParameters = SDPUtils.getIceParameters(
-              mediaSection, sessionpart);
+            mediaSection, sessionpart);
           var remoteDtlsParameters = SDPUtils.getDtlsParameters(
-              mediaSection, sessionpart);
+            mediaSection, sessionpart);
           if (isIceLite) {
             remoteDtlsParameters.role = 'server';
           }
@@ -691,7 +691,7 @@ module.exports = function(window, edgeVersion) {
             pc._gather(transceiver.mid, sdpMLineIndex);
             if (iceTransport.state === 'new') {
               iceTransport.start(iceGatherer, remoteIceParameters,
-                  isIceLite ? 'controlling' : 'controlled');
+                isIceLite ? 'controlling' : 'controlled');
             }
             if (dtlsTransport.state === 'new') {
               dtlsTransport.start(remoteDtlsParameters);
@@ -700,13 +700,13 @@ module.exports = function(window, edgeVersion) {
 
           // Calculate intersection of capabilities.
           var params = getCommonCapabilities(localCapabilities,
-              remoteCapabilities);
+            remoteCapabilities);
 
           // Start the RTCRtpSender. The RTCRtpReceiver for this
           // transceiver has already been started in setRemoteDescription.
           pc._transceive(transceiver,
-              params.codecs.length > 0,
-              false);
+            params.codecs.length > 0,
+            false);
         }
       });
     }
@@ -730,13 +730,13 @@ module.exports = function(window, edgeVersion) {
     // Note: pranswer is not supported.
     if (['offer', 'answer'].indexOf(description.type) === -1) {
       return Promise.reject(util.makeError('TypeError',
-          'Unsupported type "' + description.type + '"'));
+        'Unsupported type "' + description.type + '"'));
     }
 
     if (!util.isActionAllowedInSignalingState('setRemoteDescription',
-        description.type, pc._signalingState) || pc._isClosed) {
+      description.type, pc._signalingState) || pc._isClosed) {
       return Promise.reject(util.makeError('InvalidStateError',
-          'Can not set remote ' + description.type +
+        'Can not set remote ' + description.type +
           ' in state ' + pc._signalingState));
     }
 
@@ -748,15 +748,15 @@ module.exports = function(window, edgeVersion) {
     var sections = SDPUtils.splitSections(description.sdp);
     var sessionpart = sections.shift();
     var isIceLite = SDPUtils.matchPrefix(sessionpart,
-        'a=ice-lite').length > 0;
+      'a=ice-lite').length > 0;
     var usingBundle = SDPUtils.matchPrefix(sessionpart,
-        'a=group:BUNDLE ').length > 0;
+      'a=group:BUNDLE ').length > 0;
     pc._usingBundle = usingBundle;
     var iceOptions = SDPUtils.matchPrefix(sessionpart,
-        'a=ice-options:')[0];
+      'a=ice-options:')[0];
     if (iceOptions) {
       pc._canTrickleIceCandidates = iceOptions.substr(14).split(' ')
-          .indexOf('trickle') >= 0;
+        .indexOf('trickle') >= 0;
     } else {
       pc._canTrickleIceCandidates = false;
     }
@@ -810,9 +810,9 @@ module.exports = function(window, edgeVersion) {
       var remoteDtlsParameters;
       if (!rejected) {
         remoteIceParameters = SDPUtils.getIceParameters(mediaSection,
-            sessionpart);
+          sessionpart);
         remoteDtlsParameters = SDPUtils.getDtlsParameters(mediaSection,
-            sessionpart);
+          sessionpart);
         remoteDtlsParameters.role = 'client';
       }
       recvEncodingParameters =
@@ -821,14 +821,14 @@ module.exports = function(window, edgeVersion) {
       var rtcpParameters = SDPUtils.parseRtcpParameters(mediaSection);
 
       var isComplete = SDPUtils.matchPrefix(mediaSection,
-          'a=end-of-candidates', sessionpart).length > 0;
+        'a=end-of-candidates', sessionpart).length > 0;
       var cands = SDPUtils.matchPrefix(mediaSection, 'a=candidate:')
-          .map(function(cand) {
-            return SDPUtils.parseCandidate(cand);
-          })
-          .filter(function(cand) {
-            return cand.component === 1;
-          });
+        .map(function(cand) {
+          return SDPUtils.parseCandidate(cand);
+        })
+        .filter(function(cand) {
+          return cand.component === 1;
+        });
 
       // Check if we can use BUNDLE and dispose transports.
       if ((description.type === 'offer' || description.type === 'answer') &&
@@ -843,11 +843,11 @@ module.exports = function(window, edgeVersion) {
             pc._transceivers[0].dtlsTransport;
         if (pc._transceivers[sdpMLineIndex].rtpSender) {
           pc._transceivers[sdpMLineIndex].rtpSender.setTransport(
-              pc._transceivers[0].dtlsTransport);
+            pc._transceivers[0].dtlsTransport);
         }
         if (pc._transceivers[sdpMLineIndex].rtpReceiver) {
           pc._transceivers[sdpMLineIndex].rtpReceiver.setTransport(
-              pc._transceivers[0].dtlsTransport);
+            pc._transceivers[0].dtlsTransport);
         }
       }
       if (description.type === 'offer' && !rejected) {
@@ -857,7 +857,7 @@ module.exports = function(window, edgeVersion) {
 
         if (!transceiver.iceGatherer) {
           transceiver.iceGatherer = pc._createIceGatherer(sdpMLineIndex,
-              usingBundle);
+            usingBundle);
         }
 
         if (cands.length && transceiver.iceTransport.state === 'new') {
@@ -876,9 +876,9 @@ module.exports = function(window, edgeVersion) {
         // in adapter.js
         if (edgeVersion < 15019) {
           localCapabilities.codecs = localCapabilities.codecs.filter(
-              function(codec) {
-                return codec.name !== 'rtx';
-              });
+            function(codec) {
+              return codec.name !== 'rtx';
+            });
         }
 
         sendEncodingParameters = transceiver.sendEncodingParameters || [{
@@ -947,8 +947,8 @@ module.exports = function(window, edgeVersion) {
         // Start the RTCRtpReceiver now. The RTPSender is started in
         // setLocalDescription.
         pc._transceive(pc._transceivers[sdpMLineIndex],
-            false,
-            isNewTrack);
+          false,
+          isNewTrack);
       } else if (description.type === 'answer' && !rejected) {
         transceiver = pc._transceivers[sdpMLineIndex];
         iceGatherer = transceiver.iceGatherer;
@@ -978,7 +978,7 @@ module.exports = function(window, edgeVersion) {
         if (!usingBundle || sdpMLineIndex === 0) {
           if (iceTransport.state === 'new') {
             iceTransport.start(iceGatherer, remoteIceParameters,
-                'controlling');
+              'controlling');
           }
           if (dtlsTransport.state === 'new') {
             dtlsTransport.start(remoteDtlsParameters);
@@ -989,8 +989,8 @@ module.exports = function(window, edgeVersion) {
         }
 
         pc._transceive(transceiver,
-            direction === 'sendrecv' || direction === 'recvonly',
-            direction === 'sendrecv' || direction === 'sendonly');
+          direction === 'sendrecv' || direction === 'recvonly',
+          direction === 'sendrecv' || direction === 'sendonly');
 
         // TODO: rewrite to use http://w3c.github.io/webrtc-pc/#set-associated-remote-streams
         if (rtpReceiver &&
@@ -1001,7 +1001,7 @@ module.exports = function(window, edgeVersion) {
               streams[remoteMsid.stream] = new window.MediaStream();
             }
             util.addTrackToStreamAndFireEvent(track,
-                streams[remoteMsid.stream]);
+              streams[remoteMsid.stream]);
             receiverList.push([track, rtpReceiver, streams[remoteMsid.stream]]);
           } else {
             if (!streams.default) {
@@ -1109,7 +1109,7 @@ module.exports = function(window, edgeVersion) {
 
     if (pc._isClosed) {
       return Promise.reject(util.makeError('InvalidStateError',
-          'Can not call createOffer after close'));
+        'Can not call createOffer after close'));
     }
 
     var numAudioTracks = pc._transceivers.filter(function(t) {
@@ -1125,7 +1125,7 @@ module.exports = function(window, edgeVersion) {
       // Reject Chrome legacy constraints.
       if (offerOptions.mandatory || offerOptions.optional) {
         throw new TypeError(
-            'Legacy mandatory/optional constraints not supported.');
+          'Legacy mandatory/optional constraints not supported.');
       }
       if (offerOptions.offerToReceiveAudio !== undefined) {
         if (offerOptions.offerToReceiveAudio === true) {
@@ -1174,7 +1174,7 @@ module.exports = function(window, edgeVersion) {
     }
 
     var sdp = SDPUtils.writeSessionBoilerplate(pc._sdpSessionId,
-        pc._sdpSessionVersion++);
+      pc._sdpSessionVersion++);
     pc._transceivers.forEach(function(transceiver, sdpMLineIndex) {
       // For each track, create an ice gatherer, ice transport,
       // dtls transport, potentially rtpsender and rtpreceiver.
@@ -1185,7 +1185,7 @@ module.exports = function(window, edgeVersion) {
 
       if (!transceiver.iceGatherer) {
         transceiver.iceGatherer = pc._createIceGatherer(sdpMLineIndex,
-            pc._usingBundle);
+          pc._usingBundle);
       }
 
       var localCapabilities = window.RTCRtpSender.getCapabilities(kind);
@@ -1193,9 +1193,9 @@ module.exports = function(window, edgeVersion) {
       // in adapter.js
       if (edgeVersion < 15019) {
         localCapabilities.codecs = localCapabilities.codecs.filter(
-            function(codec) {
-              return codec.name !== 'rtx';
-            });
+          function(codec) {
+            return codec.name !== 'rtx';
+          });
       }
       localCapabilities.codecs.forEach(function(codec) {
         // work around https://bugs.chromium.org/p/webrtc/issues/detail?id=6552
@@ -1243,7 +1243,7 @@ module.exports = function(window, edgeVersion) {
 
       if (transceiver.wantReceive) {
         transceiver.rtpReceiver = new window.RTCRtpReceiver(
-            transceiver.dtlsTransport, kind);
+          transceiver.dtlsTransport, kind);
       }
 
       transceiver.localCapabilities = localCapabilities;
@@ -1260,7 +1260,7 @@ module.exports = function(window, edgeVersion) {
 
     pc._transceivers.forEach(function(transceiver, sdpMLineIndex) {
       sdp += writeMediaSection(transceiver, transceiver.localCapabilities,
-          'offer', transceiver.stream, pc._dtlsRole);
+        'offer', transceiver.stream, pc._dtlsRole);
       sdp += 'a=rtcp-rsize\r\n';
 
       if (transceiver.iceGatherer && pc._iceGatheringState !== 'new' &&
@@ -1288,24 +1288,24 @@ module.exports = function(window, edgeVersion) {
 
     if (pc._isClosed) {
       return Promise.reject(util.makeError('InvalidStateError',
-          'Can not call createAnswer after close'));
+        'Can not call createAnswer after close'));
     }
 
     if (!(pc._signalingState === 'have-remote-offer' ||
         pc._signalingState === 'have-local-pranswer')) {
       return Promise.reject(util.makeError('InvalidStateError',
-          'Can not call createAnswer in signalingState ' + pc._signalingState));
+        'Can not call createAnswer in signalingState ' + pc._signalingState));
     }
 
     var sdp = SDPUtils.writeSessionBoilerplate(pc._sdpSessionId,
-        pc._sdpSessionVersion++);
+      pc._sdpSessionVersion++);
     if (pc._usingBundle) {
       sdp += 'a=group:BUNDLE ' + pc._transceivers.map(function(t) {
         return t.mid;
       }).join(' ') + '\r\n';
     }
     var mediaSectionsInOffer = SDPUtils.getMediaSections(
-        pc._remoteDescription.sdp).length;
+      pc._remoteDescription.sdp).length;
     pc._transceivers.forEach(function(transceiver, sdpMLineIndex) {
       if (sdpMLineIndex + 1 > mediaSectionsInOffer) {
         return;
@@ -1352,8 +1352,8 @@ module.exports = function(window, edgeVersion) {
 
       // Calculate intersection of capabilities.
       var commonCapabilities = getCommonCapabilities(
-          transceiver.localCapabilities,
-          transceiver.remoteCapabilities);
+        transceiver.localCapabilities,
+        transceiver.remoteCapabilities);
 
       var hasRtx = commonCapabilities.codecs.filter(function(c) {
         return c.name.toLowerCase() === 'rtx';
@@ -1363,7 +1363,7 @@ module.exports = function(window, edgeVersion) {
       }
 
       sdp += writeMediaSection(transceiver, commonCapabilities,
-          'answer', transceiver.stream, pc._dtlsRole);
+        'answer', transceiver.stream, pc._dtlsRole);
       if (transceiver.rtcpParameters &&
           transceiver.rtcpParameters.reducedSize) {
         sdp += 'a=rtcp-rsize\r\n';
@@ -1389,7 +1389,7 @@ module.exports = function(window, edgeVersion) {
     return new Promise(function(resolve, reject) {
       if (!pc._remoteDescription) {
         return reject(util.makeError('InvalidStateError',
-            'Can not add ICE candidate without a remote description'));
+          'Can not add ICE candidate without a remote description'));
       } else if (!candidate || candidate.candidate === '') {
         for (var j = 0; j < pc._transceivers.length; j++) {
           if (pc._transceivers[j].rejected) {
@@ -1421,7 +1421,7 @@ module.exports = function(window, edgeVersion) {
             return resolve();
           }
           var cand = Object.keys(candidate.candidate).length > 0 ?
-              SDPUtils.parseCandidate(candidate.candidate) : {};
+            SDPUtils.parseCandidate(candidate.candidate) : {};
           // Ignore Chrome's invalid candidates since Edge does not like them.
           if (cand.protocol === 'tcp' && (cand.port === 0 || cand.port === 9)) {
             return resolve();
@@ -1436,7 +1436,7 @@ module.exports = function(window, edgeVersion) {
               transceiver.iceTransport !== pc._transceivers[0].iceTransport)) {
             if (!util.maybeAddCandidate(transceiver.iceTransport, cand)) {
               return reject(util.makeError('OperationError',
-                  'Can not add ICE candidate'));
+                'Can not add ICE candidate'));
             }
           }
 
@@ -1454,7 +1454,7 @@ module.exports = function(window, edgeVersion) {
               sections.join('');
         } else {
           return reject(util.makeError('OperationError',
-              'Can not add ICE candidate'));
+            'Can not add ICE candidate'));
         }
       }
       resolve();
@@ -1482,11 +1482,11 @@ module.exports = function(window, edgeVersion) {
     var promises = [];
     this._transceivers.forEach(function(transceiver) {
       ['rtpSender', 'rtpReceiver', 'iceGatherer', 'iceTransport',
-          'dtlsTransport'].forEach(function(method) {
-            if (transceiver[method]) {
-              promises.push(transceiver[method].getStats());
-            }
-          });
+        'dtlsTransport'].forEach(function(method) {
+        if (transceiver[method]) {
+          promises.push(transceiver[method].getStats());
+        }
+      });
     });
     return Promise.all(promises).then(function(allStats) {
       var results = new Map();

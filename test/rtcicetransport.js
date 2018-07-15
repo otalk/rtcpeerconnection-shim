@@ -50,7 +50,7 @@ describe('RTCIceTransport wrapper', () => {
         return t.getLocalParameters();
       };
       expect(getParameters).to.throw()
-          .that.has.property('name').that.equals('InvalidStateError');
+        .that.has.property('name').that.equals('InvalidStateError');
     });
 
     it('returns the ice gatherers parameters when gatherer is set', () => {

@@ -39,8 +39,8 @@ module.exports = function(window) {
       if (this._dtmf === undefined) {
         if (this.kind === 'audio') {
           if (!this._sender) {
-            throw(util.makeError('InvalidStateError',
-                'Can not access dtmf in this state'));
+            throw (util.makeError('InvalidStateError',
+              'Can not access dtmf in this state'));
           } else {
             this._dtmf = new window.RTCDtmfSender(this._sender);
           }
@@ -109,7 +109,7 @@ module.exports = function(window) {
       return this._sender.send(parameters);
     }
     return Promise.reject(util.makeError('InvalidStateError',
-        'Can not call send in this state'));
+      'Can not call send in this state'));
   };
 
   RTCRtpSender.prototype.stop = function() {
@@ -123,7 +123,7 @@ module.exports = function(window) {
       return this._sender.getStats();
     }
     return Promise.reject(util.makeError('InvalidStateError',
-        'Can not call send in this state'));
+      'Can not call send in this state'));
   };
   return RTCRtpSender;
 };
