@@ -193,8 +193,8 @@ module.exports = function(window) {
       preferredPayloadType: 100,
       numChannels: 1,
       rtcpFeedback: [
-          {type: 'nack', parameter: ''},
-          {type: 'nack', parameter: 'pli'}
+        {type: 'nack', parameter: ''},
+        {type: 'nack', parameter: 'pli'}
       ]
     };
     var vp8rtx = {
@@ -212,8 +212,8 @@ module.exports = function(window) {
       preferredPayloadType: 100,
       numChannels: 1,
       rtcpFeedback: [
-          {type: 'nack', parameter: ''},
-          {type: 'nack', parameter: 'pli'}
+        {type: 'nack', parameter: ''},
+        {type: 'nack', parameter: 'pli'}
       ],
       parameters: []
     };

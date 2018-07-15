@@ -83,14 +83,14 @@ module.exports = {
         var nativeGetstats = obj.prototype.getStats;
         obj.prototype.getStats = function() {
           return nativeGetstats.apply(this)
-          .then(function(nativeStats) {
-            var mapStats = new Map();
-            Object.keys(nativeStats).forEach(function(id) {
-              nativeStats[id].type = fixStatsType(nativeStats[id]);
-              mapStats.set(id, nativeStats[id]);
+            .then(function(nativeStats) {
+              var mapStats = new Map();
+              Object.keys(nativeStats).forEach(function(id) {
+                nativeStats[id].type = fixStatsType(nativeStats[id]);
+                mapStats.set(id, nativeStats[id]);
+              });
+              return mapStats;
             });
-            return mapStats;
-          });
         };
       }
     });
@@ -128,14 +128,14 @@ module.exports = {
   addTrackToStreamAndFireEvent: function(track, stream) {
     stream.addTrack(track);
     stream.dispatchEvent(new window.MediaStreamTrackEvent('addtrack',
-        {track: track}));
+      {track: track}));
   },
 
   /* adds the track from the stream and dispatches 'removetrack' */
   removeTrackFromStreamAndFireEvent: function(track, stream) {
     stream.removeTrack(track);
     stream.dispatchEvent(new window.MediaStreamTrackEvent('removetrack',
-        {track: track}));
+      {track: track}));
   },
 
   /* adds a candidate to an iceTransport unless already added */
@@ -143,14 +143,14 @@ module.exports = {
     // Edge's internal representation adds some fields therefore
     // not all fieldѕ are taken into account.
     var alreadyAdded = iceTransport.getRemoteCandidates()
-        .find(function(remoteCandidate) {
-          return candidate.foundation === remoteCandidate.foundation &&
+      .find(function(remoteCandidate) {
+        return candidate.foundation === remoteCandidate.foundation &&
               candidate.ip === remoteCandidate.ip &&
               candidate.port === remoteCandidate.port &&
               candidate.priority === remoteCandidate.priority &&
               candidate.protocol === remoteCandidate.protocol &&
               candidate.type === remoteCandidate.type;
-        });
+      });
     if (!alreadyAdded) {
       iceTransport.addRemoteCandidate(candidate);
     }
@@ -181,22 +181,22 @@ module.exports = {
         if (typeof args[0] === 'function' ||
             typeof args[1] === 'function') { // legacy
           return nativeMethod.apply(this, [arguments[2]])
-          .then(function(description) {
-            if (typeof args[0] === 'function') {
-              args[0].apply(null, [description]);
-            }
-          }, function(error) {
-            if (typeof args[1] === 'function') {
-              args[1].apply(null, [error]);
-            }
-          });
+            .then(function(description) {
+              if (typeof args[0] === 'function') {
+                args[0].apply(null, [description]);
+              }
+            }, function(error) {
+              if (typeof args[1] === 'function') {
+                args[1].apply(null, [error]);
+              }
+            });
         }
         return nativeMethod.apply(this, arguments);
       };
     });
 
     methods = ['setLocalDescription', 'setRemoteDescription',
-        'addIceCandidate'];
+      'addIceCandidate'];
     methods.forEach(function(method) {
       var nativeMethod = RTCPeerConnection.prototype[method];
       RTCPeerConnection.prototype[method] = function() {
@@ -204,15 +204,15 @@ module.exports = {
         if (typeof args[1] === 'function' ||
             typeof args[2] === 'function') { // legacy
           return nativeMethod.apply(this, arguments)
-          .then(function() {
-            if (typeof args[1] === 'function') {
-              args[1].apply(null);
-            }
-          }, function(error) {
-            if (typeof args[2] === 'function') {
-              args[2].apply(null, [error]);
-            }
-          });
+            .then(function() {
+              if (typeof args[1] === 'function') {
+                args[1].apply(null);
+              }
+            }, function(error) {
+              if (typeof args[2] === 'function') {
+                args[2].apply(null, [error]);
+              }
+            });
         }
         return nativeMethod.apply(this, arguments);
       };
@@ -226,11 +226,11 @@ module.exports = {
         var args = arguments;
         if (typeof args[1] === 'function') {
           return nativeMethod.apply(this, arguments)
-          .then(function() {
-            if (typeof args[1] === 'function') {
-              args[1].apply(null);
-            }
-          });
+            .then(function() {
+              if (typeof args[1] === 'function') {
+                args[1].apply(null);
+              }
+            });
         }
         return nativeMethod.apply(this, arguments);
       };

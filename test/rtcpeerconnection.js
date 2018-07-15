@@ -107,7 +107,7 @@ describe('Edge shim', () => {
         return new RTCPeerConnection({rtcpMuxPolicy: 'negotiate'});
       };
       expect(constructor).to.throw(/rtcpMuxPolicy/)
-          .that.has.property('name').that.equals('NotSupportedError');
+        .that.has.property('name').that.equals('NotSupportedError');
     });
 
     describe('when RTCIceCandidatePoolSize is set', () => {
@@ -135,14 +135,14 @@ describe('Edge shim', () => {
 
       it('sets ICETransportPolicy=all on RTCIceGatherer', () => {
         new RTCPeerConnection({iceCandidatePoolSize: 1,
-            iceTransportPolicy: 'all'});
+          iceTransportPolicy: 'all'});
         expect(window.RTCIceGatherer).to.have.been.calledWith(sinon.match({
           gatherPolicy: 'all'
         }));
       });
       it('sets ICETransportPolicy=relay on RTCIceGatherer', () => {
         new RTCPeerConnection({iceCandidatePoolSize: 1,
-            iceTransportPolicy: 'relay'});
+          iceTransportPolicy: 'relay'});
         expect(window.RTCIceGatherer).to.have.been.calledWith(sinon.match({
           gatherPolicy: 'relay'
         }));
@@ -152,13 +152,13 @@ describe('Edge shim', () => {
 
   describe('prototype', () => {
     ['icecandidate', 'addstream', 'removestream', 'track',
-        'signalingstatechange', 'iceconnectionstatechange',
-        'icegatheringstatechange', 'negotiationneeded'].forEach((name) => {
-          it('has on' + name + ' handler', () => {
-            expect(RTCPeerConnection.prototype)
-                .to.have.ownPropertyDescriptor('on' + name);
-          });
-        });
+      'signalingstatechange', 'iceconnectionstatechange',
+      'icegatheringstatechange', 'negotiationneeded'].forEach((name) => {
+      it('has on' + name + ' handler', () => {
+        expect(RTCPeerConnection.prototype)
+          .to.have.ownPropertyDescriptor('on' + name);
+      });
+    });
   });
 
   describe('close', () => {
@@ -201,99 +201,99 @@ describe('Edge shim', () => {
 
     it('returns a promise', (done) => {
       pc.createOffer({offerToReceiveAudio: true})
-      .then((offer) => {
-        return pc.setLocalDescription(offer);
-      })
-      .then(done);
+        .then((offer) => {
+          return pc.setLocalDescription(offer);
+        })
+        .then(done);
     });
 
     it('calls the legacy success callback', (done) => {
       pc.createOffer({offerToReceiveAudio: true})
-      .then((offer) => {
-        return pc.setLocalDescription(offer, done, () => {});
-      });
+        .then((offer) => {
+          return pc.setLocalDescription(offer, done, () => {});
+        });
     });
 
     it('throws an InvalidStateError when called after close', (done) => {
       pc.createOffer({offerToReceiveAudio: true})
-      .then((offer) => {
-        pc.close();
-        return pc.setLocalDescription(offer);
-      })
-      .catch((e) => {
-        expect(e.name).to.equal('InvalidStateError');
-        done();
-      });
+        .then((offer) => {
+          pc.close();
+          return pc.setLocalDescription(offer);
+        })
+        .catch((e) => {
+          expect(e.name).to.equal('InvalidStateError');
+          done();
+        });
     });
     it('throws an InvalidStateError when called after close ' +
         '(callback)', (done) => {
       pc.createOffer({offerToReceiveAudio: true})
-      .then((offer) => {
-        pc.close();
-        return pc.setLocalDescription(offer, undefined, (e) => {
-          expect(e.name).to.equal('InvalidStateError');
-          done();
+        .then((offer) => {
+          pc.close();
+          return pc.setLocalDescription(offer, undefined, (e) => {
+            expect(e.name).to.equal('InvalidStateError');
+            done();
+          });
         });
-      });
     });
 
     it('throws a TypeError when called with an ' +
         'unsupported description type', (done) => {
       pc.setLocalDescription({type: 'invalid'})
-      .catch((e) => {
-        expect(e.name).to.equal('TypeError');
-        done();
-      });
+        .catch((e) => {
+          expect(e.name).to.equal('TypeError');
+          done();
+        });
     });
 
 
     it('changes the signalingState to have-local-offer', () => {
       return pc.createOffer({offerToReceiveAudio: true})
-      .then((offer) => {
-        return pc.setLocalDescription(offer);
-      })
-      .then(() => {
-        expect(pc.localDescription.type).to.equal('offer');
-        expect(pc.signalingState = 'have-local-offer');
-      });
+        .then((offer) => {
+          return pc.setLocalDescription(offer);
+        })
+        .then(() => {
+          expect(pc.localDescription.type).to.equal('offer');
+          expect(pc.signalingState = 'have-local-offer');
+        });
     });
 
     it('calls the signalingstatechange event', () => {
       pc.onsignalingstatechange = sinon.stub();
       return pc.createOffer({offerToReceiveAudio: true})
-      .then((offer) => {
-        return pc.setLocalDescription(offer);
-      })
-      .then(() => {
-        expect(pc.onsignalingstatechange).to.have.been.calledOnce();
-      });
+        .then((offer) => {
+          return pc.setLocalDescription(offer);
+        })
+        .then(() => {
+          expect(pc.onsignalingstatechange).to.have.been.calledOnce();
+        });
     });
 
     describe('InvalidStateError is thrown when called with', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       it('an offer in signalingState have-remote-offer', (done) => {
         pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => {
-          return pc.setLocalDescription({type: 'offer'});
-        })
-        .catch((e) => {
-          expect(e.name).to.equal('InvalidStateError');
-          done();
-        });
+          .then(() => {
+            return pc.setLocalDescription({type: 'offer'});
+          })
+          .catch((e) => {
+            expect(e.name).to.equal('InvalidStateError');
+            done();
+          });
       });
 
       it('an answer in signalingState have-local-offer', (done) => {
         pc.createOffer({offerToReceiveAudio: true})
-        .then((offer) => {
-          return pc.setLocalDescription(offer);
-        })
-        .then(() => {
-          return pc.setLocalDescription({type: 'answer'});
-        })
-        .catch((e) => {
-          expect(e.name).to.equal('InvalidStateError');
-          done();
-        });
+          .then((offer) => {
+            return pc.setLocalDescription(offer);
+          })
+          .then(() => {
+            return pc.setLocalDescription({type: 'answer'});
+          })
+          .catch((e) => {
+            expect(e.name).to.equal('InvalidStateError');
+            done();
+          });
       });
     });
 
@@ -316,13 +316,13 @@ describe('Edge shim', () => {
           };
           pc.onicecandidate = sinon.stub();
           pc.createOffer({offerToReceiveAudio: true})
-          .then(offer => pc.setLocalDescription(offer))
-          .then(() => {
-            window.setTimeout(() => {
-              clock.tick(500);
+            .then(offer => pc.setLocalDescription(offer))
+            .then(() => {
+              window.setTimeout(() => {
+                clock.tick(500);
+              });
+              clock.tick(0);
             });
-            clock.tick(0);
-          });
         });
         it('the icecandidate event listener', (done) => {
           const stub = sinon.stub();
@@ -334,13 +334,13 @@ describe('Edge shim', () => {
           };
           pc.addEventListener('icecandidate', stub);
           pc.createOffer({offerToReceiveAudio: true})
-          .then(offer => pc.setLocalDescription(offer))
-          .then(() => {
-            window.setTimeout(() => {
-              clock.tick(500);
+            .then(offer => pc.setLocalDescription(offer))
+            .then(() => {
+              window.setTimeout(() => {
+                clock.tick(500);
+              });
+              clock.tick(0);
             });
-            clock.tick(0);
-          });
         });
       });
 
@@ -348,20 +348,20 @@ describe('Edge shim', () => {
         pc.onicegatheringstatechange = () => {
           if (pc.iceGatheringState === 'complete') {
             expect(SDPUtils.matchPrefix(pc.localDescription.sdp,
-                'a=candidate:').length).to.be.above(0);
+              'a=candidate:').length).to.be.above(0);
             expect(SDPUtils.matchPrefix(pc.localDescription.sdp,
-                'a=end-of-candidates')).to.have.length(1);
+              'a=end-of-candidates')).to.have.length(1);
             done();
           }
         };
         pc.createOffer({offerToReceiveAudio: true})
-        .then(offer => pc.setLocalDescription(offer))
-        .then(() => {
-          window.setTimeout(() => {
-            clock.tick(500);
+          .then(offer => pc.setLocalDescription(offer))
+          .then(() => {
+            window.setTimeout(() => {
+              clock.tick(500);
+            });
+            clock.tick(0);
           });
-          clock.tick(0);
-        });
       });
 
       it('changes iceGatheringState and emits icegatheringstatechange ' +
@@ -377,11 +377,11 @@ describe('Edge shim', () => {
           }
         });
         pc.createOffer({offerToReceiveAudio: true})
-        .then(offer => pc.setLocalDescription(offer))
-        .then(() => {
-          expect(pc.iceGatheringState).to.equal('new');
-          clock.tick(500);
-        });
+          .then(offer => pc.setLocalDescription(offer))
+          .then(() => {
+            expect(pc.iceGatheringState).to.equal('new');
+            clock.tick(500);
+          });
       });
 
       it('does not serialize extra parameters in ' +
@@ -402,13 +402,13 @@ describe('Edge shim', () => {
           }
         };
         pc.createOffer({offerToReceiveAudio: true})
-        .then(offer => pc.setLocalDescription(offer))
-        .then(() => {
-          window.setTimeout(() => {
-            clock.tick(500);
+          .then(offer => pc.setLocalDescription(offer))
+          .then(() => {
+            window.setTimeout(() => {
+              clock.tick(500);
+            });
+            clock.tick(0);
           });
-          clock.tick(0);
-        });
       });
     });
 
@@ -427,69 +427,69 @@ describe('Edge shim', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       it('starts the ice transport', () => {
         return pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          return pc.setLocalDescription(answer);
-        })
-        .then(() => {
-          const receiver = pc.getReceivers()[0];
-          const iceTransport = receiver.transport.transport;
-          expect(iceTransport.start).to.have.been.calledOnce();
-          expect(iceTransport.start).to.have.been.calledWith(
-            sinon.match.any,
-            sinon.match({
-              usernameFragment: '' + ICEUFRAG + '',
-              password: '' + ICEPWD + ''
-            })
-          );
-        });
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            return pc.setLocalDescription(answer);
+          })
+          .then(() => {
+            const receiver = pc.getReceivers()[0];
+            const iceTransport = receiver.transport.transport;
+            expect(iceTransport.start).to.have.been.calledOnce();
+            expect(iceTransport.start).to.have.been.calledWith(
+              sinon.match.any,
+              sinon.match({
+                usernameFragment: '' + ICEUFRAG + '',
+                password: '' + ICEPWD + ''
+              })
+            );
+          });
       });
 
       it('starts the dtls transport', () => {
         return pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          return pc.setLocalDescription(answer);
-        })
-        .then(() => {
-          const receiver = pc.getReceivers()[0];
-          const dtlsTransport = receiver.transport;
-          expect(dtlsTransport.start).to.have.been.calledOnce();
-          expect(dtlsTransport.start).to.have.been.calledWith(
-            sinon.match({
-              role: 'auto',
-              fingerprints: sinon.match([
-                sinon.match({
-                  algorithm: 'sha-256',
-                  value: FINGERPRINT_SHA256
-                })
-              ])
-            })
-          );
-        });
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            return pc.setLocalDescription(answer);
+          })
+          .then(() => {
+            const receiver = pc.getReceivers()[0];
+            const dtlsTransport = receiver.transport;
+            expect(dtlsTransport.start).to.have.been.calledOnce();
+            expect(dtlsTransport.start).to.have.been.calledWith(
+              sinon.match({
+                role: 'auto',
+                fingerprints: sinon.match([
+                  sinon.match({
+                    algorithm: 'sha-256',
+                    value: FINGERPRINT_SHA256
+                  })
+                ])
+              })
+            );
+          });
       });
 
       it('sets the RTPSender transport', () => {
         return pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          return navigator.mediaDevices.getUserMedia({audio: true});
-        })
-        .then((stream) => {
-          pc.addTrack(stream.getAudioTracks()[0], stream);
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          return pc.setLocalDescription(answer);
-        })
-        .then(() => {
-          const sender = pc.getSenders()[0];
-          expect(sender.setTransport).to.have.been.calledOnce();
-          expect(sender.transport).not.to.equal(null);
-        });
+          .then(() => {
+            return navigator.mediaDevices.getUserMedia({audio: true});
+          })
+          .then((stream) => {
+            pc.addTrack(stream.getAudioTracks()[0], stream);
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            return pc.setLocalDescription(answer);
+          })
+          .then(() => {
+            const sender = pc.getSenders()[0];
+            expect(sender.setTransport).to.have.been.calledOnce();
+            expect(sender.transport).not.to.equal(null);
+          });
       });
     });
   });
@@ -508,7 +508,7 @@ describe('Edge shim', () => {
     it('returns a promise', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .then(done);
+        .then(done);
     });
     it('calls the legacy success callback', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
@@ -518,29 +518,29 @@ describe('Edge shim', () => {
     it('changes the signalingState to have-remote-offer', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .then(() => {
-        expect(pc.signalingState = 'have-remote-offer');
-        done();
-      });
+        .then(() => {
+          expect(pc.signalingState = 'have-remote-offer');
+          done();
+        });
     });
 
     it('calls the signalingstatechange event', () => {
       pc.onsignalingstatechange = sinon.stub();
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .then(() => {
-        expect(pc.onsignalingstatechange).to.have.been.calledOnce();
-      });
+        .then(() => {
+          expect(pc.onsignalingstatechange).to.have.been.calledOnce();
+        });
     });
 
     it('throws an InvalidStateError when called after close', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.close();
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .catch((e) => {
-        expect(e.name).to.equal('InvalidStateError');
-        done();
-      });
+        .catch((e) => {
+          expect(e.name).to.equal('InvalidStateError');
+          done();
+        });
     });
 
     it('throws an InvalidStateError when called after close ' +
@@ -557,10 +557,10 @@ describe('Edge shim', () => {
         'unsupported description type', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'invalid', sdp: sdp})
-      .catch((e) => {
-        expect(e.name).to.equal('TypeError');
-        done();
-      });
+        .catch((e) => {
+          expect(e.name).to.equal('TypeError');
+          done();
+        });
     });
 
     it('sets the remoteDescription', (done) => {
@@ -624,11 +624,11 @@ describe('Edge shim', () => {
         pc.addEventListener('track', trackEvent);
         pc.ontrack = sinon.stub();
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          expect(trackEvent).to.have.been.calledWith();
-          expect(pc.ontrack).to.have.been.calledWith();
-          done();
-        });
+          .then(() => {
+            expect(trackEvent).to.have.been.calledWith();
+            expect(pc.ontrack).to.have.been.calledWith();
+            done();
+          });
       });
 
       describe('without a stream (stream id -)', () => {
@@ -636,15 +636,15 @@ describe('Edge shim', () => {
           let clock = sinon.useFakeTimers();
           pc.onaddstream = sinon.stub();
           pc.setRemoteDescription({type: 'offer',
-              sdp: sdp.replace('stream1', '-')})
-          .then(() => {
-            window.setTimeout(() => {
-              expect(pc.onaddstream).not.to.have.been.calledWith();
-              clock.restore();
-              done();
-            }, 0);
-            clock.tick(500);
-          });
+            sdp: sdp.replace('stream1', '-')})
+            .then(() => {
+              window.setTimeout(() => {
+                expect(pc.onaddstream).not.to.have.been.calledWith();
+                clock.restore();
+                done();
+              }, 0);
+              clock.tick(500);
+            });
         });
 
         it('does trigger ontrack with an empty streams set', (done) => {
@@ -656,14 +656,14 @@ describe('Edge shim', () => {
             done();
           });
           pc.setRemoteDescription({type: 'offer',
-              sdp: sdp.replace('stream1', '-')});
+            sdp: sdp.replace('stream1', '-')});
         });
       });
     });
 
     describe('when called with an offer without (explicit) tracks', () => {
       const sdp = (SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE)
-          .replace('a=msid-semantics:WMS *\r\n', '');
+        .replace('a=msid-semantics:WMS *\r\n', '');
 
       it('triggers onaddstream', (done) => {
         pc.onaddstream = (event) => {
@@ -754,23 +754,23 @@ describe('Edge shim', () => {
           'a=ssrc:2002 cname:some\r\n';
       it('disposes the second ice transport', () => {
         return navigator.mediaDevices.getUserMedia({audio: true, video: true})
-        .then((stream) => {
+          .then((stream) => {
           // this creates two transceivers with ice transports.
-          pc.addStream(stream);
+            pc.addStream(stream);
 
-          // this has bundle so will set usingBundle. But two
-          // transceivers and their ice/dtls transports exist
-          // and the second one needs to be disposed.
-          return pc.setRemoteDescription({type: 'offer', sdp: sdp});
-        })
-        .then(() => pc.createAnswer())
-        .then((answer) => pc.setLocalDescription(answer))
-        .then(() => {
-          const senders = pc.getSenders();
-          // the second ice transport should have been disposed.
-          expect(senders[0].transport.transport).to
+            // this has bundle so will set usingBundle. But two
+            // transceivers and their ice/dtls transports exist
+            // and the second one needs to be disposed.
+            return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+          })
+          .then(() => pc.createAnswer())
+          .then((answer) => pc.setLocalDescription(answer))
+          .then(() => {
+            const senders = pc.getSenders();
+            // the second ice transport should have been disposed.
+            expect(senders[0].transport.transport).to
               .equal(senders[1].transport.transport);
-        });
+          });
       });
     });
 
@@ -797,12 +797,12 @@ describe('Edge shim', () => {
 
       it('calls RTCRtpReceiver.recv with encodings set to [{}]', () => {
         return pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          const receiver = pc.getReceivers()[0];
-          expect(receiver.receive).to.have.been.calledWith(
-            sinon.match({encodings: [{}]})
-          );
-        });
+          .then(() => {
+            const receiver = pc.getReceivers()[0];
+            expect(receiver.receive).to.have.been.calledWith(
+              sinon.match({encodings: [{}]})
+            );
+          });
       });
     });
 
@@ -815,18 +815,18 @@ describe('Edge shim', () => {
         const sdp = SDP_BOILERPLATE +
             'a=ice-options:trickle\r\n';
         return pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          expect(pc.canTrickleIceCandidates).to.equal(true);
-        });
+          .then(() => {
+            expect(pc.canTrickleIceCandidates).to.equal(true);
+          });
       });
 
       it('to false when called with an offer that does not contain ' +
           'a=ice-options:trickle', () => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          expect(pc.canTrickleIceCandidates).to.equal(false);
-        });
+          .then(() => {
+            expect(pc.canTrickleIceCandidates).to.equal(false);
+          });
       });
     });
 
@@ -846,49 +846,49 @@ describe('Edge shim', () => {
           candidateString + '\r\n';
       it('adds the candidates to the ice transport', () => {
         return pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          const receiver = pc.getReceivers()[0];
-          const iceTransport = receiver.transport.transport;
-          expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
-        });
+          .then(() => {
+            const receiver = pc.getReceivers()[0];
+            const iceTransport = receiver.transport.transport;
+            expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
+          });
       });
 
       it('interprets end-of-candidates', () => {
         return pc.setRemoteDescription({type: 'offer',
-            sdp: sdp + 'a=end-of-candidates\r\n'
+          sdp: sdp + 'a=end-of-candidates\r\n'
         })
-        .then(() => {
-          const receiver = pc.getReceivers()[0];
-          const iceTransport = receiver.transport.transport;
-          expect(iceTransport.setRemoteCandidates).to.have.been.calledOnce();
-        });
+          .then(() => {
+            const receiver = pc.getReceivers()[0];
+            const iceTransport = receiver.transport.transport;
+            expect(iceTransport.setRemoteCandidates).to.have.been.calledOnce();
+          });
       });
 
       it('does not add the candidate in a subsequent offer ' +
           'again', () => {
         return pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => { // call SRD again.
-          return pc.setRemoteDescription({type: 'offer', sdp: sdp});
-        })
-        .then(() => {
-          const receiver = pc.getReceivers()[0];
-          const iceTransport = receiver.transport.transport;
-          expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
-        });
+          .then(() => { // call SRD again.
+            return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+          })
+          .then(() => {
+            const receiver = pc.getReceivers()[0];
+            const iceTransport = receiver.transport.transport;
+            expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
+          });
       });
 
       it('does not add the candidates when they are also supplied ' +
           'with addIceCandidate', () => {
         return pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          const receiver = pc.getReceivers()[0];
-          const iceTransport = receiver.transport.transport;
+          .then(() => {
+            const receiver = pc.getReceivers()[0];
+            const iceTransport = receiver.transport.transport;
 
-          pc.addIceCandidate({sdpMid: 'audio1', sdpMLineIndex: 0,
-            candidate: candidateString})
-          .catch(() => {});
-          expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
-        });
+            pc.addIceCandidate({sdpMid: 'audio1', sdpMLineIndex: 0,
+              candidate: candidateString})
+              .catch(() => {});
+            expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
+          });
       });
     });
 
@@ -921,51 +921,51 @@ describe('Edge shim', () => {
 
       it('adds the candidates to the ice transport', () => {
         return pc2.createAnswer()
-        .then((answer) => {
-          answer.sdp += candidateString;
-          return pc.setRemoteDescription(answer);
-        })
-        .then(() => {
-          const sender = pc.getSenders()[0];
-          const iceTransport = sender.transport.transport;
-          expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
-        });
+          .then((answer) => {
+            answer.sdp += candidateString;
+            return pc.setRemoteDescription(answer);
+          })
+          .then(() => {
+            const sender = pc.getSenders()[0];
+            const iceTransport = sender.transport.transport;
+            expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
+          });
       });
 
       it('interprets end-of-candidates', () => {
         return pc2.createAnswer()
-        .then((answer) => {
-          answer.sdp += candidateString + '\r\n';
-          answer.sdp += 'a=end-of-candidates\r\n';
-          return pc.setRemoteDescription(answer);
-        })
-        .then(() => {
-          const sender = pc.getSenders()[0];
-          const iceTransport = sender.transport.transport;
-          expect(iceTransport.setRemoteCandidates).to.have.been.calledOnce();
-        });
+          .then((answer) => {
+            answer.sdp += candidateString + '\r\n';
+            answer.sdp += 'a=end-of-candidates\r\n';
+            return pc.setRemoteDescription(answer);
+          })
+          .then(() => {
+            const sender = pc.getSenders()[0];
+            const iceTransport = sender.transport.transport;
+            expect(iceTransport.setRemoteCandidates).to.have.been.calledOnce();
+          });
       });
     });
 
     describe('InvalidStateError is thrown when called with', () => {
       it('an answer in signalingState stable', () => {
         return pc.setRemoteDescription({type: 'answer'})
-        .catch((e) => {
-          expect(e.name).to.equal('InvalidStateError');
-        });
+          .catch((e) => {
+            expect(e.name).to.equal('InvalidStateError');
+          });
       });
 
       it('an offer in signalingState have-local-offer', () => {
         return pc.createOffer({offerToReceiveAudio: true})
-        .then((offer) => {
-          return pc.setLocalDescription(offer);
-        })
-        .then(() => {
-          return pc.setRemoteDescription({type: 'offer'});
-        })
-        .catch((e) => {
-          expect(e.name).to.equal('InvalidStateError');
-        });
+          .then((offer) => {
+            return pc.setLocalDescription(offer);
+          })
+          .then(() => {
+            return pc.setRemoteDescription({type: 'offer'});
+          })
+          .catch((e) => {
+            expect(e.name).to.equal('InvalidStateError');
+          });
       });
     });
 
@@ -1006,18 +1006,18 @@ describe('Edge shim', () => {
           pc.onaddstream = sinon.stub();
           pc.ontrack = sinon.stub();
           pc.setRemoteDescription({type: 'offer', sdp: sdp})
-          .then(() => {
-            return pc.setRemoteDescription({type: 'offer',
+            .then(() => {
+              return pc.setRemoteDescription({type: 'offer',
                 sdp: sdp + videoPart});
-          })
-          .then(() => {
-            window.setTimeout(() => {
-              expect(pc.onaddstream).to.have.been.calledOnce();
-              expect(pc.ontrack).to.have.been.calledTwice();
-              done();
+            })
+            .then(() => {
+              window.setTimeout(() => {
+                expect(pc.onaddstream).to.have.been.calledOnce();
+                expect(pc.ontrack).to.have.been.calledTwice();
+                done();
+              });
+              clock.tick(500);
             });
-            clock.tick(500);
-          });
         });
 
         it('fires the stream addtrack event', (done) => {
@@ -1032,12 +1032,12 @@ describe('Edge shim', () => {
             });
           };
           pc.setRemoteDescription({type: 'offer', sdp: sdp})
-          .then(() => {
-            window.setTimeout(() => {
-              pc.setRemoteDescription({type: 'offer', sdp: sdp + videoPart});
+            .then(() => {
+              window.setTimeout(() => {
+                pc.setRemoteDescription({type: 'offer', sdp: sdp + videoPart});
+              });
+              clock.tick(500);
             });
-            clock.tick(500);
-          });
         });
       });
 
@@ -1054,13 +1054,13 @@ describe('Edge shim', () => {
             });
           };
           pc.setRemoteDescription({type: 'offer', sdp: sdp + videoPart})
-          .then(() => {
-            window.setTimeout(() => {
-              pc.setRemoteDescription({type: 'offer', sdp:
+            .then(() => {
+              window.setTimeout(() => {
+                pc.setRemoteDescription({type: 'offer', sdp:
                   sdp + videoPart.replace('sendrecv', 'recvonly')});
+              });
+              clock.tick(500);
             });
-            clock.tick(500);
-          });
         });
       });
 
@@ -1069,19 +1069,19 @@ describe('Edge shim', () => {
           pc.onaddstream = sinon.stub();
           pc.ontrack = sinon.stub();
           pc.setRemoteDescription({type: 'offer',
-              sdp: sdp.replace('m=audio 9', 'm=audio 0')})
-          .then(() => {
-            return pc.setRemoteDescription({type: 'offer',
+            sdp: sdp.replace('m=audio 9', 'm=audio 0')})
+            .then(() => {
+              return pc.setRemoteDescription({type: 'offer',
                 sdp: sdp});
-          })
-          .then(() => {
-            window.setTimeout(() => {
-              expect(pc.onaddstream).to.have.been.calledOnce();
-              expect(pc.ontrack).to.have.been.calledOnce();
-              done();
+            })
+            .then(() => {
+              window.setTimeout(() => {
+                expect(pc.onaddstream).to.have.been.calledOnce();
+                expect(pc.ontrack).to.have.been.calledOnce();
+                done();
+              });
+              clock.tick(500);
             });
-            clock.tick(500);
-          });
         });
       });
     });
@@ -1098,22 +1098,22 @@ describe('Edge shim', () => {
 
       it('set RtpReceiver is called with compound set to false', () => {
         return pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          const receiver = pc.getReceivers()[0];
-          expect(receiver.receive).to.have.been.calledWith(
-            sinon.match({rtcp: sinon.match({compound: false})})
-          );
-        });
+          .then(() => {
+            const receiver = pc.getReceivers()[0];
+            expect(receiver.receive).to.have.been.calledWith(
+              sinon.match({rtcp: sinon.match({compound: false})})
+            );
+          });
       });
       it('not set RtpReceiver is called with compound set to true', () => {
         return pc.setRemoteDescription({type: 'offer',
-            sdp: sdp.replace('a=rtcp-rsize\r\n', '')})
-        .then(() => {
-          const receiver = pc.getReceivers()[0];
-          expect(receiver.receive).to.have.been.calledWith(
-            sinon.match({rtcp: sinon.match({compound: true})})
-          );
-        });
+          sdp: sdp.replace('a=rtcp-rsize\r\n', '')})
+          .then(() => {
+            const receiver = pc.getReceivers()[0];
+            expect(receiver.receive).to.have.been.calledWith(
+              sinon.match({rtcp: sinon.match({compound: true})})
+            );
+          });
       });
     });
 
@@ -1133,43 +1133,43 @@ describe('Edge shim', () => {
 
       it('set the ice role to controlling', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          return pc.setLocalDescription(answer);
-        })
-        .then(() => {
-          const receiver = pc.getReceivers()[0];
-          const dtlsTransport = receiver.transport;
-          const iceTransport = dtlsTransport.transport;
-          expect(iceTransport.start).to.have.been.calledOnce();
-          expect(iceTransport.start).to.have.been.calledWith(
-            sinon.match.any,
-            sinon.match.any,
-            sinon.match('controlling')
-          );
-        });
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            return pc.setLocalDescription(answer);
+          })
+          .then(() => {
+            const receiver = pc.getReceivers()[0];
+            const dtlsTransport = receiver.transport;
+            const iceTransport = dtlsTransport.transport;
+            expect(iceTransport.start).to.have.been.calledOnce();
+            expect(iceTransport.start).to.have.been.calledWith(
+              sinon.match.any,
+              sinon.match.any,
+              sinon.match('controlling')
+            );
+          });
       });
 
       it('sets the dtls role to server', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          return pc.setLocalDescription(answer);
-        })
-        .then(() => {
-          const receiver = pc.getReceivers()[0];
-          const dtlsTransport = receiver.transport;
-          expect(dtlsTransport.start).to.have.been.calledOnce();
-          expect(dtlsTransport.start).to.have.been.calledWith(
-            sinon.match({
-              role: 'server'
-            })
-          );
-        });
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            return pc.setLocalDescription(answer);
+          })
+          .then(() => {
+            const receiver = pc.getReceivers()[0];
+            const dtlsTransport = receiver.transport;
+            expect(dtlsTransport.start).to.have.been.calledOnce();
+            expect(dtlsTransport.start).to.have.been.calledWith(
+              sinon.match({
+                role: 'server'
+              })
+            );
+          });
       });
     });
 
@@ -1203,14 +1203,14 @@ describe('Edge shim', () => {
             'a=candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host\r\n' +
             'a=end-of-candidates\r\n';
         return pc.createOffer({offerToReceiveAudio: true,
-            offerToReceiveVideo: true})
-        .then(offer => pc.setLocalDescription(offer))
-        .then(() => pc.setRemoteDescription({type: 'answer', sdp}))
-        .then(() => {
-          const receiver = pc.getReceivers()[0];
-          const iceTransport = receiver.transport.transport;
-          expect(iceTransport.setRemoteCandidates).to.have.been.calledOnce();
-        });
+          offerToReceiveVideo: true})
+          .then(offer => pc.setLocalDescription(offer))
+          .then(() => pc.setRemoteDescription({type: 'answer', sdp}))
+          .then(() => {
+            const receiver = pc.getReceivers()[0];
+            const iceTransport = receiver.transport.transport;
+            expect(iceTransport.setRemoteCandidates).to.have.been.calledOnce();
+          });
       });
     });
 
@@ -1239,11 +1239,11 @@ describe('Edge shim', () => {
           'a=msid:stream1 videotrack\r\n' +
           'a=end-of-candidates\r\n';
       return pc.setRemoteDescription({type: 'offer', sdp})
-      .then(() => {
-        const receivers = pc.getReceivers();
-        expect(receivers).to.have.length(2);
-        expect(receivers[1].track.id).to.equal('videotrack');
-      });
+        .then(() => {
+          const receivers = pc.getReceivers();
+          expect(receivers).to.have.length(2);
+          expect(receivers[1].track.id).to.equal('videotrack');
+        });
     });
 
     describe('simulates end-of-candidates from remote', () => {
@@ -1260,14 +1260,14 @@ describe('Edge shim', () => {
             MINIMAL_AUDIO_MLINE +
             'a=candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host\r\n';
         return pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => {
-          const receiver = pc.getReceivers()[0];
-          const dtlsTransport = receiver.transport;
-          const iceTransport = dtlsTransport.transport;
-          const spy = sinon.spy(iceTransport, 'addRemoteCandidate');
-          clock.tick(10000);
-          expect(spy).to.have.been.calledWith({});
-        });
+          .then(() => {
+            const receiver = pc.getReceivers()[0];
+            const dtlsTransport = receiver.transport;
+            const iceTransport = dtlsTransport.transport;
+            const spy = sinon.spy(iceTransport, 'addRemoteCandidate');
+            clock.tick(10000);
+            expect(spy).to.have.been.calledWith({});
+          });
       });
 
       it('does nothing when the peerconnection is already closed', () => {
@@ -1275,10 +1275,10 @@ describe('Edge shim', () => {
             MINIMAL_AUDIO_MLINE +
             'a=candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host\r\n';
         return pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => {
-          pc.close();
-          clock.tick(10000);
-        });
+          .then(() => {
+            pc.close();
+            clock.tick(10000);
+          });
       });
     });
 
@@ -1287,10 +1287,10 @@ describe('Edge shim', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.onsignalingstatechange = sinon.stub();
       return pc.setRemoteDescription({type: 'offer', sdp})
-      .then(() => pc.setRemoteDescription({type: 'offer', sdp}))
-      .then(() => {
-        expect(pc.onsignalingstatechange).to.have.been.calledOnce();
-      });
+        .then(() => pc.setRemoteDescription({type: 'offer', sdp}))
+        .then(() => {
+          expect(pc.onsignalingstatechange).to.have.been.calledOnce();
+        });
     });
   });
 
@@ -1307,9 +1307,9 @@ describe('Edge shim', () => {
 
     it('returns a promise', (done) => {
       pc.createOffer({offerToReceiveAudio: true})
-      .then(() => {
-        done();
-      });
+        .then(() => {
+          done();
+        });
     });
 
     it('calls the legacy success callback', (done) => {
@@ -1322,49 +1322,49 @@ describe('Edge shim', () => {
     it('calls the legacy success callback and resolves with ' +
        'no arguments', (done) => {
       pc.createOffer((offer) => {})
-      .then((shouldBeUndefined) => {
-        expect(shouldBeUndefined).to.equal(undefined);
-        done();
-      });
+        .then((shouldBeUndefined) => {
+          expect(shouldBeUndefined).to.equal(undefined);
+          done();
+        });
     });
 
     it('does not change the signalingState', (done) => {
       pc.createOffer({offerToReceiveAudio: true})
-      .then(() => {
-        expect(pc.signalingState).to.equal('stable');
-        done();
-      });
+        .then(() => {
+          expect(pc.signalingState).to.equal('stable');
+          done();
+        });
     });
 
     it('uses pooled RTCIceGatherer', (done) => {
       pc.close();
       pc = new RTCPeerConnection({iceCandidatePoolSize: 1});
       pc.createOffer({offerToReceiveAudio: true})
-      .then(() => {
-        expect(pc._iceGatherers).to.have.length(0);
-        done();
-      });
+        .then(() => {
+          expect(pc._iceGatherers).to.have.length(0);
+          done();
+        });
     });
 
     it('does not start emitting ICE candidates', (done) => {
       let clock = sinon.useFakeTimers();
       pc.onicecandidate = sinon.stub();
       pc.createOffer({offerToReceiveAudio: true})
-      .then(() => {
-        clock.tick(500);
-        expect(pc.onicecandidate).not.to.have.been.calledWith();
-        clock.restore();
-        done();
-      });
+        .then(() => {
+          clock.tick(500);
+          expect(pc.onicecandidate).not.to.have.been.calledWith();
+          clock.restore();
+          done();
+        });
     });
 
     it('throws an InvalidStateError when called after close', (done) => {
       pc.close();
       pc.createOffer({offerToReceiveAudio: true})
-      .catch((e) => {
-        expect(e.name).to.equal('InvalidStateError');
-        done();
-      });
+        .catch((e) => {
+          expect(e.name).to.equal('InvalidStateError');
+          done();
+        });
     });
 
     it('throws an InvalidStateError when called after close ' +
@@ -1379,160 +1379,49 @@ describe('Edge shim', () => {
     describe('throws a TypeError when called with legacy constraints', () => {
       it('(optional)', () => {
         expect(() => pc.createOffer({optional: {OfferToReceiveAudio: true}}))
-            .to.throw()
-            .that.has.property('name').that.equals('TypeError');
+          .to.throw()
+          .that.has.property('name').that.equals('TypeError');
       });
 
       it('(mandatory)', () => {
         expect(() => pc.createOffer({mandatory: {OfferToReceiveAudio: true}}))
-            .to.throw()
-            .that.has.property('name').that.equals('TypeError');
+          .to.throw()
+          .that.has.property('name').that.equals('TypeError');
       });
     });
 
     describe('when called with offerToReceiveAudio', () => {
       it('= true the generated SDP should contain one audio m-line', () => {
         return pc.createOffer({offerToReceiveAudio: true})
-        .then((offer) => {
-          const sections = SDPUtils.getMediaSections(offer.sdp);
-          expect(sections.length).to.equal(1);
-          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
-        });
+          .then((offer) => {
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(1);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
+          });
       });
 
       // probably legacy which was covered by the spec at some point.
       it('= 2 the generated SDP should contain two audio m-lines', () => {
         return pc.createOffer({offerToReceiveAudio: 2})
-        .then((offer) => {
-          const sections = SDPUtils.getMediaSections(offer.sdp);
-          expect(sections.length).to.equal(2);
-          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
-          expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
-        });
+          .then((offer) => {
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(2);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
+            expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+          });
       });
 
       it('= true the generated SDP should contain one audio m-line', () => {
         return pc.createOffer({offerToReceiveAudio: true})
-        .then((offer) => {
-          const sections = SDPUtils.getMediaSections(offer.sdp);
-          expect(sections.length).to.equal(1);
-          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
-        });
+          .then((offer) => {
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(1);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
+          });
       });
 
       it('= false the generated SDP should not offer to receive audio', () => {
         return navigator.mediaDevices.getUserMedia({audio: true})
-        .then((stream) => {
-          pc.addStream(stream);
-          return pc.createOffer({offerToReceiveAudio: false});
-        })
-        .then((offer) => {
-          const sections = SDPUtils.getMediaSections(offer.sdp);
-          expect(sections.length).to.equal(1);
-          expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
-        });
-      });
-
-      it('= false and no local track the generated SDP should not ' +
-          'contain a m-line', () => {
-        // see https://github.com/rtcweb-wg/jsep/issues/832
-        return pc.createOffer({offerToReceiveAudio: false})
-        .then((offer) => {
-          const sections = SDPUtils.getMediaSections(offer.sdp);
-          expect(sections).to.have.length(0);
-        });
-      });
-    });
-
-    describe('when called with offerToReceiveVideo', () => {
-      it('= true the generated SDP should contain one video m-line', () => {
-        return pc.createOffer({offerToReceiveVideo: true})
-        .then((offer) => {
-          const sections = SDPUtils.getMediaSections(offer.sdp);
-          expect(sections.length).to.equal(1);
-          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
-        });
-      });
-
-      // probably legacy which was covered by the spec at some point.
-      it('= 2 the generated SDP should contain two video m-lines', () => {
-        return pc.createOffer({offerToReceiveVideo: 2})
-        .then((offer) => {
-          const sections = SDPUtils.getMediaSections(offer.sdp);
-          expect(sections.length).to.equal(2);
-          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
-          expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
-        });
-      });
-
-      it('= true the generated SDP should contain one video m-line', () => {
-        return pc.createOffer({offerToReceiveVideo: true})
-        .then((offer) => {
-          const sections = SDPUtils.getMediaSections(offer.sdp);
-          expect(sections.length).to.equal(1);
-          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
-        });
-      });
-
-      it('= false the generated SDP should not offer to receive video', () => {
-        return navigator.mediaDevices.getUserMedia({video: true})
-        .then((stream) => {
-          pc.addStream(stream);
-          return pc.createOffer({offerToReceiveVideo: false});
-        })
-        .then((offer) => {
-          const sections = SDPUtils.getMediaSections(offer.sdp);
-          expect(sections.length).to.equal(1);
-          expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
-        });
-      });
-
-      it('= false and no local track the generated SDP should not ' +
-          'contain a m-line', () => {
-        // see https://github.com/rtcweb-wg/jsep/issues/832
-        return pc.createOffer({offerToReceiveVideo: false})
-        .then((offer) => {
-          const sections = SDPUtils.getMediaSections(offer.sdp);
-          expect(sections).to.have.length(0);
-        });
-      });
-    });
-
-    describe('when called with offerToReceiveAudio and ' +
-        'offerToReceiveVideo', () => {
-      it('the generated SDP should contain two m-lines', () => {
-        return pc.createOffer({offerToReceiveAudio: true,
-            offerToReceiveVideo: true})
-        .then((offer) => {
-          const sections = SDPUtils.getMediaSections(offer.sdp);
-          expect(sections.length).to.equal(2);
-          expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
-          expect(SDPUtils.getKind(sections[0])).to.equal('audio');
-          expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
-          expect(SDPUtils.getKind(sections[1])).to.equal('video');
-        });
-      });
-    });
-
-    describe('when called after adding a stream', () => {
-      describe('with an audio track', () => {
-        it('the generated SDP should contain an audio m-line', () => {
-          return navigator.mediaDevices.getUserMedia({audio: true})
-          .then((stream) => {
-            pc.addStream(stream);
-            return pc.createOffer();
-          })
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            expect(sections.length).to.equal(1);
-            expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
-          });
-        });
-      });
-
-      describe('with an audio track not offering to receive audio', () => {
-        it('the generated SDP should contain a sendonly audio m-line', () => {
-          return navigator.mediaDevices.getUserMedia({audio: true})
           .then((stream) => {
             pc.addStream(stream);
             return pc.createOffer({offerToReceiveAudio: false});
@@ -1542,39 +1431,150 @@ describe('Edge shim', () => {
             expect(sections.length).to.equal(1);
             expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
           });
+      });
+
+      it('= false and no local track the generated SDP should not ' +
+          'contain a m-line', () => {
+        // see https://github.com/rtcweb-wg/jsep/issues/832
+        return pc.createOffer({offerToReceiveAudio: false})
+          .then((offer) => {
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections).to.have.length(0);
+          });
+      });
+    });
+
+    describe('when called with offerToReceiveVideo', () => {
+      it('= true the generated SDP should contain one video m-line', () => {
+        return pc.createOffer({offerToReceiveVideo: true})
+          .then((offer) => {
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(1);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
+          });
+      });
+
+      // probably legacy which was covered by the spec at some point.
+      it('= 2 the generated SDP should contain two video m-lines', () => {
+        return pc.createOffer({offerToReceiveVideo: 2})
+          .then((offer) => {
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(2);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
+            expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+          });
+      });
+
+      it('= true the generated SDP should contain one video m-line', () => {
+        return pc.createOffer({offerToReceiveVideo: true})
+          .then((offer) => {
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(1);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
+          });
+      });
+
+      it('= false the generated SDP should not offer to receive video', () => {
+        return navigator.mediaDevices.getUserMedia({video: true})
+          .then((stream) => {
+            pc.addStream(stream);
+            return pc.createOffer({offerToReceiveVideo: false});
+          })
+          .then((offer) => {
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(1);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
+          });
+      });
+
+      it('= false and no local track the generated SDP should not ' +
+          'contain a m-line', () => {
+        // see https://github.com/rtcweb-wg/jsep/issues/832
+        return pc.createOffer({offerToReceiveVideo: false})
+          .then((offer) => {
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections).to.have.length(0);
+          });
+      });
+    });
+
+    describe('when called with offerToReceiveAudio and ' +
+        'offerToReceiveVideo', () => {
+      it('the generated SDP should contain two m-lines', () => {
+        return pc.createOffer({offerToReceiveAudio: true,
+          offerToReceiveVideo: true})
+          .then((offer) => {
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections.length).to.equal(2);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
+            expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+            expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+            expect(SDPUtils.getKind(sections[1])).to.equal('video');
+          });
+      });
+    });
+
+    describe('when called after adding a stream', () => {
+      describe('with an audio track', () => {
+        it('the generated SDP should contain an audio m-line', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true})
+            .then((stream) => {
+              pc.addStream(stream);
+              return pc.createOffer();
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(1);
+              expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
+            });
+        });
+      });
+
+      describe('with an audio track not offering to receive audio', () => {
+        it('the generated SDP should contain a sendonly audio m-line', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true})
+            .then((stream) => {
+              pc.addStream(stream);
+              return pc.createOffer({offerToReceiveAudio: false});
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(1);
+              expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
+            });
         });
       });
 
       describe('with an audio track and offering to receive video', () => {
         it('the generated SDP should contain a recvonly m-line', () => {
           return navigator.mediaDevices.getUserMedia({audio: true})
-          .then((stream) => {
-            pc.addStream(stream);
-            return pc.createOffer({offerToReceiveVideo: true});
-          })
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            expect(sections.length).to.equal(2);
-            expect(SDPUtils.getKind(sections[0])).to.equal('audio');
-            expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
-            expect(SDPUtils.getKind(sections[1])).to.equal('video');
-            expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
-          });
+            .then((stream) => {
+              pc.addStream(stream);
+              return pc.createOffer({offerToReceiveVideo: true});
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(2);
+              expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+              expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
+              expect(SDPUtils.getKind(sections[1])).to.equal('video');
+              expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+            });
         });
       });
 
       describe('with a video track', () => {
         it('the generated SDP should contain an video m-line', () => {
           return navigator.mediaDevices.getUserMedia({video: true})
-          .then((stream) => {
-            pc.addStream(stream);
-            return pc.createOffer();
-          })
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            expect(sections.length).to.equal(1);
-            expect(SDPUtils.getKind(sections[0])).to.equal('video');
-          });
+            .then((stream) => {
+              pc.addStream(stream);
+              return pc.createOffer();
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(1);
+              expect(SDPUtils.getKind(sections[0])).to.equal('video');
+            });
         });
       });
 
@@ -1582,16 +1582,16 @@ describe('Edge shim', () => {
         it('the generated SDP should contain a video and an ' +
             'audio m-line', () => {
           return navigator.mediaDevices.getUserMedia({video: true})
-          .then((stream) => {
-            pc.addStream(stream);
-            return pc.createOffer({offerToReceiveAudio: true});
-          })
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            expect(sections.length).to.equal(2);
-            expect(SDPUtils.getKind(sections[0])).to.equal('video');
-            expect(SDPUtils.getKind(sections[1])).to.equal('audio');
-          });
+            .then((stream) => {
+              pc.addStream(stream);
+              return pc.createOffer({offerToReceiveAudio: true});
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(2);
+              expect(SDPUtils.getKind(sections[0])).to.equal('video');
+              expect(SDPUtils.getKind(sections[1])).to.equal('audio');
+            });
         });
       });
 
@@ -1600,16 +1600,16 @@ describe('Edge shim', () => {
         it('the generated SDP should contain an audio and video ' +
             'm-line', () => {
           return navigator.mediaDevices.getUserMedia({audio: true, video: true})
-          .then((stream) => {
-            pc.addStream(stream);
-            return pc.createOffer();
-          })
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            expect(sections.length).to.equal(2);
-            expect(SDPUtils.getKind(sections[0])).to.equal('audio');
-            expect(SDPUtils.getKind(sections[1])).to.equal('video');
-          });
+            .then((stream) => {
+              pc.addStream(stream);
+              return pc.createOffer();
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(2);
+              expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+              expect(SDPUtils.getKind(sections[1])).to.equal('video');
+            });
         });
       });
 
@@ -1617,21 +1617,21 @@ describe('Edge shim', () => {
         it('the generated SDP should contain an audio and ' +
             'video m-line', () => {
           return navigator.mediaDevices.getUserMedia({audio: true, video: true})
-          .then((stream) => {
-            pc.addStream(stream);
-            return navigator.mediaDevices.getUserMedia({video: true});
-          })
-          .then((stream) => {
-            pc.addStream(stream);
-            return pc.createOffer();
-          })
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            expect(sections.length).to.equal(3);
-            expect(SDPUtils.getKind(sections[0])).to.equal('audio');
-            expect(SDPUtils.getKind(sections[1])).to.equal('video');
-            expect(SDPUtils.getKind(sections[2])).to.equal('video');
-          });
+            .then((stream) => {
+              pc.addStream(stream);
+              return navigator.mediaDevices.getUserMedia({video: true});
+            })
+            .then((stream) => {
+              pc.addStream(stream);
+              return pc.createOffer();
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(3);
+              expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+              expect(SDPUtils.getKind(sections[1])).to.equal('video');
+              expect(SDPUtils.getKind(sections[2])).to.equal('video');
+            });
         });
       });
     });
@@ -1640,15 +1640,15 @@ describe('Edge shim', () => {
       describe('with an audio track', () => {
         it('the generated SDP should contain a sendrecv audio m-line', () => {
           return navigator.mediaDevices.getUserMedia({audio: true})
-          .then((stream) => {
-            pc.addTrack(stream.getAudioTracks()[0], stream);
-            return pc.createOffer();
-          })
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            expect(sections.length).to.equal(1);
-            expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
-          });
+            .then((stream) => {
+              pc.addTrack(stream.getAudioTracks()[0], stream);
+              return pc.createOffer();
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(1);
+              expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
+            });
         });
       });
 
@@ -1656,15 +1656,15 @@ describe('Edge shim', () => {
         it('the generated SDP should contain a sendonly audio ' +
             'm-line', () => {
           return navigator.mediaDevices.getUserMedia({audio: true})
-          .then((stream) => {
-            pc.addTrack(stream.getAudioTracks()[0], stream);
-            return pc.createOffer({offerToReceiveAudio: false});
-          })
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            expect(sections.length).to.equal(1);
-            expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
-          });
+            .then((stream) => {
+              pc.addTrack(stream.getAudioTracks()[0], stream);
+              return pc.createOffer({offerToReceiveAudio: false});
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(1);
+              expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
+            });
         });
       });
 
@@ -1672,33 +1672,33 @@ describe('Edge shim', () => {
         it('the generated SDP should contain a sendrecv audio m-line ' +
            'and a recvonly video m-line', () => {
           return navigator.mediaDevices.getUserMedia({audio: true})
-          .then((stream) => {
-            pc.addTrack(stream.getAudioTracks()[0], stream);
-            return pc.createOffer({offerToReceiveVideo: true});
-          })
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            expect(sections.length).to.equal(2);
-            expect(SDPUtils.getKind(sections[0])).to.equal('audio');
-            expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
-            expect(SDPUtils.getKind(sections[1])).to.equal('video');
-            expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
-          });
+            .then((stream) => {
+              pc.addTrack(stream.getAudioTracks()[0], stream);
+              return pc.createOffer({offerToReceiveVideo: true});
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(2);
+              expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+              expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
+              expect(SDPUtils.getKind(sections[1])).to.equal('video');
+              expect(SDPUtils.getDirection(sections[1])).to.equal('recvonly');
+            });
         });
       });
 
       describe('with a video track', () => {
         it('the generated SDP should contain an video m-line', () => {
           return navigator.mediaDevices.getUserMedia({video: true})
-          .then((stream) => {
-            pc.addTrack(stream.getVideoTracks()[0], stream);
-            return pc.createOffer();
-          })
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            expect(sections.length).to.equal(1);
-            expect(SDPUtils.getKind(sections[0])).to.equal('video');
-          });
+            .then((stream) => {
+              pc.addTrack(stream.getVideoTracks()[0], stream);
+              return pc.createOffer();
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(1);
+              expect(SDPUtils.getKind(sections[0])).to.equal('video');
+            });
         });
       });
 
@@ -1706,16 +1706,16 @@ describe('Edge shim', () => {
         it('the generated SDP should contain a video and an ' +
             'audio m-line', () => {
           return navigator.mediaDevices.getUserMedia({video: true})
-          .then((stream) => {
-            pc.addTrack(stream.getVideoTracks()[0], stream);
-            return pc.createOffer({offerToReceiveAudio: true});
-          })
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            expect(sections.length).to.equal(2);
-            expect(SDPUtils.getKind(sections[0])).to.equal('video');
-            expect(SDPUtils.getKind(sections[1])).to.equal('audio');
-          });
+            .then((stream) => {
+              pc.addTrack(stream.getVideoTracks()[0], stream);
+              return pc.createOffer({offerToReceiveAudio: true});
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(2);
+              expect(SDPUtils.getKind(sections[0])).to.equal('video');
+              expect(SDPUtils.getKind(sections[1])).to.equal('audio');
+            });
         });
       });
 
@@ -1724,18 +1724,18 @@ describe('Edge shim', () => {
         it('the generated SDP should contain an audio and video ' +
             'm-line', () => {
           return navigator.mediaDevices.getUserMedia({audio: true, video: true})
-          .then((stream) => {
-            stream.getTracks().forEach((track) => {
-              pc.addTrack(track, stream);
+            .then((stream) => {
+              stream.getTracks().forEach((track) => {
+                pc.addTrack(track, stream);
+              });
+              return pc.createOffer();
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(2);
+              expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+              expect(SDPUtils.getKind(sections[1])).to.equal('video');
             });
-            return pc.createOffer();
-          })
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            expect(sections.length).to.equal(2);
-            expect(SDPUtils.getKind(sections[0])).to.equal('audio');
-            expect(SDPUtils.getKind(sections[1])).to.equal('video');
-          });
         });
       });
 
@@ -1743,43 +1743,43 @@ describe('Edge shim', () => {
         it('the generated SDP should contain an audio and ' +
             'two video m-lines', () => {
           return navigator.mediaDevices.getUserMedia({audio: true, video: true})
-          .then((stream) => {
-            stream.getTracks().forEach((track) => {
-              pc.addTrack(track, stream);
+            .then((stream) => {
+              stream.getTracks().forEach((track) => {
+                pc.addTrack(track, stream);
+              });
+              return navigator.mediaDevices.getUserMedia({video: true});
+            })
+            .then((stream) => {
+              stream.getTracks().forEach((track) => {
+                pc.addTrack(track, stream);
+              });
+              return pc.createOffer();
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(3);
+              expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+              expect(SDPUtils.getKind(sections[1])).to.equal('video');
+              expect(SDPUtils.getKind(sections[2])).to.equal('video');
             });
-            return navigator.mediaDevices.getUserMedia({video: true});
-          })
-          .then((stream) => {
-            stream.getTracks().forEach((track) => {
-              pc.addTrack(track, stream);
-            });
-            return pc.createOffer();
-          })
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            expect(sections.length).to.equal(3);
-            expect(SDPUtils.getKind(sections[0])).to.equal('audio');
-            expect(SDPUtils.getKind(sections[1])).to.equal('video');
-            expect(SDPUtils.getKind(sections[2])).to.equal('video');
-          });
         });
       });
 
       describe('with an audio track but no stream', () => {
         it('creates an offer with msid stream set to "-"', () => {
           return navigator.mediaDevices.getUserMedia({audio: true})
-          .then((stream) => {
-            stream.getTracks().forEach((track) => {
-              pc.addTrack(track);
+            .then((stream) => {
+              stream.getTracks().forEach((track) => {
+                pc.addTrack(track);
+              });
+              return pc.createOffer();
+            })
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              expect(sections.length).to.equal(1);
+              const msid = SDPUtils.parseMsid(sections[0]);
+              expect(msid.stream).to.equal('-');
             });
-            return pc.createOffer();
-          })
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            expect(sections.length).to.equal(1);
-            const msid = SDPUtils.parseMsid(sections[0]);
-            expect(msid.stream).to.equal('-');
-          });
         });
       });
     });
@@ -1799,57 +1799,57 @@ describe('Edge shim', () => {
             return;
           }
           pc.createOffer()
-          .then((offer) => {
-            const sections = SDPUtils.getMediaSections(offer.sdp);
-            const candidates = SDPUtils.matchPrefix(sections[0],
+            .then((offer) => {
+              const sections = SDPUtils.getMediaSections(offer.sdp);
+              const candidates = SDPUtils.matchPrefix(sections[0],
                 'a=candidate:');
-            const end = SDPUtils.matchPrefix(sections[0],
+              const end = SDPUtils.matchPrefix(sections[0],
                 'a=end-of-candidates');
-            expect(candidates.length).to.be.above(0);
-            expect(end.length).to.equal(1);
-            done();
-          });
+              expect(candidates.length).to.be.above(0);
+              expect(end.length).to.equal(1);
+              done();
+            });
         };
         pc.createOffer({offerToReceiveAudio: true})
-        .then((offer) => {
-          return pc.setLocalDescription(offer);
-        })
-        .then(() => {
-          window.setTimeout(() => {
-            clock.tick(500);
+          .then((offer) => {
+            return pc.setLocalDescription(offer);
+          })
+          .then(() => {
+            window.setTimeout(() => {
+              clock.tick(500);
+            });
+            clock.tick(0);
           });
-          clock.tick(0);
-        });
       });
 
       it('retains the session id', (done) => {
         let sessionId;
         pc.createOffer({offerToReceiveAudio: true})
-        .then((offer) => {
-          sessionId = SDPUtils.matchPrefix(offer.sdp, 'o=')[0].split(' ')[1];
-          return pc.createOffer({offerToReceiveAudio: true});
-        })
-        .then((offer) => {
-          let sid = SDPUtils.matchPrefix(offer.sdp, 'o=')[0].split(' ')[1];
-          expect(sid).to.equal(sessionId);
-          done();
-        });
+          .then((offer) => {
+            sessionId = SDPUtils.matchPrefix(offer.sdp, 'o=')[0].split(' ')[1];
+            return pc.createOffer({offerToReceiveAudio: true});
+          })
+          .then((offer) => {
+            let sid = SDPUtils.matchPrefix(offer.sdp, 'o=')[0].split(' ')[1];
+            expect(sid).to.equal(sessionId);
+            done();
+          });
       });
 
       it('increments the session version', (done) => {
         let version;
         pc.createOffer({offerToReceiveAudio: true})
-        .then((offer) => {
-          version = SDPUtils.matchPrefix(offer.sdp, 'o=')[0]
+          .then((offer) => {
+            version = SDPUtils.matchPrefix(offer.sdp, 'o=')[0]
               .split(' ')[2] >>> 0;
-          return pc.createOffer({offerToReceiveAudio: true});
-        })
-        .then((offer) => {
-          let ver = SDPUtils.matchPrefix(offer.sdp, 'o=')[0]
-             .split(' ')[2] >>> 0;
-          expect(ver).to.equal(version + 1);
-          done();
-        });
+            return pc.createOffer({offerToReceiveAudio: true});
+          })
+          .then((offer) => {
+            let ver = SDPUtils.matchPrefix(offer.sdp, 'o=')[0]
+              .split(' ')[2] >>> 0;
+            expect(ver).to.equal(version + 1);
+            done();
+          });
       });
     });
 
@@ -1858,26 +1858,26 @@ describe('Edge shim', () => {
 
       it('retains the MID attribute', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => pc.createAnswer())
-        .then((answer) => pc.setLocalDescription(answer))
-        .then(() => pc.createOffer())
-        .then((offer) => {
-          const sections = SDPUtils.getMediaSections(offer.sdp);
-          expect(SDPUtils.getMid(sections[0])).to.equal('audio1');
-        });
+          .then(() => pc.createAnswer())
+          .then((answer) => pc.setLocalDescription(answer))
+          .then(() => pc.createOffer())
+          .then((offer) => {
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(SDPUtils.getMid(sections[0])).to.equal('audio1');
+          });
       });
 
       it('retains the offerer payload types', () => {
         return pc.setRemoteDescription({type: 'offer',
-            sdp: sdp.replace(/111/g, 98)
+          sdp: sdp.replace(/111/g, 98)
         })
-        .then(() => pc.createAnswer())
-        .then((answer) => pc.setLocalDescription(answer))
-        .then(() => pc.createOffer())
-        .then((offer) => {
-          expect(offer.sdp).to.contain('a=rtpmap:98 opus');
-          expect(offer.sdp).not.to.contain('a=rtpmap:111 opus');
-        });
+          .then(() => pc.createAnswer())
+          .then((answer) => pc.setLocalDescription(answer))
+          .then(() => pc.createOffer())
+          .then((offer) => {
+            expect(offer.sdp).to.contain('a=rtpmap:98 opus');
+            expect(offer.sdp).not.to.contain('a=rtpmap:111 opus');
+          });
       });
 
       it('retains the offerer extmap ids', () => {
@@ -1901,34 +1901,34 @@ describe('Edge shim', () => {
           'a=extmap:5 ' + extmapUri + '\r\n';
 
         return pc.setRemoteDescription({type: 'offer', sdp: videoSdp})
-        .then(() => pc.createAnswer())
-        .then((answer) => pc.setLocalDescription(answer))
-        .then(() => pc.createOffer())
-        .then((offer) => {
-          expect(offer.sdp).to.contain('a=extmap:5 ' + extmapUri + '\r\n');
-        });
+          .then(() => pc.createAnswer())
+          .then((answer) => pc.setLocalDescription(answer))
+          .then(() => pc.createOffer())
+          .then((offer) => {
+            expect(offer.sdp).to.contain('a=extmap:5 ' + extmapUri + '\r\n');
+          });
       });
     });
 
     describe('after replaceTrack', () => {
       it('retains the original track id', () => {
         return navigator.mediaDevices.getUserMedia({audio: true})
-        .then((stream) => {
-          pc.addTrack(stream.getAudioTracks()[0], stream);
-          return pc.createOffer();
-        })
-        .then((offer) => pc.setLocalDescription(offer))
-        .then(() => navigator.mediaDevices.getUserMedia({audio: true}))
-        .then((stream) => {
-          const sender = pc.getSenders()[0];
-          return sender.replaceTrack(stream.getAudioTracks()[0]);
-        })
-        .then(() => pc.createOffer())
-        .then((offer) => {
-          const newMsid = SDPUtils.parseMsid(offer.sdp);
-          const existingMsid = SDPUtils.parseMsid(pc.localDescription.sdp);
-          expect(newMsid.track).to.equal(existingMsid.track);
-        });
+          .then((stream) => {
+            pc.addTrack(stream.getAudioTracks()[0], stream);
+            return pc.createOffer();
+          })
+          .then((offer) => pc.setLocalDescription(offer))
+          .then(() => navigator.mediaDevices.getUserMedia({audio: true}))
+          .then((stream) => {
+            const sender = pc.getSenders()[0];
+            return sender.replaceTrack(stream.getAudioTracks()[0]);
+          })
+          .then(() => pc.createOffer())
+          .then((offer) => {
+            const newMsid = SDPUtils.parseMsid(offer.sdp);
+            const existingMsid = SDPUtils.parseMsid(pc.localDescription.sdp);
+            expect(newMsid.track).to.equal(existingMsid.track);
+          });
       });
     });
   });
@@ -1945,84 +1945,84 @@ describe('Edge shim', () => {
     it('returns a promise', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .then(() => {
-        return pc.createAnswer();
-      })
-      .then(() => {
-        done();
-      });
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then(() => {
+          done();
+        });
     });
 
     it('calls the legacy success callback', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .then(() => {
-        return pc.createAnswer((answer) => {
-          expect(answer.type).to.equal('answer');
-          done();
-        }, () => {});
-      });
+        .then(() => {
+          return pc.createAnswer((answer) => {
+            expect(answer.type).to.equal('answer');
+            done();
+          }, () => {});
+        });
     });
 
     it('calls the legacy success callback and resolves with ' +
        'no arguments', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .then(() => {
-        return pc.createAnswer((answer) => {});
-      })
-      .then((shouldBeUndefined) => {
-        expect(shouldBeUndefined).to.equal(undefined);
-        done();
-      });
+        .then(() => {
+          return pc.createAnswer((answer) => {});
+        })
+        .then((shouldBeUndefined) => {
+          expect(shouldBeUndefined).to.equal(undefined);
+          done();
+        });
     });
 
     it('does not change the signaling state', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .then(() => {
-        expect(pc.signalingState).to.equal('have-remote-offer');
-        return pc.createAnswer();
-      })
-      .then(() => {
-        expect(pc.signalingState).to.equal('have-remote-offer');
-        done();
-      });
+        .then(() => {
+          expect(pc.signalingState).to.equal('have-remote-offer');
+          return pc.createAnswer();
+        })
+        .then(() => {
+          expect(pc.signalingState).to.equal('have-remote-offer');
+          done();
+        });
     });
 
     it('throws an InvalidStateError when called after close', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .then(() => {
-        pc.close();
-        return pc.createAnswer();
-      })
-      .catch((e) => {
-        expect(e.name).to.equal('InvalidStateError');
-        done();
-      });
+        .then(() => {
+          pc.close();
+          return pc.createAnswer();
+        })
+        .catch((e) => {
+          expect(e.name).to.equal('InvalidStateError');
+          done();
+        });
     });
 
     it('throws an InvalidStateError when called after close ' +
         '(callback)', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .then(() => {
-        pc.close();
-        return pc.createAnswer(undefined, (e) => {
-          expect(e.name).to.equal('InvalidStateError');
-          done();
+        .then(() => {
+          pc.close();
+          return pc.createAnswer(undefined, (e) => {
+            expect(e.name).to.equal('InvalidStateError');
+            done();
+          });
         });
-      });
     });
 
     it('throws an InvalidStateError when called in the wrong ' +
         'signalingstate', (done) => {
       pc.createAnswer()
-      .catch((e) => {
-        expect(e.name).to.equal('InvalidStateError');
-        done();
-      });
+        .catch((e) => {
+          expect(e.name).to.equal('InvalidStateError');
+          done();
+        });
     });
 
     it('uses payload types of offerer', (done) => {
@@ -2042,13 +2042,13 @@ describe('Edge shim', () => {
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .then(() => {
-        return pc.createAnswer();
-      })
-      .then((answer) => {
-        expect(answer.sdp).to.contain('a=rtpmap:98 opus');
-        done();
-      });
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          expect(answer.sdp).to.contain('a=rtpmap:98 opus');
+          done();
+        });
     });
 
     it('uses the extmap ids of the offerer', (done) => {
@@ -2072,13 +2072,13 @@ describe('Edge shim', () => {
           'a=ssrc:1001 cname:some\r\n' +
           'a=extmap:5 ' + extmapUri + '\r\n';
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .then(() => {
-        return pc.createAnswer();
-      })
-      .then((answer) => {
-        expect(answer.sdp).to.contain('a=extmap:5 ' + extmapUri + '\r\n');
-        done();
-      });
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          expect(answer.sdp).to.contain('a=extmap:5 ' + extmapUri + '\r\n');
+          done();
+        });
     });
 
     it('returns the intersection of rtcp feedback', (done) => {
@@ -2101,31 +2101,31 @@ describe('Edge shim', () => {
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .then(() => {
-        return pc.createAnswer();
-      })
-      .then((answer) => {
-        expect(answer.sdp).to.contain('a=rtcp-fb:102 nack\r\n');
-        expect(answer.sdp).to.contain('a=rtcp-fb:102 nack pli\r\n');
-        expect(answer.sdp).not.to.contain('a=rtcp-fb:102 goog-remb\r\n');
-        done();
-      });
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          expect(answer.sdp).to.contain('a=rtcp-fb:102 nack\r\n');
+          expect(answer.sdp).to.contain('a=rtcp-fb:102 nack pli\r\n');
+          expect(answer.sdp).not.to.contain('a=rtcp-fb:102 goog-remb\r\n');
+          done();
+        });
     });
 
     it('rejects a m-line when there are no compatible codecs', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer',
-          sdp: sdp.replace('opus', 'nosuchcodec')
+        sdp: sdp.replace('opus', 'nosuchcodec')
       })
-      .then(() => {
-        return pc.createAnswer();
-      })
-      .then((answer) => {
-        const sections = SDPUtils.getMediaSections(answer.sdp);
-        const rejected = SDPUtils.isRejected(sections[0]);
-        expect(rejected).to.equal(true);
-        done();
-      });
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          const sections = SDPUtils.getMediaSections(answer.sdp);
+          const rejected = SDPUtils.isRejected(sections[0]);
+          expect(rejected).to.equal(true);
+          done();
+        });
     });
 
     describe('rejects a legacy datachannel offer', () => {
@@ -2140,28 +2140,28 @@ describe('Edge shim', () => {
           'a=sctpmap:5000 webrtc-datachannel 1024\r\n';
       it('in setRemoteDescription', (done) => {
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          const sections = SDPUtils.getMediaSections(answer.sdp);
-          const rejected = SDPUtils.isRejected(sections[0]);
-          expect(rejected).to.equal(true);
-          done();
-        });
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            const sections = SDPUtils.getMediaSections(answer.sdp);
+            const rejected = SDPUtils.isRejected(sections[0]);
+            expect(rejected).to.equal(true);
+            done();
+          });
       });
 
       it('ignores candidates', () => {
         return pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          return pc.addIceCandidate({sdpMid: 'data', candidate:
+          .then(() => {
+            return pc.addIceCandidate({sdpMid: 'data', candidate:
               'candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host'});
-        });
+          });
       });
 
       it('ignores end-of-candidates', () => {
         return pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => pc.addIceCandidate());
+          .then(() => pc.addIceCandidate());
       });
     });
 
@@ -2178,12 +2178,12 @@ describe('Edge shim', () => {
             'a=sctp-port:5000\r\n' +
             'a=max-message-size:1073741823\r\n';
         return pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => pc.createAnswer())
-        .then((answer) => {
-          const sections = SDPUtils.getMediaSections(answer.sdp);
-          const rejected = SDPUtils.isRejected(sections[0]);
-          expect(rejected).to.equal(true);
-        });
+          .then(() => pc.createAnswer())
+          .then((answer) => {
+            const sections = SDPUtils.getMediaSections(answer.sdp);
+            const rejected = SDPUtils.isRejected(sections[0]);
+            expect(rejected).to.equal(true);
+          });
       });
     });
 
@@ -2207,115 +2207,115 @@ describe('Edge shim', () => {
 
       it('responds with a inactive answer to inactive', (done) => {
         pc.setRemoteDescription({type: 'offer', sdp: sdp.replace('sendrecv',
-            'recvonly')})
-        .then(() => {
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          const sections = SDPUtils.getMediaSections(answer.sdp);
-          expect(sections.length).to.equal(1);
-          expect(SDPUtils.getDirection(sections[0])).to.equal('inactive');
-          done();
-        });
-      });
-
-      describe('with a local track', () => {
-        it('responds with a sendrecv answer to sendrecv', (done) => {
-          navigator.mediaDevices.getUserMedia({audio: true})
-          .then((stream) => {
-            pc.addStream(stream);
-            return pc.setRemoteDescription({type: 'offer', sdp: sdp});
-          })
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            const sections = SDPUtils.getMediaSections(answer.sdp);
-            expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
-            done();
-          });
-        });
-
-        it('responds with a sendonly answer to recvonly', (done) => {
-          navigator.mediaDevices.getUserMedia({audio: true})
-          .then((stream) => {
-            pc.addStream(stream);
-            return pc.setRemoteDescription({type: 'offer',
-                sdp: sdp.replace('sendrecv', 'recvonly')
-            });
-          })
+          'recvonly')})
           .then(() => {
             return pc.createAnswer();
           })
           .then((answer) => {
             const sections = SDPUtils.getMediaSections(answer.sdp);
             expect(sections.length).to.equal(1);
-            expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
+            expect(SDPUtils.getDirection(sections[0])).to.equal('inactive');
             done();
           });
+      });
+
+      describe('with a local track', () => {
+        it('responds with a sendrecv answer to sendrecv', (done) => {
+          navigator.mediaDevices.getUserMedia({audio: true})
+            .then((stream) => {
+              pc.addStream(stream);
+              return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+            })
+            .then(() => {
+              return pc.createAnswer();
+            })
+            .then((answer) => {
+              const sections = SDPUtils.getMediaSections(answer.sdp);
+              expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
+              done();
+            });
+        });
+
+        it('responds with a sendonly answer to recvonly', (done) => {
+          navigator.mediaDevices.getUserMedia({audio: true})
+            .then((stream) => {
+              pc.addStream(stream);
+              return pc.setRemoteDescription({type: 'offer',
+                sdp: sdp.replace('sendrecv', 'recvonly')
+              });
+            })
+            .then(() => {
+              return pc.createAnswer();
+            })
+            .then((answer) => {
+              const sections = SDPUtils.getMediaSections(answer.sdp);
+              expect(sections.length).to.equal(1);
+              expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
+              done();
+            });
         });
       });
 
       describe('with a local track added after setRemoteDescription', () => {
         it('responds with a sendrecv answer to sendrecv', (done) => {
           pc.setRemoteDescription({type: 'offer', sdp: sdp})
-          .then(() => {
-            return navigator.mediaDevices.getUserMedia({audio: true});
-          })
-          .then((stream) => {
-            pc.addStream(stream);
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            const sections = SDPUtils.getMediaSections(answer.sdp);
-            expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
-            done();
-          });
+            .then(() => {
+              return navigator.mediaDevices.getUserMedia({audio: true});
+            })
+            .then((stream) => {
+              pc.addStream(stream);
+              return pc.createAnswer();
+            })
+            .then((answer) => {
+              const sections = SDPUtils.getMediaSections(answer.sdp);
+              expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
+              done();
+            });
         });
 
         it('responds with a sendonly answer to recvonly', (done) => {
           pc.setRemoteDescription({type: 'offer', sdp: sdp.replace('sendrecv',
-              'recvonly')})
-          .then(() => {
-            return navigator.mediaDevices.getUserMedia({audio: true});
-          })
-          .then((stream) => {
-            pc.addStream(stream);
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            const sections = SDPUtils.getMediaSections(answer.sdp);
-            expect(sections.length).to.equal(1);
-            expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
-            done();
-          });
+            'recvonly')})
+            .then(() => {
+              return navigator.mediaDevices.getUserMedia({audio: true});
+            })
+            .then((stream) => {
+              pc.addStream(stream);
+              return pc.createAnswer();
+            })
+            .then((answer) => {
+              const sections = SDPUtils.getMediaSections(answer.sdp);
+              expect(sections.length).to.equal(1);
+              expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
+              done();
+            });
         });
       });
 
       describe('with no local track', () => {
         it('responds with a recvonly answer to sendrecv', (done) => {
           pc.setRemoteDescription({type: 'offer', sdp: sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            const sections = SDPUtils.getMediaSections(answer.sdp);
-            expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
-            done();
-          });
+            .then(() => {
+              return pc.createAnswer();
+            })
+            .then((answer) => {
+              const sections = SDPUtils.getMediaSections(answer.sdp);
+              expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
+              done();
+            });
         });
 
         it('responds with a inactive answer to recvonly', (done) => {
           pc.setRemoteDescription({type: 'offer', sdp: sdp.replace('sendrecv',
-              'recvonly')})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            const sections = SDPUtils.getMediaSections(answer.sdp);
-            expect(SDPUtils.getDirection(sections[0])).to.equal('inactive');
-            done();
-          });
+            'recvonly')})
+            .then(() => {
+              return pc.createAnswer();
+            })
+            .then((answer) => {
+              const sections = SDPUtils.getMediaSections(answer.sdp);
+              expect(SDPUtils.getDirection(sections[0])).to.equal('inactive');
+              done();
+            });
         });
       });
     });
@@ -2344,58 +2344,58 @@ describe('Edge shim', () => {
       describe('with no local track', () => {
         it('creates an answer with RTX but no FID group', (done) => {
           pc.setRemoteDescription({type: 'offer', sdp: sdp + remoteRTX})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
-            expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
-            expect(answer.sdp).to.contain('a=fmtp:103 apt=102');
-            expect(answer.sdp).not.to.contain('a=ssrc-group:FID ');
-            done();
-          });
+            .then(() => {
+              return pc.createAnswer();
+            })
+            .then((answer) => {
+              expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
+              expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
+              expect(answer.sdp).to.contain('a=fmtp:103 apt=102');
+              expect(answer.sdp).not.to.contain('a=ssrc-group:FID ');
+              done();
+            });
         });
       });
 
       describe('with a local track', () => {
         it('creates an answer with RTX', (done) => {
           navigator.mediaDevices.getUserMedia({video: true})
-          .then((stream) => {
-            pc.addStream(stream);
-            return pc.setRemoteDescription({type: 'offer',
+            .then((stream) => {
+              pc.addStream(stream);
+              return pc.setRemoteDescription({type: 'offer',
                 sdp: sdp + remoteRTX});
-          })
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
-            expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
-            expect(answer.sdp).to.contain('a=fmtp:103 apt=102');
-            expect(answer.sdp).to.contain('a=ssrc-group:FID ');
-            done();
-          });
+            })
+            .then(() => {
+              return pc.createAnswer();
+            })
+            .then((answer) => {
+              expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
+              expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
+              expect(answer.sdp).to.contain('a=fmtp:103 apt=102');
+              expect(answer.sdp).to.contain('a=ssrc-group:FID ');
+              done();
+            });
         });
       });
 
       describe('with no remote track', () => {
         it('creates an answer with RTX', (done) => {
           navigator.mediaDevices.getUserMedia({video: true})
-          .then((stream) => {
-            pc.addStream(stream);
-            return pc.setRemoteDescription({type: 'offer',
+            .then((stream) => {
+              pc.addStream(stream);
+              return pc.setRemoteDescription({type: 'offer',
                 sdp: sdp.replace('sendrecv', 'recvonly')});
-          })
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
-            expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
-            expect(answer.sdp).to.contain('a=fmtp:103 apt=102');
-            expect(answer.sdp).to.contain('a=ssrc-group:FID ');
-            done();
-          });
+            })
+            .then(() => {
+              return pc.createAnswer();
+            })
+            .then((answer) => {
+              expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
+              expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
+              expect(answer.sdp).to.contain('a=fmtp:103 apt=102');
+              expect(answer.sdp).to.contain('a=ssrc-group:FID ');
+              done();
+            });
         });
       });
 
@@ -2418,16 +2418,16 @@ describe('Edge shim', () => {
               'a=rtpmap:103 rtx/90000\r\n' +
               'a=fmtp:103 apt=102\r\n';
           pc.setRemoteDescription({type: 'offer', sdp: modifiedSDP})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            expect(answer.sdp).to.contain('a=rtpmap:101 vp8');
-            expect(answer.sdp).not.to.contain('a=rtpmap:102 no-such-codec');
-            expect(answer.sdp).not.to.contain('a=rtpmap:103 rtx');
-            expect(answer.sdp).not.to.contain('a=fmtp:103 apt=102');
-            done();
-          });
+            .then(() => {
+              return pc.createAnswer();
+            })
+            .then((answer) => {
+              expect(answer.sdp).to.contain('a=rtpmap:101 vp8');
+              expect(answer.sdp).not.to.contain('a=rtpmap:102 no-such-codec');
+              expect(answer.sdp).not.to.contain('a=rtpmap:103 rtx');
+              expect(answer.sdp).not.to.contain('a=fmtp:103 apt=102');
+              done();
+            });
         });
       });
     });
@@ -2450,17 +2450,17 @@ describe('Edge shim', () => {
           'a=ssrc:1001 cname:some\r\n';
       it('there is no ssrc-group in the answer', (done) => {
         navigator.mediaDevices.getUserMedia({video: true})
-        .then((stream) => {
-          pc.addStream(stream);
-          return pc.setRemoteDescription({type: 'offer', sdp: sdp});
-        })
-        .then(() => {
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          expect(answer.sdp).not.to.contain('a=ssrc-group:FID ');
-          done();
-        });
+          .then((stream) => {
+            pc.addStream(stream);
+            return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+          })
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            expect(answer.sdp).not.to.contain('a=ssrc-group:FID ');
+            done();
+          });
       });
     });
 
@@ -2470,18 +2470,18 @@ describe('Edge shim', () => {
             MINIMAL_AUDIO_MLINE.replace('m=audio 9', 'm=audio 0') +
             MINIMAL_AUDIO_MLINE.replace('m=audio 9', 'm=video 0');
         return pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          const sections = SDPUtils.getMediaSections(answer.sdp);
-          expect(sections.length).to.equal(2);
-          expect(SDPUtils.getKind(sections[0])).to.equal('audio');
-          expect(SDPUtils.isRejected(sections[0])).to.equal(true);
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            const sections = SDPUtils.getMediaSections(answer.sdp);
+            expect(sections.length).to.equal(2);
+            expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+            expect(SDPUtils.isRejected(sections[0])).to.equal(true);
 
-          expect(SDPUtils.getKind(sections[1])).to.equal('video');
-          expect(SDPUtils.isRejected(sections[1])).to.equal(true);
-        });
+            expect(SDPUtils.getKind(sections[1])).to.equal('video');
+            expect(SDPUtils.isRejected(sections[1])).to.equal(true);
+          });
       });
     });
 
@@ -2504,25 +2504,25 @@ describe('Edge shim', () => {
 
       it('set if the offer contained rtcp-rsize', (done) => {
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          expect(answer.sdp).to.contain('a=rtcp-rsize\r\n');
-          done();
-        });
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            expect(answer.sdp).to.contain('a=rtcp-rsize\r\n');
+            done();
+          });
       });
 
       it('not set if the offer did not contain rtcp-rsize', (done) => {
         pc.setRemoteDescription({type: 'offer',
-            sdp: sdp.replace('a=rtcp-rsize\r\n', '')})
-        .then(() => {
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          expect(answer.sdp).not.to.contain('a=rtcp-rsize\r\n');
-          done();
-        });
+          sdp: sdp.replace('a=rtcp-rsize\r\n', '')})
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            expect(answer.sdp).not.to.contain('a=rtcp-rsize\r\n');
+            done();
+          });
       });
     });
 
@@ -2577,18 +2577,18 @@ describe('Edge shim', () => {
           }
         };
         pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          return pc.setLocalDescription(answer);
-        })
-        .then(() => {
-          window.setTimeout(() => {
-            clock.tick(500);
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            return pc.setLocalDescription(answer);
+          })
+          .then(() => {
+            window.setTimeout(() => {
+              clock.tick(500);
+            });
+            clock.tick(0);
           });
-          clock.tick(0);
-        });
       });
     });
 
@@ -2596,32 +2596,32 @@ describe('Edge shim', () => {
       it('starts at version 0', (done) => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          let ver = SDPUtils.matchPrefix(answer.sdp, 'o=')[0]
-             .split(' ')[2] >>> 0;
-          expect(ver).to.equal(0);
-          done();
-        });
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            let ver = SDPUtils.matchPrefix(answer.sdp, 'o=')[0]
+              .split(' ')[2] >>> 0;
+            expect(ver).to.equal(0);
+            done();
+          });
       });
 
       it('subsequent calls increase the session version', (done) => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
-        .then(() => {
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          let ver = SDPUtils.matchPrefix(answer.sdp, 'o=')[0]
-             .split(' ')[2] >>> 0;
-          expect(ver).to.equal(1);
-          done();
-        });
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then(() => {
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            let ver = SDPUtils.matchPrefix(answer.sdp, 'o=')[0]
+              .split(' ')[2] >>> 0;
+            expect(ver).to.equal(1);
+            done();
+          });
       });
     });
 
@@ -2631,19 +2631,19 @@ describe('Edge shim', () => {
       it('does not try to add a video m-line', (done) => {
         // https://github.com/webrtc/adapter/issues/638
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          return navigator.mediaDevices.getUserMedia({audio: true,
+          .then(() => {
+            return navigator.mediaDevices.getUserMedia({audio: true,
               video: true});
-        })
-        .then((stream) => {
-          pc.addStream(stream);
-          return pc.createAnswer();
-        })
-        .then((answer) => {
-          const sections = SDPUtils.getMediaSections(answer.sdp);
-          expect(sections.length).to.equal(1);
-          done();
-        });
+          })
+          .then((stream) => {
+            pc.addStream(stream);
+            return pc.createAnswer();
+          })
+          .then((answer) => {
+            const sections = SDPUtils.getMediaSections(answer.sdp);
+            expect(sections.length).to.equal(1);
+            done();
+          });
       });
     });
   });
@@ -2692,7 +2692,7 @@ describe('Edge shim', () => {
     beforeEach((done) => {
       pc = new RTCPeerConnection();
       pc.setRemoteDescription({type: 'offer', sdp})
-      .then(done);
+        .then(done);
     });
     afterEach(() => {
       pc.close();
@@ -2700,7 +2700,7 @@ describe('Edge shim', () => {
 
     it('returns a promise', (done) => {
       pc.addIceCandidate({sdpMid, candidate: candidateString})
-      .then(done);
+        .then(done);
     });
 
     it('calls the legacy success callback', (done) => {
@@ -2710,27 +2710,27 @@ describe('Edge shim', () => {
     it('throws a TypeError when called without sdpMid or ' +
         'sdpMLineIndex', (done) => {
       pc.addIceCandidate({})
-      .catch((e) => {
-        expect(e.name).to.equal('TypeError');
-        done();
-      });
+        .catch((e) => {
+          expect(e.name).to.equal('TypeError');
+          done();
+        });
     });
 
     describe('rejects with an OperationError when called with an', () => {
       it('invalid sdpMid', (done) => {
         pc.addIceCandidate({sdpMid: 'invalid', candidate: candidateString})
-        .catch((e) => {
-          expect(e.name).to.equal('OperationError');
-          done();
-        });
+          .catch((e) => {
+            expect(e.name).to.equal('OperationError');
+            done();
+          });
       });
 
       it('invalid sdpMLineIndex', (done) => {
         pc.addIceCandidate({sdpMLineIndex: 99, candidate: candidateString})
-        .catch((e) => {
-          expect(e.name).to.equal('OperationError');
-          done();
-        });
+          .catch((e) => {
+            expect(e.name).to.equal('OperationError');
+            done();
+          });
       });
     });
 
@@ -2749,52 +2749,52 @@ describe('Edge shim', () => {
        'setRemoteDescription', (done) => {
       pc = new RTCPeerConnection(); // recreate pc.
       pc.addIceCandidate({sdpMid, candidate: candidateString})
-      .catch((e) => {
-        expect(e.name).to.equal('InvalidStateError');
-        done();
-      });
+        .catch((e) => {
+          expect(e.name).to.equal('InvalidStateError');
+          done();
+        });
     });
 
     it('adds the candidate to the remote description', (done) => {
       pc.addIceCandidate({sdpMid, candidate: candidateString})
-      .then(() => {
-        const sections = SDPUtils.getMediaSections(pc.remoteDescription.sdp);
-        expect(SDPUtils.matchPrefix(sections[0],
+        .then(() => {
+          const sections = SDPUtils.getMediaSections(pc.remoteDescription.sdp);
+          expect(SDPUtils.matchPrefix(sections[0],
             'a=candidate:')).to.have.length(1);
-        done();
-      });
+          done();
+        });
     });
 
     it('adds the candidate to the remote description ' +
        'with legacy a=candidate syntax', (done) => {
       pc.addIceCandidate({sdpMid, candidate: 'a=' + candidateString})
-      .then(() => {
-        expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+        .then(() => {
+          expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
             'a=candidate:')).to.have.length(1);
-        done();
-      });
+          done();
+        });
     });
 
     it('adds end-of-candidates when receiving the null candidate', (done) => {
       // add at least one valid candidate.
       pc.addIceCandidate({sdpMid, candidate: candidateString});
       pc.addIceCandidate()
-      .then(() => {
-        expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+        .then(() => {
+          expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
             'a=end-of-candidates')).to.have.length(1);
-        done();
-      });
+          done();
+        });
     });
 
     it('adds end-of-candidates when receiving the \'\' candidate', (done) => {
       // add at least one valid candidate.
       pc.addIceCandidate({sdpMid, candidate: candidateString});
       pc.addIceCandidate({sdpMid, candidate: ''})
-      .then(() => {
-        expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+        .then(() => {
+          expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
             'a=end-of-candidates')).to.have.length(1);
-        done();
-      });
+          done();
+        });
     });
 
     describe('ignores candidates with', () => {
@@ -2803,24 +2803,26 @@ describe('Edge shim', () => {
         sinon.spy(iceTransport, 'addRemoteCandidate');
         pc.addIceCandidate({sdpMid, candidate:
           candidateString.replace('1 udp', '2 udp')})
-        .then(() => {
-          expect(iceTransport.addRemoteCandidate).not.to.have.been.calledWith();
-          expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+          .then(() => {
+            expect(iceTransport.addRemoteCandidate)
+              .not.to.have.been.calledWith();
+            expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
               'a=candidate:')).to.have.length(0);
-          done();
-        });
+            done();
+          });
       });
 
       it('non-master mid but does add them to the sdp', (done) => {
         const iceTransport = pc.getReceivers()[0].transport.transport;
         sinon.spy(iceTransport, 'addRemoteCandidate');
         pc.addIceCandidate({sdpMid: 'video1', candidate: candidateString})
-        .then(() => {
-          expect(iceTransport.addRemoteCandidate).not.to.have.been.calledWith();
-          expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+          .then(() => {
+            expect(iceTransport.addRemoteCandidate)
+              .not.to.have.been.calledWith();
+            expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
               'a=candidate:')).to.have.length(1);
-          done();
-        });
+            done();
+          });
       });
 
       it('port 0 and does not add them to the sdp', (done) => {
@@ -2828,12 +2830,13 @@ describe('Edge shim', () => {
         sinon.spy(iceTransport, 'addRemoteCandidate');
         pc.addIceCandidate({sdpMid, candidate:
           candidateString.replace('60769', '0').replace('udp', 'tcp')})
-        .then(() => {
-          expect(iceTransport.addRemoteCandidate).not.to.have.been.calledWith();
-          expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+          .then(() => {
+            expect(iceTransport.addRemoteCandidate)
+              .not.to.have.been.calledWith();
+            expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
               'a=candidate:')).to.have.length(0);
-          done();
-        });
+            done();
+          });
       });
 
       it('port 9 and does not add them to the sdp', (done) => {
@@ -2841,12 +2844,13 @@ describe('Edge shim', () => {
         sinon.spy(iceTransport, 'addRemoteCandidate');
         pc.addIceCandidate({sdpMid, candidate:
           candidateString.replace('60769', '9').replace('udp', 'tcp')})
-        .then(() => {
-          expect(iceTransport.addRemoteCandidate).not.to.have.been.calledWith();
-          expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
+          .then(() => {
+            expect(iceTransport.addRemoteCandidate)
+              .not.to.have.been.calledWith();
+            expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
               'a=candidate:')).to.have.length(0);
-          done();
-        });
+            done();
+          });
       });
     });
   });
@@ -2865,15 +2869,15 @@ describe('Edge shim', () => {
       pc.addEventListener('negotiationneeded', stub);
 
       navigator.mediaDevices.getUserMedia({audio: true})
-      .then((stream) => {
-        pc.addTrack(stream.getAudioTracks()[0], stream);
-      })
-      .then(() => {
-        setTimeout(() => {
-          expect(stub).to.have.been.calledOnce();
-          done();
+        .then((stream) => {
+          pc.addTrack(stream.getAudioTracks()[0], stream);
+        })
+        .then(() => {
+          setTimeout(() => {
+            expect(stub).to.have.been.calledOnce();
+            done();
+          });
         });
-      });
     });
 
     describe('triggers after', () => {
@@ -2881,30 +2885,30 @@ describe('Edge shim', () => {
         pc.onnegotiationneeded = sinon.stub();
 
         navigator.mediaDevices.getUserMedia({audio: true})
-        .then((stream) => {
-          pc.addTrack(stream.getAudioTracks()[0], stream);
-        })
-        .then(() => {
-          setTimeout(() => {
-            expect(pc.onnegotiationneeded).to.have.been.calledOnce();
-            done();
+          .then((stream) => {
+            pc.addTrack(stream.getAudioTracks()[0], stream);
+          })
+          .then(() => {
+            setTimeout(() => {
+              expect(pc.onnegotiationneeded).to.have.been.calledOnce();
+              done();
+            });
           });
-        });
       });
 
       it('addStream', (done) => {
         pc.onnegotiationneeded = sinon.stub();
 
         navigator.mediaDevices.getUserMedia({audio: true, video: true})
-        .then((stream) => {
-          pc.addStream(stream);
-        })
-        .then(() => {
-          setTimeout(() => {
-            expect(pc.onnegotiationneeded).to.have.been.calledOnce();
-            done();
+          .then((stream) => {
+            pc.addStream(stream);
+          })
+          .then(() => {
+            setTimeout(() => {
+              expect(pc.onnegotiationneeded).to.have.been.calledOnce();
+              done();
+            });
           });
-        });
       });
     });
 
@@ -2912,17 +2916,17 @@ describe('Edge shim', () => {
       pc.onnegotiationneeded = sinon.stub();
 
       navigator.mediaDevices.getUserMedia({audio: true, video: true})
-      .then((stream) => {
-        stream.getTracks().forEach((track) => {
-          pc.addTrack(track, stream);
+        .then((stream) => {
+          stream.getTracks().forEach((track) => {
+            pc.addTrack(track, stream);
+          });
+        })
+        .then(() => {
+          setTimeout(() => {
+            expect(pc.onnegotiationneeded).to.have.been.calledOnce();
+            done();
+          });
         });
-      })
-      .then(() => {
-        setTimeout(() => {
-          expect(pc.onnegotiationneeded).to.have.been.calledOnce();
-          done();
-        });
-      });
     });
   });
 
@@ -2941,21 +2945,21 @@ describe('Edge shim', () => {
     it('completes a full createOffer-SLD-SRD-createAnswer-SLD-SRD ' +
        'cycle', (done) => {
       navigator.mediaDevices.getUserMedia({audio: true, video: true})
-      .then((stream) => {
-        pc1.addStream(stream);
-        pc2.addStream(stream);
-        return pc1.createOffer();
-      })
-      .then((offer) => pc1.setLocalDescription(offer))
-      .then(() => pc2.setRemoteDescription(pc1.localDescription))
-      .then(() => pc2.createAnswer())
-      .then((answer) => pc2.setLocalDescription(answer))
-      .then(() => pc1.setRemoteDescription(pc2.localDescription))
-      .then(() => {
-        expect(pc1.signalingState).to.equal('stable');
-        expect(pc2.signalingState).to.equal('stable');
-        done();
-      });
+        .then((stream) => {
+          pc1.addStream(stream);
+          pc2.addStream(stream);
+          return pc1.createOffer();
+        })
+        .then((offer) => pc1.setLocalDescription(offer))
+        .then(() => pc2.setRemoteDescription(pc1.localDescription))
+        .then(() => pc2.createAnswer())
+        .then((answer) => pc2.setLocalDescription(answer))
+        .then(() => pc1.setRemoteDescription(pc2.localDescription))
+        .then(() => {
+          expect(pc1.signalingState).to.equal('stable');
+          expect(pc2.signalingState).to.equal('stable');
+          done();
+        });
     });
   });
 
@@ -2973,64 +2977,62 @@ describe('Edge shim', () => {
 
     it('retains SSRCs', (done) => {
       navigator.mediaDevices.getUserMedia({audio: true, video: true})
-      .then((stream) => {
-        pc1.addStream(stream);
-        return pc1.createOffer();
-      })
-      .then((offer) => pc1.setLocalDescription(offer))
-      .then(() => pc2.setRemoteDescription(pc1.localDescription))
-      .then(() => pc2.createAnswer())
-      .then((answer) => pc2.setLocalDescription(answer))
-      .then(() => pc1.setRemoteDescription(pc2.localDescription))
-      .then(() => {
-        return navigator.mediaDevices.getUserMedia({audio: true, video: true});
-      })
-      .then((stream) => {
-        pc2.addStream(stream);
-        return pc2.createOffer();
-      })
-      .then((offer) => {
-        const sections = SDPUtils.getMediaSections(offer.sdp);
-        expect(sections.length).to.equal(2);
-        const audioEncodingParameters = SDPUtils.parseRtpEncodingParameters(
+        .then((stream) => {
+          pc1.addStream(stream);
+          return pc1.createOffer();
+        })
+        .then((offer) => pc1.setLocalDescription(offer))
+        .then(() => pc2.setRemoteDescription(pc1.localDescription))
+        .then(() => pc2.createAnswer())
+        .then((answer) => pc2.setLocalDescription(answer))
+        .then(() => pc1.setRemoteDescription(pc2.localDescription))
+        .then(() => navigator.mediaDevices
+          .getUserMedia({audio: true, video: true}))
+        .then((stream) => {
+          pc2.addStream(stream);
+          return pc2.createOffer();
+        })
+        .then((offer) => {
+          const sections = SDPUtils.getMediaSections(offer.sdp);
+          expect(sections.length).to.equal(2);
+          const audioEncodingParameters = SDPUtils.parseRtpEncodingParameters(
             sections[0]);
-        const videoEncodingParameters = SDPUtils.parseRtpEncodingParameters(
+          const videoEncodingParameters = SDPUtils.parseRtpEncodingParameters(
             sections[1]);
-        expect(audioEncodingParameters[0].ssrc).to.equal(2002);
-        expect(videoEncodingParameters[0].ssrc).to.equal(4004);
-        expect(videoEncodingParameters[0].rtx.ssrc).to.equal(4005);
-        done();
-      });
+          expect(audioEncodingParameters[0].ssrc).to.equal(2002);
+          expect(videoEncodingParameters[0].ssrc).to.equal(4004);
+          expect(videoEncodingParameters[0].rtx.ssrc).to.equal(4005);
+          done();
+        });
     });
 
     it('sets the right DTLS role in the answer', (done) => {
       navigator.mediaDevices.getUserMedia({audio: true, video: true})
-      .then((stream) => {
-        pc1.addStream(stream);
-        return pc1.createOffer();
-      })
-      .then((offer) => pc1.setLocalDescription(offer))
-      .then(() => pc2.setRemoteDescription(pc1.localDescription))
-      .then(() => pc2.createAnswer())
-      .then((answer) => pc2.setLocalDescription(answer))
-      .then(() => pc1.setRemoteDescription(pc2.localDescription))
-      .then(() => {
-        return navigator.mediaDevices.getUserMedia({audio: true, video: true});
-      })
-      .then((stream) => {
-        pc2.addStream(stream);
-        return pc2.createOffer();
-      })
-      .then((offer) => pc2.setLocalDescription(offer))
-      .then(() => pc1.setRemoteDescription(pc2.localDescription))
-      .then(() => pc1.createAnswer())
-      .then((answer) => {
-        const sections = SDPUtils.getMediaSections(answer.sdp);
-        expect(sections.length).to.equal(2);
-        const setupLine = SDPUtils.matchPrefix(sections[0], 'a=setup:');
-        expect(setupLine[0]).to.equal('a=setup:passive');
-        done();
-      });
+        .then((stream) => {
+          pc1.addStream(stream);
+          return pc1.createOffer();
+        })
+        .then((offer) => pc1.setLocalDescription(offer))
+        .then(() => pc2.setRemoteDescription(pc1.localDescription))
+        .then(() => pc2.createAnswer())
+        .then((answer) => pc2.setLocalDescription(answer))
+        .then(() => pc1.setRemoteDescription(pc2.localDescription))
+        .then(() => navigator.mediaDevices
+          .getUserMedia({audio: true, video: true}))
+        .then((stream) => {
+          pc2.addStream(stream);
+          return pc2.createOffer();
+        })
+        .then((offer) => pc2.setLocalDescription(offer))
+        .then(() => pc1.setRemoteDescription(pc2.localDescription))
+        .then(() => pc1.createAnswer())
+        .then((answer) => {
+          const sections = SDPUtils.getMediaSections(answer.sdp);
+          expect(sections.length).to.equal(2);
+          const setupLine = SDPUtils.matchPrefix(sections[0], 'a=setup:');
+          expect(setupLine[0]).to.equal('a=setup:passive');
+          done();
+        });
     });
   });
 
@@ -3039,20 +3041,20 @@ describe('Edge shim', () => {
       const pc = new RTCPeerConnection();
 
       pc.createOffer({offerToReceiveAudio: true})
-      .then((offer) => {
-        expect(offer.sdp).to.contain('a=group:BUNDLE');
-        done();
-      });
+        .then((offer) => {
+          expect(offer.sdp).to.contain('a=group:BUNDLE');
+          done();
+        });
     });
 
     it('max-compat creates an offer without a=group:BUNDLE', (done) => {
       const pc = new RTCPeerConnection({bundlePolicy: 'max-compat'});
 
       pc.createOffer({offerToReceiveAudio: true})
-      .then((offer) => {
-        expect(offer.sdp).not.to.contain('a=group:BUNDLE');
-        done();
-      });
+        .then((offer) => {
+          expect(offer.sdp).not.to.contain('a=group:BUNDLE');
+          done();
+        });
     });
 
     describe('emits candidates with sdpMLineIndex', () => {
@@ -3081,15 +3083,15 @@ describe('Edge shim', () => {
         };
 
         pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true})
-        .then((offer) => {
-          return pc.setLocalDescription(offer);
-        })
-        .then(() => {
-          window.setTimeout(() => {
-            clock.tick(500);
+          .then((offer) => {
+            return pc.setLocalDescription(offer);
+          })
+          .then(() => {
+            window.setTimeout(() => {
+              clock.tick(500);
+            });
+            clock.tick(0);
           });
-          clock.tick(0);
-        });
       });
 
       it('1 when using max-bundle', (done) => {
@@ -3109,15 +3111,15 @@ describe('Edge shim', () => {
         };
 
         pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true})
-        .then((offer) => {
-          return pc.setLocalDescription(offer);
-        })
-        .then(() => {
-          window.setTimeout(() => {
-            clock.tick(500);
+          .then((offer) => {
+            return pc.setLocalDescription(offer);
+          })
+          .then(() => {
+            window.setTimeout(() => {
+              clock.tick(500);
+            });
+            clock.tick(0);
           });
-          clock.tick(0);
-        });
       });
     });
   });
@@ -3137,14 +3139,14 @@ describe('Edge shim', () => {
 
     it('returns a single element after addTrack', (done) => {
       navigator.mediaDevices.getUserMedia({audio: true})
-      .then((stream) => {
-        const track = stream.getTracks()[0];
-        pc.addTrack(track, stream);
-        const senders = pc.getSenders();
-        expect(senders.length).to.equal(1);
-        expect(senders[0].track).to.equal(track);
-        done();
-      });
+        .then((stream) => {
+          const track = stream.getTracks()[0];
+          pc.addTrack(track, stream);
+          const senders = pc.getSenders();
+          expect(senders.length).to.equal(1);
+          expect(senders[0].track).to.equal(track);
+          done();
+        });
     });
   });
 
@@ -3166,12 +3168,12 @@ describe('Edge shim', () => {
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
       pc.setRemoteDescription({type: 'offer', sdp: sdp})
-      .then(() => {
-        const receivers = pc.getReceivers();
-        expect(receivers.length).to.equal(1);
-        expect(receivers[0].track.kind).to.equal('audio');
-        done();
-      });
+        .then(() => {
+          const receivers = pc.getReceivers();
+          expect(receivers.length).to.equal(1);
+          expect(receivers[0].track.kind).to.equal('audio');
+          done();
+        });
     });
   });
 
@@ -3191,42 +3193,42 @@ describe('Edge shim', () => {
     describe('returns a single element after', () => {
       it('addTrack was called once', (done) => {
         navigator.mediaDevices.getUserMedia({audio: true})
-        .then((stream) => {
-          const track = stream.getTracks()[0];
-          pc.addTrack(track, stream);
-        })
-        .then(() => {
-          const localStreams = pc.getLocalStreams();
-          expect(localStreams.length).to.equal(1);
-          done();
-        });
+          .then((stream) => {
+            const track = stream.getTracks()[0];
+            pc.addTrack(track, stream);
+          })
+          .then(() => {
+            const localStreams = pc.getLocalStreams();
+            expect(localStreams.length).to.equal(1);
+            done();
+          });
       });
 
       it('addTrack was called twice with tracks from the ' +
          'same stream', (done) => {
         navigator.mediaDevices.getUserMedia({audio: true, video: true})
-        .then((stream) => {
-          stream.getTracks().forEach(track => {
-            pc.addTrack(track, stream);
+          .then((stream) => {
+            stream.getTracks().forEach(track => {
+              pc.addTrack(track, stream);
+            });
+          })
+          .then(() => {
+            const localStreams = pc.getLocalStreams();
+            expect(localStreams.length).to.equal(1);
+            done();
           });
-        })
-        .then(() => {
-          const localStreams = pc.getLocalStreams();
-          expect(localStreams.length).to.equal(1);
-          done();
-        });
       });
 
       it('addStream was called', (done) => {
         navigator.mediaDevices.getUserMedia({audio: true, video: true})
-        .then((stream) => {
-          pc.addStream(stream);
-        })
-        .then(() => {
-          const localStreams = pc.getLocalStreams();
-          expect(localStreams.length).to.equal(1);
-          done();
-        });
+          .then((stream) => {
+            pc.addStream(stream);
+          })
+          .then(() => {
+            const localStreams = pc.getLocalStreams();
+            expect(localStreams.length).to.equal(1);
+            done();
+          });
       });
     });
 
@@ -3234,38 +3236,38 @@ describe('Edge shim', () => {
       it('addTrack was called twice with tracks from two ' +
          'streams', (done) => {
         navigator.mediaDevices.getUserMedia({audio: true})
-        .then((stream) => {
-          stream.getTracks().forEach(track => {
-            pc.addTrack(track, stream);
+          .then((stream) => {
+            stream.getTracks().forEach(track => {
+              pc.addTrack(track, stream);
+            });
+            return navigator.mediaDevices.getUserMedia({video: true});
+          })
+          .then((stream) => {
+            stream.getTracks().forEach(track => {
+              pc.addTrack(track, stream);
+            });
+          })
+          .then(() => {
+            const localStreams = pc.getLocalStreams();
+            expect(localStreams.length).to.equal(2);
+            done();
           });
-          return navigator.mediaDevices.getUserMedia({video: true});
-        })
-        .then((stream) => {
-          stream.getTracks().forEach(track => {
-            pc.addTrack(track, stream);
-          });
-        })
-        .then(() => {
-          const localStreams = pc.getLocalStreams();
-          expect(localStreams.length).to.equal(2);
-          done();
-        });
       });
 
       it('addStream was called twice', (done) => {
         navigator.mediaDevices.getUserMedia({audio: true})
-        .then((stream) => {
-          pc.addStream(stream);
-          return navigator.mediaDevices.getUserMedia({video: true});
-        })
-        .then((stream) => {
-          pc.addStream(stream);
-        })
-        .then(() => {
-          const localStreams = pc.getLocalStreams();
-          expect(localStreams.length).to.equal(2);
-          done();
-        });
+          .then((stream) => {
+            pc.addStream(stream);
+            return navigator.mediaDevices.getUserMedia({video: true});
+          })
+          .then((stream) => {
+            pc.addStream(stream);
+          })
+          .then(() => {
+            const localStreams = pc.getLocalStreams();
+            expect(localStreams.length).to.equal(2);
+            done();
+          });
       });
     });
   });
@@ -3289,11 +3291,11 @@ describe('Edge shim', () => {
             'a=ssrc:1001 msid:stream1 track1\r\n' +
             'a=ssrc:1001 cname:some\r\n';
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          const remoteStreams = pc.getRemoteStreams();
-          expect(remoteStreams.length).to.equal(1);
-          done();
-        });
+          .then(() => {
+            const remoteStreams = pc.getRemoteStreams();
+            expect(remoteStreams.length).to.equal(1);
+            done();
+          });
       });
 
       it('with two tracks in a single stream', (done) => {
@@ -3304,11 +3306,11 @@ describe('Edge shim', () => {
             'a=ssrc:1001 msid:stream1 track2\r\n' +
             'a=ssrc:1001 cname:some\r\n';
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          const remoteStreams = pc.getRemoteStreams();
-          expect(remoteStreams.length).to.equal(1);
-          done();
-        });
+          .then(() => {
+            const remoteStreams = pc.getRemoteStreams();
+            expect(remoteStreams.length).to.equal(1);
+            done();
+          });
       });
     });
 
@@ -3321,11 +3323,11 @@ describe('Edge shim', () => {
             'a=ssrc:1001 msid:stream2 track1\r\n' +
             'a=ssrc:1001 cname:some\r\n';
         pc.setRemoteDescription({type: 'offer', sdp: sdp})
-        .then(() => {
-          const remoteStreams = pc.getRemoteStreams();
-          expect(remoteStreams.length).to.equal(2);
-          done();
-        });
+          .then(() => {
+            const remoteStreams = pc.getRemoteStreams();
+            expect(remoteStreams.length).to.equal(2);
+            done();
+          });
       });
     });
   });
@@ -3346,7 +3348,7 @@ describe('Edge shim', () => {
         pc.removeTrack('something');
       };
       expect(removeTrack).to.throw(/does not implement/)
-          .that.has.property('name').that.equals('TypeError');
+        .that.has.property('name').that.equals('TypeError');
     });
 
     it('throws an InvalidAccessError if the sender does not belong ' +
@@ -3355,7 +3357,7 @@ describe('Edge shim', () => {
         pc.removeTrack(new window.RTCRtpSender('audio'));
       };
       expect(removeTrack).to.throw(/not created by/)
-          .that.has.property('name').that.equals('InvalidAccessError');
+        .that.has.property('name').that.equals('InvalidAccessError');
     });
 
     it('throws an InvalidStateError if the peerconnection has been ' +
@@ -3365,60 +3367,14 @@ describe('Edge shim', () => {
         pc.removeTrack(new window.RTCRtpSender('audio'));
       };
       expect(removeTrack).to.throw()
-          .that.has.property('name').that.equals('InvalidStateError');
+        .that.has.property('name').that.equals('InvalidStateError');
     });
 
     it('makes the m-line recvonly', () => {
       return navigator.mediaDevices.getUserMedia({audio: true})
-      .then((stream) => {
-        const sender = pc.addTrack(stream.getAudioTracks()[0], stream);
-        pc.removeTrack(sender);
-        return pc.createOffer();
-      })
-      .then((offer) => {
-        const sections = SDPUtils.getMediaSections(offer.sdp);
-        expect(sections).to.have.length(1);
-        expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
-      });
-    });
-
-    describe('and getLocalStreams', () => {
-      it('removes local streams when the last sender has been removed', () => {
-        return navigator.mediaDevices.getUserMedia({audio: true})
         .then((stream) => {
           const sender = pc.addTrack(stream.getAudioTracks()[0], stream);
           pc.removeTrack(sender);
-          expect(pc.getLocalStreams()).to.have.length(0);
-        });
-      });
-
-      it('keeps the local stream if there is a transceiver to which the ' +
-         'stream belongs', () => {
-        return navigator.mediaDevices.getUserMedia({audio: true, video: true})
-        .then((stream) => {
-          pc.addTrack(stream.getAudioTracks()[0], stream);
-          const sender = pc.addTrack(stream.getVideoTracks()[0], stream);
-          pc.removeTrack(sender);
-          expect(pc.getLocalStreams()).to.have.length(1);
-        });
-      });
-    });
-
-    describe('legacy removeStream', () => {
-      it('removes the stream from getLocalStreams', () => {
-        return navigator.mediaDevices.getUserMedia({audio: true})
-        .then((stream) => {
-          pc.addStream(stream);
-          pc.removeStream(stream);
-          expect(pc.getLocalStreams()).to.have.length(0);
-        });
-      });
-
-      it('makes the m-line recvonly', () => {
-        return navigator.mediaDevices.getUserMedia({audio: true})
-        .then((stream) => {
-          pc.addStream(stream);
-          pc.removeStream(stream);
           return pc.createOffer();
         })
         .then((offer) => {
@@ -3426,6 +3382,52 @@ describe('Edge shim', () => {
           expect(sections).to.have.length(1);
           expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
         });
+    });
+
+    describe('and getLocalStreams', () => {
+      it('removes local streams when the last sender has been removed', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true})
+          .then((stream) => {
+            const sender = pc.addTrack(stream.getAudioTracks()[0], stream);
+            pc.removeTrack(sender);
+            expect(pc.getLocalStreams()).to.have.length(0);
+          });
+      });
+
+      it('keeps the local stream if there is a transceiver to which the ' +
+         'stream belongs', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true, video: true})
+          .then((stream) => {
+            pc.addTrack(stream.getAudioTracks()[0], stream);
+            const sender = pc.addTrack(stream.getVideoTracks()[0], stream);
+            pc.removeTrack(sender);
+            expect(pc.getLocalStreams()).to.have.length(1);
+          });
+      });
+    });
+
+    describe('legacy removeStream', () => {
+      it('removes the stream from getLocalStreams', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true})
+          .then((stream) => {
+            pc.addStream(stream);
+            pc.removeStream(stream);
+            expect(pc.getLocalStreams()).to.have.length(0);
+          });
+      });
+
+      it('makes the m-line recvonly', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true})
+          .then((stream) => {
+            pc.addStream(stream);
+            pc.removeStream(stream);
+            return pc.createOffer();
+          })
+          .then((offer) => {
+            const sections = SDPUtils.getMediaSections(offer.sdp);
+            expect(sections).to.have.length(1);
+            expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
+          });
       });
     });
   });
@@ -3442,51 +3444,51 @@ describe('Edge shim', () => {
     describe('throws an exception', () => {
       it('if the track has already been added', () => {
         return navigator.mediaDevices.getUserMedia({audio: true})
-        .then(stream => {
-          pc.addTrack(stream.getTracks()[0], stream);
-          const again = () => {
+          .then(stream => {
             pc.addTrack(stream.getTracks()[0], stream);
-          };
-          expect(again).to.throw(/already/)
-            .that.has.property('name').that.equals('InvalidAccessError');
-        });
+            const again = () => {
+              pc.addTrack(stream.getTracks()[0], stream);
+            };
+            expect(again).to.throw(/already/)
+              .that.has.property('name').that.equals('InvalidAccessError');
+          });
       });
 
       it('if the track has already been added via addStream', () => {
         return navigator.mediaDevices.getUserMedia({audio: true})
-        .then(stream => {
-          pc.addStream(stream);
-          const again = () => {
-            pc.addTrack(stream.getTracks()[0], stream);
-          };
-          expect(again).to.throw(/already/)
-            .that.has.property('name').that.equals('InvalidAccessError');
-        });
+          .then(stream => {
+            pc.addStream(stream);
+            const again = () => {
+              pc.addTrack(stream.getTracks()[0], stream);
+            };
+            expect(again).to.throw(/already/)
+              .that.has.property('name').that.equals('InvalidAccessError');
+          });
       });
 
       it('if addStream is called with a stream containing a track ' +
          'already added', () => {
         return navigator.mediaDevices.getUserMedia({audio: true, video: true})
-        .then(stream => {
-          pc.addTrack(stream.getTracks()[0], stream);
-          const again = () => {
-            pc.addStream(stream);
-          };
-          expect(again).to.throw(/already/)
-            .that.has.property('name').that.equals('InvalidAccessError');
-        });
+          .then(stream => {
+            pc.addTrack(stream.getTracks()[0], stream);
+            const again = () => {
+              pc.addStream(stream);
+            };
+            expect(again).to.throw(/already/)
+              .that.has.property('name').that.equals('InvalidAccessError');
+          });
       });
 
       it('if the peerconnection has been closed already', () => {
         return navigator.mediaDevices.getUserMedia({audio: true})
-        .then(stream => {
-          pc.close();
-          const afterClose = () => {
-            pc.addTrack(stream.getTracks()[0], stream);
-          };
-          expect(afterClose).to.throw(/closed/)
-            .that.has.property('name').that.equals('InvalidStateError');
-        });
+          .then(stream => {
+            pc.close();
+            const afterClose = () => {
+              pc.addTrack(stream.getTracks()[0], stream);
+            };
+            expect(afterClose).to.throw(/closed/)
+              .that.has.property('name').that.equals('InvalidStateError');
+          });
       });
     });
   });
@@ -3514,13 +3516,13 @@ describe('Edge shim', () => {
     beforeEach((done) => {
       pc = new RTCPeerConnection();
       navigator.mediaDevices.getUserMedia({audio: true})
-      .then((stream) => {
-        pc.addTrack(stream.getAudioTracks()[0], stream);
-        return pc.setRemoteDescription({type: 'offer', sdp});
-      })
-      .then(() => pc.createAnswer())
-      .then(answer => pc.setLocalDescription(answer))
-      .then(() => done());
+        .then((stream) => {
+          pc.addTrack(stream.getAudioTracks()[0], stream);
+          return pc.setRemoteDescription({type: 'offer', sdp});
+        })
+        .then(() => pc.createAnswer())
+        .then(answer => pc.setLocalDescription(answer))
+        .then(() => done());
     });
     afterEach(() => {
       pc.close();
@@ -3528,9 +3530,9 @@ describe('Edge shim', () => {
 
     it('returns a promise', (done) => {
       pc.getStats()
-      .then(() => {
-        done();
-      });
+        .then(() => {
+          done();
+        });
     });
 
     it('calls the legacy success callback', (done) => {
@@ -3541,11 +3543,11 @@ describe('Edge shim', () => {
 
     it('hyphenates stats', () => {
       return pc.getStats()
-      .then(stats => {
-        let hasOutbound = false;
-        stats.forEach(stat => hasOutbound |= (stat.type === 'outbound-rtp'));
-        expect(hasOutbound).to.equal(1); // |= changes to 1.
-      });
+        .then(stats => {
+          let hasOutbound = false;
+          stats.forEach(stat => hasOutbound |= (stat.type === 'outbound-rtp'));
+          expect(hasOutbound).to.equal(1); // |= changes to 1.
+        });
     });
 
     describe('with a track selector', () => {
@@ -3553,18 +3555,18 @@ describe('Edge shim', () => {
         const sender = pc.getSenders()[0];
         sinon.spy(sender, 'getStats');
         return pc.getStats(sender.track)
-        .then(() => {
-          expect(sender.getStats).to.have.been.calledOnce();
-        });
+          .then(() => {
+            expect(sender.getStats).to.have.been.calledOnce();
+          });
       });
 
       it('calls getStats on the receiver', () => {
         let receiver = pc.getReceivers()[0];
         sinon.spy(receiver, 'getStats');
         return pc.getStats(receiver.track)
-        .then(() => {
-          expect(receiver.getStats).to.have.been.calledOnce();
-        });
+          .then(() => {
+            expect(receiver.getStats).to.have.been.calledOnce();
+          });
       });
 
       it('throws an InvalidAccessError if the track is not assocіated', () => {
@@ -3572,7 +3574,7 @@ describe('Edge shim', () => {
           pc.getStats(new window.MediaStreamTrack());
         };
         expect(getStats).to.throw()
-            .that.has.property('name').that.equals('InvalidAccessError');
+          .that.has.property('name').that.equals('InvalidAccessError');
       });
     });
   });
@@ -3590,7 +3592,7 @@ describe('Edge shim', () => {
         }
       };
       pc.createOffer({offerToReceiveAudio: true})
-      .then(offer => pc.setLocalDescription(offer));
+        .then(offer => pc.setLocalDescription(offer));
     });
 
     it('the icecandidate event', (done) => {
@@ -3605,7 +3607,7 @@ describe('Edge shim', () => {
         }
       });
       pc.createOffer({offerToReceiveAudio: true})
-      .then(offer => pc.setLocalDescription(offer));
+        .then(offer => pc.setLocalDescription(offer));
     });
   });
 
@@ -3634,22 +3636,22 @@ describe('Edge shim', () => {
 
     describe('emits connectionstatechange when ice is', () => {
       ['checking', 'connected', 'completed', 'disconnected', 'failed']
-      .forEach(state => {
-        it(state, () => {
-          const receiver = pc.getReceivers()[0];
-          const dtlsTransport = receiver.transport;
-          const iceTransport = dtlsTransport.transport;
-          iceTransport.state = state;
+        .forEach(state => {
+          it(state, () => {
+            const receiver = pc.getReceivers()[0];
+            const dtlsTransport = receiver.transport;
+            const iceTransport = dtlsTransport.transport;
+            iceTransport.state = state;
 
-          const stub = sinon.stub();
-          pc.oniceconnectionstatechange = stub;
+            const stub = sinon.stub();
+            pc.oniceconnectionstatechange = stub;
 
-          iceTransport.dispatchEvent(new Event('icestatechange'));
+            iceTransport.dispatchEvent(new Event('icestatechange'));
 
-          expect(stub).to.have.been.calledOnce();
-          expect(pc.iceConnectionState).to.equal(state);
+            expect(stub).to.have.been.calledOnce();
+            expect(pc.iceConnectionState).to.equal(state);
+          });
         });
-      });
     });
   });
 
@@ -3762,10 +3764,10 @@ describe('Edge shim', () => {
     beforeEach((done) => {
       pc = new RTCPeerConnection();
       navigator.mediaDevices.getUserMedia({audio: true})
-      .then((stream) => {
-        audioTrack = stream.getAudioTracks()[0];
-        done();
-      });
+        .then((stream) => {
+          audioTrack = stream.getAudioTracks()[0];
+          done();
+        });
     });
 
     it('returns a sender whose transport is not set', () => {
@@ -3787,10 +3789,10 @@ describe('Edge shim', () => {
 
     it('does not create an offer with RTX', (done) => {
       pc.createOffer({offerToReceiveVideo: true})
-      .then((offer) => {
-        expect(offer.sdp).not.to.contain(' rtx/90000');
-        done();
-      });
+        .then((offer) => {
+          expect(offer.sdp).not.to.contain(' rtx/90000');
+          done();
+        });
     });
 
     it('does not answer with RTX', (done) => {
@@ -3815,17 +3817,17 @@ describe('Edge shim', () => {
           'a=ssrc:1002 msid:stream1 track1\r\n' +
           'a=ssrc:1002 cname:some\r\n';
       navigator.mediaDevices.getUserMedia({video: true})
-      .then((stream) => {
-        pc.addTrack(stream.getTracks()[0], stream);
-        return pc.setRemoteDescription({type: 'offer', sdp});
-      })
-      .then(() => {
-        return pc.createAnswer();
-      })
-      .then((answer) => {
-        expect(answer.sdp).not.to.contain(' rtx/90000');
-        done();
-      });
+        .then((stream) => {
+          pc.addTrack(stream.getTracks()[0], stream);
+          return pc.setRemoteDescription({type: 'offer', sdp});
+        })
+        .then(() => {
+          return pc.createAnswer();
+        })
+        .then((answer) => {
+          expect(answer.sdp).not.to.contain(' rtx/90000');
+          done();
+        });
     });
   });
 
@@ -3841,27 +3843,27 @@ describe('Edge shim', () => {
 
     it('clones the stream before addStream', () => {
       return navigator.mediaDevices.getUserMedia({video: true})
-      .then((stream) => {
-        stream.clone = sinon.stub().returns(stream);
-        pc.addStream(stream);
-        expect(stream.clone).to.have.been.calledOnce();
-      });
+        .then((stream) => {
+          stream.clone = sinon.stub().returns(stream);
+          pc.addStream(stream);
+          expect(stream.clone).to.have.been.calledOnce();
+        });
     });
 
     it('triggers the enabled event on the cloned track and sets enabled ' +
        'when triggered on the original track', () => {
       return navigator.mediaDevices.getUserMedia({video: true})
-      .then((originalStream) => {
-        const originalTrack = originalStream.getTracks()[0];
-        pc.addStream(originalStream);
+        .then((originalStream) => {
+          const originalTrack = originalStream.getTracks()[0];
+          pc.addStream(originalStream);
 
-        const clonedTrack = pc.getLocalStreams()[0].getTracks()[0];
-        const e = new Event('MediaStreamTrackEvent');
-        e.type = 'enabled';
-        e.enabled = false;
-        originalTrack.dispatchEvent(e);
-        expect(clonedTrack.enabled).to.equal(false);
-      });
+          const clonedTrack = pc.getLocalStreams()[0].getTracks()[0];
+          const e = new Event('MediaStreamTrackEvent');
+          e.type = 'enabled';
+          e.enabled = false;
+          originalTrack.dispatchEvent(e);
+          expect(clonedTrack.enabled).to.equal(false);
+        });
     });
   });
 });

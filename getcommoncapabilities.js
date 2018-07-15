@@ -42,14 +42,14 @@ module.exports = function(localCapabilities, remoteCapabilities) {
           // for RTX we need to find the local rtx that has a apt
           // which points to the same local codec as the remote one.
           if (!rtxCapabilityMatches(lCodec, rCodec,
-              localCapabilities.codecs, remoteCapabilities.codecs)) {
+            localCapabilities.codecs, remoteCapabilities.codecs)) {
             continue;
           }
         }
         rCodec = JSON.parse(JSON.stringify(rCodec)); // deepcopy
         // number of channels is the highest common number of channels
         rCodec.numChannels = Math.min(lCodec.numChannels,
-            rCodec.numChannels);
+          rCodec.numChannels);
         // push rCodec so we reply with offerer payload type
         commonCapabilities.codecs.push(rCodec);
 
@@ -72,7 +72,7 @@ module.exports = function(localCapabilities, remoteCapabilities) {
 
   localCapabilities.headerExtensions.forEach(function(lHeaderExtension) {
     for (var i = 0; i < remoteCapabilities.headerExtensions.length;
-         i++) {
+      i++) {
       var rHeaderExtension = remoteCapabilities.headerExtensions[i];
       if (lHeaderExtension.uri === rHeaderExtension.uri) {
         commonCapabilities.headerExtensions.push(rHeaderExtension);

@@ -35,8 +35,8 @@ module.exports = function(window) {
       if (this.iceGatherer) {
         return this.iceGatherer.getLocalParameters();
       }
-      throw(util.makeError('InvalidStateError',
-        'Can not call getLocalParameters in this state'));
+      throw util.makeError('InvalidStateError',
+        'Can not call getLocalParameters in this state');
     };
   }
 
@@ -73,7 +73,7 @@ module.exports = function(window) {
         if (eventName === 'gatheringstatechange') {
           if (this.iceGatherer) {
             return this.iceGatherer[method].apply(this.iceGatherer,
-                ['statechange', cb]);
+              ['statechange', cb]);
           }
         }
         return nativeMethod.apply(this, arguments);

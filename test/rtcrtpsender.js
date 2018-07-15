@@ -275,7 +275,7 @@ describe('RTCRtpSender wrapper', () => {
         return sender.dtmf;
       };
       expect(accessor).to.throw()
-          .that.has.property('name').that.equals('InvalidStateError');
+        .that.has.property('name').that.equals('InvalidStateError');
     });
 
     it('exists on audio senders', () => {
@@ -299,13 +299,13 @@ describe('RTCRtpSender wrapper', () => {
     it('calls the native senders getStats', (done) => {
       sender = new window.RTCRtpSender(track, transport);
       const nativeGetStats = sinon.stub(sender._sender, 'getStats')
-          .returns(Promise.resolve());
+        .returns(Promise.resolve());
 
       sender.getStats()
-      .then(() => {
-        expect(nativeGetStats).to.have.been.called();
-        done();
-      });
+        .then(() => {
+          expect(nativeGetStats).to.have.been.called();
+          done();
+        });
     });
 
     it('rejects with InvalidStateError when called without a ' +

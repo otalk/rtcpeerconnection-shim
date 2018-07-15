@@ -14,12 +14,12 @@ module.exports = function(transceiver, caps, type, stream, dtlsRole) {
 
   // Map ICE parameters (ufrag, pwd) to SDP.
   sdp += SDPUtils.writeIceParameters(
-      transceiver.iceGatherer.getLocalParameters());
+    transceiver.iceGatherer.getLocalParameters());
 
   // Map DTLS parameters to SDP.
   sdp += SDPUtils.writeDtlsParameters(
-      transceiver.dtlsTransport.getLocalParameters(),
-      type === 'offer' ? 'actpass' : dtlsRole);
+    transceiver.dtlsTransport.getLocalParameters(),
+    type === 'offer' ? 'actpass' : dtlsRole);
 
   sdp += 'a=mid:' + transceiver.mid + '\r\n';
 
