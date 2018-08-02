@@ -741,13 +741,30 @@ module.exports = function(window, edgeVersion) {
           ' in state ' + pc._signalingState));
     }
 
+    // TODO: catch invalid SDP.
+    var sections = SDPUtils.splitSections(description.sdp);
+    var sessionpart = sections.shift();
+
+    var usesMux = true;
+    sections.forEach(function(mediaSection, sdpMLineIndex) {
+      var kind = SDPUtils.getKind(mediaSection);
+      var rejected = SDPUtils.isRejected(mediaSection) &&
+          SDPUtils.matchPrefix(mediaSection, 'a=bundle-only').length === 0;
+      if (!(kind === 'audio' || kind === 'video') || rejected) {
+        return;
+      }
+      usesMux &= SDPUtils.matchPrefix(mediaSection, 'a=rtcp-mux').length > 0;
+    });
+    if (!usesMux) {
+      return Promise.reject(util.makeError('InvalidAccessError',
+        'rtcp-mux is required.'));
+    }
+
     var streams = {};
     pc._remoteStreams.forEach(function(stream) {
       streams[stream.id] = stream;
     });
     var receiverList = [];
-    var sections = SDPUtils.splitSections(description.sdp);
-    var sessionpart = sections.shift();
     var isIceLite = SDPUtils.matchPrefix(sessionpart,
       'a=ice-lite').length > 0;
     var usingBundle = SDPUtils.matchPrefix(sessionpart,
@@ -805,7 +822,6 @@ module.exports = function(window, edgeVersion) {
       var localCapabilities;
 
       var track;
-      // FIXME: ensure the mediaSection has rtcp-mux set.
       var remoteCapabilities = SDPUtils.parseRtpParameters(mediaSection);
       var remoteIceParameters;
       var remoteDtlsParameters;
