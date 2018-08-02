@@ -205,8 +205,9 @@ module.exports = function(window, edgeVersion) {
       if (!end) {
         // RTCIceCandidate doesn't have a component, needs to be added
         cand.component = 1;
-        // also the usernameFragment. TODO: update SDP to take both variants.
-        cand.ufrag = iceGatherer.getLocalParameters().usernameFragment;
+        // also the usernameFragment.
+        cand.usernameFragment =
+          iceGatherer.getLocalParameters().usernameFragment;
 
         var serializedCandidate = SDPUtils.writeCandidate(cand);
         event.candidate = Object.assign(event.candidate,
