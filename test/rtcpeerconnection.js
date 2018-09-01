@@ -1292,6 +1292,17 @@ describe('Edge shim', () => {
           expect(pc.onsignalingstatechange).to.have.been.calledOnce();
         });
     });
+
+    it('throws InvalidAccessError when the peerconnection is created ' +
+       'with rtcpMuxPolicy=require and there is no rtcp-mux', () => {
+      // muxpolicy=require is impliit in Edge.
+      const sdp = SDP_BOILERPLATE +
+          MINIMAL_AUDIO_MLINE.replace('a=rtcp-mux\r\n', '');
+      return pc.setRemoteDescription({type: 'offer', sdp})
+        .catch(e => {
+          expect(e.name).to.equal('InvalidAccessError');
+        });
+    });
   });
 
   describe('createOffer', () => {
