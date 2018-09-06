@@ -741,7 +741,14 @@ module.exports = function(window, edgeVersion) {
           ' in state ' + pc._signalingState));
     }
 
-    // TODO: catch invalid SDP.
+    // TODO: should be RTCError instead. But for that it would have to
+    // give a line. And we need an RTCError shim.
+    if (!SDPUtils.isValidSDP(description.sdp)) {
+      return Promise.reject(util.makeError('InvalidAccessError',
+        'My parser failed on this SDP, ' +
+        'which means that one of the two is buggy.'));
+    }
+
     var sections = SDPUtils.splitSections(description.sdp);
     var sessionpart = sections.shift();
 

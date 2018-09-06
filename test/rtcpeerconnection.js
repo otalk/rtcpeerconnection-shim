@@ -1303,6 +1303,13 @@ describe('Edge shim', () => {
           expect(e.name).to.equal('InvalidAccessError');
         });
     });
+
+    it('rejects invalid SDP with an InvalidAccessError', () => {
+      return pc.setRemoteDescription({type: 'offer', sdp: 'invalid'})
+        .catch(e => {
+          expect(e.name).to.equal('InvalidAccessError');
+        });
+    });
   });
 
   describe('createOffer', () => {
