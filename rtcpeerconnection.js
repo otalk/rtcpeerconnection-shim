@@ -1321,6 +1321,8 @@ module.exports = function(window, edgeVersion) {
         return t.mid;
       }).join(' ') + '\r\n';
     }
+    sdp += 'a=ice-options:trickle\r\n';
+
     var mediaSectionsInOffer = SDPUtils.getMediaSections(
       pc._remoteDescription.sdp).length;
     pc._transceivers.forEach(function(transceiver, sdpMLineIndex) {
