@@ -3849,6 +3849,58 @@ describe('Edge shim', () => {
     });
   });
 
+  describe('non-rtx answer to rtx', () => {
+    let pc;
+    beforeEach(() => {
+      pc = new RTCPeerConnection();
+    });
+    afterEach(() => {
+      pc.close();
+    });
+    it('does not call send() with RTX', () => {
+      let sender;
+      return navigator.mediaDevices.getUserMedia({video: true})
+        .then((stream) => {
+          sender = pc.addTrack(stream.getTracks()[0], stream);
+          sender.send = sinon.stub();
+        })
+        .then(() => pc.createOffer())
+        .then((offer) => pc.setLocalDescription(offer))
+        .then(() => {
+          const localMid = SDPUtils.getMid(
+            SDPUtils.splitSections(pc.localDescription.sdp)[1]);
+          const candidateString = 'a=candidate:702786350 1 udp 41819902 ' +
+              '8.8.8.8 60769 typ host';
+          const sdp = 'v=0\r\n' +
+              'o=- 0 0 IN IP4 127.0.0.1\r\n' +
+              's=nortxanswer\r\n' +
+              't=0 0\r\n' +
+              'm=video 1 UDP/TLS/RTP/SAVPF 100\r\n' +
+              'c=IN IP4 0.0.0.0\r\n' +
+              'a=rtpmap:100 VP8/90000\r\n' +
+              'a=rtcp:1 IN IP4 0.0.0.0\r\n' +
+              'a=rtcp-fb:100 nack\r\n' +
+              'a=rtcp-fb:100 nack pli\r\n' +
+              'a=rtcp-fb:100 goog-remb\r\n' +
+              'a=extmap:1 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time\r\n' +
+              'a=setup:active\r\n' +
+              'a=mid:' + localMid + '\r\n' +
+              'a=recvonly\r\n' +
+              'a=ice-ufrag:S5Zq\r\n' +
+              'a=ice-pwd:6E1muhzVwnphsbN6uokNU/\r\n' +
+              'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+              candidateString + '\r\n' +
+              'a=end-of-candidates\r\n' +
+              'a=rtcp-mux\r\n';
+          return pc.setRemoteDescription({type: 'answer', sdp});
+        })
+        .then(() => {
+          expect(sender.send).to.have.been.calledWith(
+            sinon.match.has('encodings', [{ssrc: 1001}]));
+        });
+    });
+  });
+
   describe('edge clonestream issue', () => {
     let pc;
     beforeEach(() => {
