@@ -209,7 +209,7 @@ module.exports = function(window) {
       name: 'h264',
       kind: 'video',
       clockRate: 90000,
-      preferredPayloadType: 100,
+      preferredPayloadType: 102,
       numChannels: 1,
       rtcpFeedback: [
         {type: 'nack', parameter: ''},
