@@ -1012,6 +1012,19 @@ module.exports = function(window, edgeVersion) {
           transceiver.rtpSender.setTransport(transceiver.dtlsTransport);
         }
 
+        // If the offer contained RTX but the answer did not,
+        // remove RTX from sendEncodingParameters.
+        var commonCapabilities = getCommonCapabilities(
+          transceiver.localCapabilities,
+          transceiver.remoteCapabilities);
+
+        var hasRtx = commonCapabilities.codecs.filter(function(c) {
+          return c.name.toLowerCase() === 'rtx';
+        }).length;
+        if (!hasRtx && transceiver.sendEncodingParameters[0].rtx) {
+          delete transceiver.sendEncodingParameters[0].rtx;
+        }
+
         pc._transceive(transceiver,
           direction === 'sendrecv' || direction === 'recvonly',
           direction === 'sendrecv' || direction === 'sendonly');
