@@ -426,7 +426,7 @@ describe('Edge shim', () => {
 
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       it('starts the ice transport', () => {
-        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             return pc.createAnswer();
           })
@@ -448,7 +448,7 @@ describe('Edge shim', () => {
       });
 
       it('starts the dtls transport', () => {
-        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             return pc.createAnswer();
           })
@@ -474,7 +474,7 @@ describe('Edge shim', () => {
       });
 
       it('sets the RTPSender transport', () => {
-        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             return navigator.mediaDevices.getUserMedia({audio: true});
           })
@@ -507,17 +507,17 @@ describe('Edge shim', () => {
 
     it('returns a promise', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      pc.setRemoteDescription({type: 'offer', sdp})
         .then(done);
     });
     it('calls the legacy success callback', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp: sdp}, done, () => {});
+      pc.setRemoteDescription({type: 'offer', sdp}, done, () => {});
     });
 
     it('changes the signalingState to have-remote-offer', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           expect(pc.signalingState = 'have-remote-offer');
           done();
@@ -527,7 +527,7 @@ describe('Edge shim', () => {
     it('calls the signalingstatechange event', () => {
       pc.onsignalingstatechange = sinon.stub();
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           expect(pc.onsignalingstatechange).to.have.been.calledOnce();
         });
@@ -536,7 +536,7 @@ describe('Edge shim', () => {
     it('throws an InvalidStateError when called after close', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.close();
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      pc.setRemoteDescription({type: 'offer', sdp})
         .catch((e) => {
           expect(e.name).to.equal('InvalidStateError');
           done();
@@ -547,7 +547,7 @@ describe('Edge shim', () => {
         '(callback)', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.close();
-      pc.setRemoteDescription({type: 'offer', sdp: sdp}, undefined, (e) => {
+      pc.setRemoteDescription({type: 'offer', sdp}, undefined, (e) => {
         expect(e.name).to.equal('InvalidStateError');
         done();
       });
@@ -556,7 +556,7 @@ describe('Edge shim', () => {
     it('throws a TypeError when called with an ' +
         'unsupported description type', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'invalid', sdp: sdp})
+      pc.setRemoteDescription({type: 'invalid', sdp})
         .catch((e) => {
           expect(e.name).to.equal('TypeError');
           done();
@@ -565,7 +565,7 @@ describe('Edge shim', () => {
 
     it('sets the remoteDescription', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp: sdp}, () => {
+      pc.setRemoteDescription({type: 'offer', sdp}, () => {
         expect(pc.remoteDescription.type).to.equal('offer');
         expect(pc.remoteDescription.sdp).to.equal(sdp);
         done();
@@ -583,7 +583,7 @@ describe('Edge shim', () => {
 
           done();
         };
-        pc.setRemoteDescription({type: 'offer', sdp: sdp});
+        pc.setRemoteDescription({type: 'offer', sdp});
       });
 
       it('emits a addstream event', (done) => {
@@ -594,7 +594,7 @@ describe('Edge shim', () => {
 
           done();
         });
-        pc.setRemoteDescription({type: 'offer', sdp: sdp});
+        pc.setRemoteDescription({type: 'offer', sdp});
       });
 
       it('triggers ontrack', (done) => {
@@ -605,7 +605,7 @@ describe('Edge shim', () => {
 
           done();
         };
-        pc.setRemoteDescription({type: 'offer', sdp: sdp});
+        pc.setRemoteDescription({type: 'offer', sdp});
       });
 
       it('emits a track event', (done) => {
@@ -616,14 +616,14 @@ describe('Edge shim', () => {
 
           done();
         });
-        pc.setRemoteDescription({type: 'offer', sdp: sdp});
+        pc.setRemoteDescription({type: 'offer', sdp});
       });
 
       it('triggers ontrack and track event before resolving', (done) => {
         var trackEvent = sinon.stub();
         pc.addEventListener('track', trackEvent);
         pc.ontrack = sinon.stub();
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             expect(trackEvent).to.have.been.calledWith();
             expect(pc.ontrack).to.have.been.calledWith();
@@ -673,7 +673,7 @@ describe('Edge shim', () => {
 
           done();
         };
-        pc.setRemoteDescription({type: 'offer', sdp: sdp});
+        pc.setRemoteDescription({type: 'offer', sdp});
       });
 
       it('triggers ontrack', (done) => {
@@ -684,7 +684,7 @@ describe('Edge shim', () => {
           expect(event.streams).to.have.lengthOf(1);
           done();
         };
-        pc.setRemoteDescription({type: 'offer', sdp: sdp});
+        pc.setRemoteDescription({type: 'offer', sdp});
       });
     });
 
@@ -716,7 +716,7 @@ describe('Edge shim', () => {
             done();
           }
         };
-        pc.setRemoteDescription({type: 'offer', sdp: sdp});
+        pc.setRemoteDescription({type: 'offer', sdp});
       });
 
       it('triggers ontrack twice', (done) => {
@@ -728,7 +728,7 @@ describe('Edge shim', () => {
             done();
           }
         };
-        pc.setRemoteDescription({type: 'offer', sdp: sdp});
+        pc.setRemoteDescription({type: 'offer', sdp});
       });
     });
 
@@ -761,7 +761,7 @@ describe('Edge shim', () => {
             // this has bundle so will set usingBundle. But two
             // transceivers and their ice/dtls transports exist
             // and the second one needs to be disposed.
-            return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+            return pc.setRemoteDescription({type: 'offer', sdp});
           })
           .then(() => pc.createAnswer())
           .then((answer) => pc.setLocalDescription(answer))
@@ -796,7 +796,7 @@ describe('Edge shim', () => {
       });
 
       it('calls RTCRtpReceiver.recv with encodings set to [{}]', () => {
-        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             const receiver = pc.getReceivers()[0];
             expect(receiver.receive).to.have.been.calledWith(
@@ -814,7 +814,7 @@ describe('Edge shim', () => {
           'a=ice-options:trickle', () => {
         const sdp = SDP_BOILERPLATE +
             'a=ice-options:trickle\r\n';
-        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             expect(pc.canTrickleIceCandidates).to.equal(true);
           });
@@ -823,7 +823,7 @@ describe('Edge shim', () => {
       it('to false when called with an offer that does not contain ' +
           'a=ice-options:trickle', () => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             expect(pc.canTrickleIceCandidates).to.equal(false);
           });
@@ -845,7 +845,7 @@ describe('Edge shim', () => {
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           candidateString + '\r\n';
       it('adds the candidates to the ice transport', () => {
-        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             const receiver = pc.getReceivers()[0];
             const iceTransport = receiver.transport.transport;
@@ -866,9 +866,9 @@ describe('Edge shim', () => {
 
       it('does not add the candidate in a subsequent offer ' +
           'again', () => {
-        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => { // call SRD again.
-            return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+            return pc.setRemoteDescription({type: 'offer', sdp});
           })
           .then(() => {
             const receiver = pc.getReceivers()[0];
@@ -879,7 +879,7 @@ describe('Edge shim', () => {
 
       it('does not add the candidates when they are also supplied ' +
           'with addIceCandidate', () => {
-        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             const receiver = pc.getReceivers()[0];
             const iceTransport = receiver.transport.transport;
@@ -1005,7 +1005,7 @@ describe('Edge shim', () => {
         it('triggers ontrack', (done) => {
           pc.onaddstream = sinon.stub();
           pc.ontrack = sinon.stub();
-          pc.setRemoteDescription({type: 'offer', sdp: sdp})
+          pc.setRemoteDescription({type: 'offer', sdp})
             .then(() => {
               return pc.setRemoteDescription({type: 'offer',
                 sdp: sdp + videoPart});
@@ -1031,7 +1031,7 @@ describe('Edge shim', () => {
               done();
             });
           };
-          pc.setRemoteDescription({type: 'offer', sdp: sdp})
+          pc.setRemoteDescription({type: 'offer', sdp})
             .then(() => {
               window.setTimeout(() => {
                 pc.setRemoteDescription({type: 'offer', sdp: sdp + videoPart});
@@ -1072,7 +1072,7 @@ describe('Edge shim', () => {
             sdp: sdp.replace('m=audio 9', 'm=audio 0')})
             .then(() => {
               return pc.setRemoteDescription({type: 'offer',
-                sdp: sdp});
+                sdp});
             })
             .then(() => {
               window.setTimeout(() => {
@@ -1097,7 +1097,7 @@ describe('Edge shim', () => {
       });
 
       it('set RtpReceiver is called with compound set to false', () => {
-        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             const receiver = pc.getReceivers()[0];
             expect(receiver.receive).to.have.been.calledWith(
@@ -1962,7 +1962,7 @@ describe('Edge shim', () => {
 
     it('returns a promise', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           return pc.createAnswer();
         })
@@ -1973,7 +1973,7 @@ describe('Edge shim', () => {
 
     it('calls the legacy success callback', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           return pc.createAnswer((answer) => {
             expect(answer.type).to.equal('answer');
@@ -1985,7 +1985,7 @@ describe('Edge shim', () => {
     it('calls the legacy success callback and resolves with ' +
        'no arguments', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           return pc.createAnswer((answer) => {});
         })
@@ -1997,7 +1997,7 @@ describe('Edge shim', () => {
 
     it('does not change the signaling state', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           expect(pc.signalingState).to.equal('have-remote-offer');
           return pc.createAnswer();
@@ -2010,7 +2010,7 @@ describe('Edge shim', () => {
 
     it('throws an InvalidStateError when called after close', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           pc.close();
           return pc.createAnswer();
@@ -2024,7 +2024,7 @@ describe('Edge shim', () => {
     it('throws an InvalidStateError when called after close ' +
         '(callback)', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           pc.close();
           return pc.createAnswer(undefined, (e) => {
@@ -2059,7 +2059,7 @@ describe('Edge shim', () => {
           'a=rtpmap:98 opus/48000/2\r\n' +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           return pc.createAnswer();
         })
@@ -2089,7 +2089,7 @@ describe('Edge shim', () => {
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n' +
           'a=extmap:5 ' + extmapUri + '\r\n';
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           return pc.createAnswer();
         })
@@ -2118,7 +2118,7 @@ describe('Edge shim', () => {
           'a=rtcp-fb:102 goog-remb\r\n' +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           return pc.createAnswer();
         })
@@ -2157,7 +2157,7 @@ describe('Edge shim', () => {
           'a=mid:data\r\n' +
           'a=sctpmap:5000 webrtc-datachannel 1024\r\n';
       it('in setRemoteDescription', (done) => {
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             return pc.createAnswer();
           })
@@ -2170,7 +2170,7 @@ describe('Edge shim', () => {
       });
 
       it('ignores candidates', () => {
-        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             return pc.addIceCandidate({sdpMid: 'data', candidate:
               'candidate:702786350 1 udp 41819902 8.8.8.8 60769 typ host'});
@@ -2178,7 +2178,7 @@ describe('Edge shim', () => {
       });
 
       it('ignores end-of-candidates', () => {
-        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => pc.addIceCandidate());
       });
     });
@@ -2242,7 +2242,7 @@ describe('Edge shim', () => {
           navigator.mediaDevices.getUserMedia({audio: true})
             .then((stream) => {
               pc.addStream(stream);
-              return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+              return pc.setRemoteDescription({type: 'offer', sdp});
             })
             .then(() => {
               return pc.createAnswer();
@@ -2276,7 +2276,7 @@ describe('Edge shim', () => {
 
       describe('with a local track added after setRemoteDescription', () => {
         it('responds with a sendrecv answer to sendrecv', (done) => {
-          pc.setRemoteDescription({type: 'offer', sdp: sdp})
+          pc.setRemoteDescription({type: 'offer', sdp})
             .then(() => {
               return navigator.mediaDevices.getUserMedia({audio: true});
             })
@@ -2312,7 +2312,7 @@ describe('Edge shim', () => {
 
       describe('with no local track', () => {
         it('responds with a recvonly answer to sendrecv', (done) => {
-          pc.setRemoteDescription({type: 'offer', sdp: sdp})
+          pc.setRemoteDescription({type: 'offer', sdp})
             .then(() => {
               return pc.createAnswer();
             })
@@ -2470,7 +2470,7 @@ describe('Edge shim', () => {
         navigator.mediaDevices.getUserMedia({video: true})
           .then((stream) => {
             pc.addStream(stream);
-            return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+            return pc.setRemoteDescription({type: 'offer', sdp});
           })
           .then(() => {
             return pc.createAnswer();
@@ -2487,7 +2487,7 @@ describe('Edge shim', () => {
         const sdp = SDP_BOILERPLATE +
             MINIMAL_AUDIO_MLINE.replace('m=audio 9', 'm=audio 0') +
             MINIMAL_AUDIO_MLINE.replace('m=audio 9', 'm=video 0');
-        return pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             return pc.createAnswer();
           })
@@ -2521,7 +2521,7 @@ describe('Edge shim', () => {
           'a=ssrc:1001 cname:some\r\n';
 
       it('set if the offer contained rtcp-rsize', (done) => {
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             return pc.createAnswer();
           })
@@ -2613,7 +2613,7 @@ describe('Edge shim', () => {
     describe('session version handling', () => {
       it('starts at version 0', (done) => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             return pc.createAnswer();
           })
@@ -2627,7 +2627,7 @@ describe('Edge shim', () => {
 
       it('subsequent calls increase the session version', (done) => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             return pc.createAnswer();
           })
@@ -2648,7 +2648,7 @@ describe('Edge shim', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       it('does not try to add a video m-line', (done) => {
         // https://github.com/webrtc/adapter/issues/638
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             return navigator.mediaDevices.getUserMedia({audio: true,
               video: true});
@@ -3185,7 +3185,7 @@ describe('Edge shim', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
-      pc.setRemoteDescription({type: 'offer', sdp: sdp})
+      pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           const receivers = pc.getReceivers();
           expect(receivers.length).to.equal(1);
@@ -3308,7 +3308,7 @@ describe('Edge shim', () => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
             'a=ssrc:1001 msid:stream1 track1\r\n' +
             'a=ssrc:1001 cname:some\r\n';
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             const remoteStreams = pc.getRemoteStreams();
             expect(remoteStreams.length).to.equal(1);
@@ -3323,7 +3323,7 @@ describe('Edge shim', () => {
             MINIMAL_AUDIO_MLINE +
             'a=ssrc:1001 msid:stream1 track2\r\n' +
             'a=ssrc:1001 cname:some\r\n';
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             const remoteStreams = pc.getRemoteStreams();
             expect(remoteStreams.length).to.equal(1);
@@ -3340,7 +3340,7 @@ describe('Edge shim', () => {
             MINIMAL_AUDIO_MLINE +
             'a=ssrc:1001 msid:stream2 track1\r\n' +
             'a=ssrc:1001 cname:some\r\n';
-        pc.setRemoteDescription({type: 'offer', sdp: sdp})
+        pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             const remoteStreams = pc.getRemoteStreams();
             expect(remoteStreams.length).to.equal(2);
