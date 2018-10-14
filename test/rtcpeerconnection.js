@@ -201,9 +201,7 @@ describe('Edge shim', () => {
 
     it('returns a promise', (done) => {
       pc.createOffer({offerToReceiveAudio: true})
-        .then((offer) => {
-          return pc.setLocalDescription(offer);
-        })
+        .then((offer) => pc.setLocalDescription(offer))
         .then(done);
     });
 
@@ -249,9 +247,7 @@ describe('Edge shim', () => {
 
     it('changes the signalingState to have-local-offer', () => {
       return pc.createOffer({offerToReceiveAudio: true})
-        .then((offer) => {
-          return pc.setLocalDescription(offer);
-        })
+        .then((offer) => pc.setLocalDescription(offer))
         .then(() => {
           expect(pc.localDescription.type).to.equal('offer');
           expect(pc.signalingState = 'have-local-offer');
@@ -261,9 +257,7 @@ describe('Edge shim', () => {
     it('calls the signalingstatechange event', () => {
       pc.onsignalingstatechange = sinon.stub();
       return pc.createOffer({offerToReceiveAudio: true})
-        .then((offer) => {
-          return pc.setLocalDescription(offer);
-        })
+        .then((offer) => pc.setLocalDescription(offer))
         .then(() => {
           expect(pc.onsignalingstatechange).to.have.been.calledOnce();
         });
@@ -273,9 +267,7 @@ describe('Edge shim', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       it('an offer in signalingState have-remote-offer', (done) => {
         pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.setLocalDescription({type: 'offer'});
-          })
+          .then(() => pc.setLocalDescription({type: 'offer'}))
           .catch((e) => {
             expect(e.name).to.equal('InvalidStateError');
             done();
@@ -284,12 +276,8 @@ describe('Edge shim', () => {
 
       it('an answer in signalingState have-local-offer', (done) => {
         pc.createOffer({offerToReceiveAudio: true})
-          .then((offer) => {
-            return pc.setLocalDescription(offer);
-          })
-          .then(() => {
-            return pc.setLocalDescription({type: 'answer'});
-          })
+          .then((offer) => pc.setLocalDescription(offer))
+          .then(() => pc.setLocalDescription({type: 'answer'}))
           .catch((e) => {
             expect(e.name).to.equal('InvalidStateError');
             done();
@@ -427,12 +415,8 @@ describe('Edge shim', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       it('starts the ice transport', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            return pc.setLocalDescription(answer);
-          })
+          .then(() => pc.createAnswer())
+          .then((answer) => pc.setLocalDescription(answer))
           .then(() => {
             const receiver = pc.getReceivers()[0];
             const iceTransport = receiver.transport.transport;
@@ -449,12 +433,8 @@ describe('Edge shim', () => {
 
       it('starts the dtls transport', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            return pc.setLocalDescription(answer);
-          })
+          .then(() => pc.createAnswer())
+          .then((answer) => pc.setLocalDescription(answer))
           .then(() => {
             const receiver = pc.getReceivers()[0];
             const dtlsTransport = receiver.transport;
@@ -475,16 +455,12 @@ describe('Edge shim', () => {
 
       it('sets the RTPSender transport', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return navigator.mediaDevices.getUserMedia({audio: true});
-          })
+          .then(() => navigator.mediaDevices.getUserMedia({audio: true}))
           .then((stream) => {
             pc.addTrack(stream.getAudioTracks()[0], stream);
             return pc.createAnswer();
           })
-          .then((answer) => {
-            return pc.setLocalDescription(answer);
-          })
+          .then((answer) => pc.setLocalDescription(answer))
           .then(() => {
             const sender = pc.getSenders()[0];
             expect(sender.setTransport).to.have.been.calledOnce();
@@ -563,13 +539,13 @@ describe('Edge shim', () => {
         });
     });
 
-    it('sets the remoteDescription', (done) => {
+    it('sets the remoteDescription', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp}, () => {
-        expect(pc.remoteDescription.type).to.equal('offer');
-        expect(pc.remoteDescription.sdp).to.equal(sdp);
-        done();
-      });
+      return pc.setRemoteDescription({type: 'offer', sdp})
+        .then(() => {
+          expect(pc.remoteDescription.type).to.equal('offer');
+          expect(pc.remoteDescription.sdp).to.equal(sdp);
+        });
     });
 
     describe('when called with an offer containing a track', () => {
@@ -843,11 +819,11 @@ describe('Edge shim', () => {
         window.RTCIceTransport.prototype.addRemoteCandidate.restore();
         window.RTCIceTransport.prototype.setRemoteCandidates.restore();
       });
-      const candidateString = 'a=candidate:702786350 1 udp 41819902 ' +
+      const candidate = 'a=candidate:702786350 1 udp 41819902 ' +
           '8.8.8.8 60769 typ host';
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
-          candidateString + '\r\n';
+          candidate + '\r\n';
       it('adds the candidates to the ice transport', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
@@ -888,8 +864,7 @@ describe('Edge shim', () => {
             const receiver = pc.getReceivers()[0];
             const iceTransport = receiver.transport.transport;
 
-            pc.addIceCandidate({sdpMid: 'audio1', sdpMLineIndex: 0,
-              candidate: candidateString})
+            pc.addIceCandidate({sdpMid: 'audio1', sdpMLineIndex: 0, candidate})
               .catch(() => {});
             expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
           });
@@ -920,13 +895,13 @@ describe('Edge shim', () => {
         window.RTCIceTransport.prototype.setRemoteCandidates.restore();
       });
 
-      const candidateString = 'a=candidate:702786350 1 udp 41819902 ' +
+      const candidate = 'a=candidate:702786350 1 udp 41819902 ' +
           '8.8.8.8 60769 typ host';
 
       it('adds the candidates to the ice transport', () => {
         return pc2.createAnswer()
           .then((answer) => {
-            answer.sdp += candidateString;
+            answer.sdp += candidate + '\r\n';
             return pc.setRemoteDescription(answer);
           })
           .then(() => {
@@ -939,7 +914,7 @@ describe('Edge shim', () => {
       it('interprets end-of-candidates', () => {
         return pc2.createAnswer()
           .then((answer) => {
-            answer.sdp += candidateString + '\r\n';
+            answer.sdp += candidate + '\r\n';
             answer.sdp += 'a=end-of-candidates\r\n';
             return pc.setRemoteDescription(answer);
           })
@@ -961,12 +936,8 @@ describe('Edge shim', () => {
 
       it('an offer in signalingState have-local-offer', () => {
         return pc.createOffer({offerToReceiveAudio: true})
-          .then((offer) => {
-            return pc.setLocalDescription(offer);
-          })
-          .then(() => {
-            return pc.setRemoteDescription({type: 'offer'});
-          })
+          .then((offer) => pc.setLocalDescription(offer))
+          .then(() => pc.setRemoteDescription({type: 'offer'}))
           .catch((e) => {
             expect(e.name).to.equal('InvalidStateError');
           });
@@ -1137,12 +1108,8 @@ describe('Edge shim', () => {
 
       it('set the ice role to controlling', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            return pc.setLocalDescription(answer);
-          })
+          .then(() => pc.createAnswer())
+          .then((answer) => pc.setLocalDescription(answer))
           .then(() => {
             const receiver = pc.getReceivers()[0];
             const dtlsTransport = receiver.transport;
@@ -1158,12 +1125,8 @@ describe('Edge shim', () => {
 
       it('sets the dtls role to server', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            return pc.setLocalDescription(answer);
-          })
+          .then(() => pc.createAnswer())
+          .then((answer) => pc.setLocalDescription(answer))
           .then(() => {
             const receiver = pc.getReceivers()[0];
             const dtlsTransport = receiver.transport;
@@ -1356,42 +1319,38 @@ describe('Edge shim', () => {
         });
     });
 
-    it('does not change the signalingState', (done) => {
-      pc.createOffer({offerToReceiveAudio: true})
+    it('does not change the signalingState', () => {
+      return pc.createOffer({offerToReceiveAudio: true})
         .then(() => {
           expect(pc.signalingState).to.equal('stable');
-          done();
         });
     });
 
-    it('uses pooled RTCIceGatherer', (done) => {
+    it('uses pooled RTCIceGatherer', () => {
       pc.close();
       pc = new RTCPeerConnection({iceCandidatePoolSize: 1});
-      pc.createOffer({offerToReceiveAudio: true})
+      return pc.createOffer({offerToReceiveAudio: true})
         .then(() => {
           expect(pc._iceGatherers).to.have.length(0);
-          done();
         });
     });
 
-    it('does not start emitting ICE candidates', (done) => {
+    it('does not start emitting ICE candidates', () => {
       let clock = sinon.useFakeTimers();
       pc.onicecandidate = sinon.stub();
-      pc.createOffer({offerToReceiveAudio: true})
+      return pc.createOffer({offerToReceiveAudio: true})
         .then(() => {
           clock.tick(500);
           expect(pc.onicecandidate).not.to.have.been.calledWith();
           clock.restore();
-          done();
         });
     });
 
-    it('throws an InvalidStateError when called after close', (done) => {
+    it('throws an InvalidStateError when called after close', () => {
       pc.close();
-      pc.createOffer({offerToReceiveAudio: true})
+      return pc.createOffer({offerToReceiveAudio: true})
         .catch((e) => {
           expect(e.name).to.equal('InvalidStateError');
-          done();
         });
     });
 
@@ -1839,9 +1798,7 @@ describe('Edge shim', () => {
             });
         };
         pc.createOffer({offerToReceiveAudio: true})
-          .then((offer) => {
-            return pc.setLocalDescription(offer);
-          })
+          .then((offer) => pc.setLocalDescription(offer))
           .then(() => {
             window.setTimeout(() => {
               clock.tick(500);
@@ -1850,9 +1807,9 @@ describe('Edge shim', () => {
           });
       });
 
-      it('retains the session id', (done) => {
+      it('retains the session id', () => {
         let sessionId;
-        pc.createOffer({offerToReceiveAudio: true})
+        return pc.createOffer({offerToReceiveAudio: true})
           .then((offer) => {
             sessionId = SDPUtils.matchPrefix(offer.sdp, 'o=')[0].split(' ')[1];
             return pc.createOffer({offerToReceiveAudio: true});
@@ -1860,13 +1817,12 @@ describe('Edge shim', () => {
           .then((offer) => {
             let sid = SDPUtils.matchPrefix(offer.sdp, 'o=')[0].split(' ')[1];
             expect(sid).to.equal(sessionId);
-            done();
           });
       });
 
-      it('increments the session version', (done) => {
+      it('increments the session version', () => {
         let version;
-        pc.createOffer({offerToReceiveAudio: true})
+        return pc.createOffer({offerToReceiveAudio: true})
           .then((offer) => {
             version = SDPUtils.matchPrefix(offer.sdp, 'o=')[0]
               .split(' ')[2] >>> 0;
@@ -1876,7 +1832,6 @@ describe('Edge shim', () => {
             let ver = SDPUtils.matchPrefix(offer.sdp, 'o=')[0]
               .split(' ')[2] >>> 0;
             expect(ver).to.equal(version + 1);
-            done();
           });
       });
     });
@@ -1973,9 +1928,7 @@ describe('Edge shim', () => {
     it('returns a promise', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
+        .then(() => pc.createAnswer())
         .then(() => {
           done();
         });
@@ -1993,41 +1946,38 @@ describe('Edge shim', () => {
     });
 
     it('calls the legacy success callback and resolves with ' +
-       'no arguments', (done) => {
+       'no arguments', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp})
+      return pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           return pc.createAnswer((answer) => {});
         })
         .then((shouldBeUndefined) => {
           expect(shouldBeUndefined).to.equal(undefined);
-          done();
         });
     });
 
-    it('does not change the signaling state', (done) => {
+    it('does not change the signaling state', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp})
+      return pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           expect(pc.signalingState).to.equal('have-remote-offer');
           return pc.createAnswer();
         })
         .then(() => {
           expect(pc.signalingState).to.equal('have-remote-offer');
-          done();
         });
     });
 
-    it('throws an InvalidStateError when called after close', (done) => {
+    it('throws an InvalidStateError when called after close', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer', sdp})
+      return pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           pc.close();
           return pc.createAnswer();
         })
         .catch((e) => {
           expect(e.name).to.equal('InvalidStateError');
-          done();
         });
     });
 
@@ -2045,15 +1995,14 @@ describe('Edge shim', () => {
     });
 
     it('throws an InvalidStateError when called in the wrong ' +
-        'signalingstate', (done) => {
-      pc.createAnswer()
+        'signalingstate', () => {
+      return pc.createAnswer()
         .catch((e) => {
           expect(e.name).to.equal('InvalidStateError');
-          done();
         });
     });
 
-    it('uses payload types of offerer', (done) => {
+    it('uses payload types of offerer', () => {
       const sdp = SDP_BOILERPLATE +
           'm=audio 9 UDP/TLS/RTP/SAVPF 98\r\n' +
           'c=IN IP4 0.0.0.0\r\n' +
@@ -2069,17 +2018,14 @@ describe('Edge shim', () => {
           'a=rtpmap:98 opus/48000/2\r\n' +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
-      pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
+      return pc.setRemoteDescription({type: 'offer', sdp})
+        .then(() => pc.createAnswer())
         .then((answer) => {
           expect(answer.sdp).to.contain('a=rtpmap:98 opus');
-          done();
         });
     });
 
-    it('uses the extmap ids of the offerer', (done) => {
+    it('uses the extmap ids of the offerer', () => {
       const extmapUri = 'http://www.webrtc.org/experiments/' +
           'rtp-hdrext/abs-send-time';
       const sdp = SDP_BOILERPLATE +
@@ -2099,17 +2045,14 @@ describe('Edge shim', () => {
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n' +
           'a=extmap:5 ' + extmapUri + '\r\n';
-      pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
+      return pc.setRemoteDescription({type: 'offer', sdp})
+        .then(() => pc.createAnswer())
         .then((answer) => {
           expect(answer.sdp).to.contain('a=extmap:5 ' + extmapUri + '\r\n');
-          done();
         });
     });
 
-    it('returns the intersection of rtcp feedback', (done) => {
+    it('returns the intersection of rtcp feedback', () => {
       const sdp = SDP_BOILERPLATE +
           'm=video 9 UDP/TLS/RTP/SAVPF 102\r\n' +
           'c=IN IP4 0.0.0.0\r\n' +
@@ -2128,31 +2071,25 @@ describe('Edge shim', () => {
           'a=rtcp-fb:102 goog-remb\r\n' +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
-      pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
+      return pc.setRemoteDescription({type: 'offer', sdp})
+        .then(() => pc.createAnswer())
         .then((answer) => {
           expect(answer.sdp).to.contain('a=rtcp-fb:102 nack\r\n');
           expect(answer.sdp).to.contain('a=rtcp-fb:102 nack pli\r\n');
           expect(answer.sdp).not.to.contain('a=rtcp-fb:102 goog-remb\r\n');
-          done();
         });
     });
 
-    it('rejects a m-line when there are no compatible codecs', (done) => {
+    it('rejects a m-line when there are no compatible codecs', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      pc.setRemoteDescription({type: 'offer',
+      return pc.setRemoteDescription({type: 'offer',
         sdp: sdp.replace('opus', 'nosuchcodec')
       })
-        .then(() => {
-          return pc.createAnswer();
-        })
+        .then(() => pc.createAnswer())
         .then((answer) => {
           const sections = SDPUtils.getMediaSections(answer.sdp);
           const rejected = SDPUtils.isRejected(sections[0]);
           expect(rejected).to.equal(true);
-          done();
         });
     });
 
@@ -2166,16 +2103,13 @@ describe('Edge shim', () => {
           'a=setup:actpass\r\n' +
           'a=mid:data\r\n' +
           'a=sctpmap:5000 webrtc-datachannel 1024\r\n';
-      it('in setRemoteDescription', (done) => {
-        pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
+      it('in setRemoteDescription', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp})
+          .then(() => pc.createAnswer())
           .then((answer) => {
             const sections = SDPUtils.getMediaSections(answer.sdp);
             const rejected = SDPUtils.isRejected(sections[0]);
             expect(rejected).to.equal(true);
-            done();
           });
       });
 
@@ -2245,60 +2179,52 @@ describe('Edge shim', () => {
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
 
-      it('responds with a inactive answer to inactive', (done) => {
-        pc.setRemoteDescription({type: 'offer', sdp: sdp.replace('sendrecv',
-          'recvonly')})
-          .then(() => {
-            return pc.createAnswer();
-          })
+      it('responds with a inactive answer to inactive', () => {
+        return pc.setRemoteDescription({type: 'offer',
+          sdp: sdp.replace('sendrecv', 'recvonly')
+        })
+          .then(() => pc.createAnswer())
           .then((answer) => {
             const sections = SDPUtils.getMediaSections(answer.sdp);
             expect(sections.length).to.equal(1);
             expect(SDPUtils.getDirection(sections[0])).to.equal('inactive');
-            done();
           });
       });
 
       describe('with a local track', () => {
-        it('responds with a sendrecv answer to sendrecv', (done) => {
-          navigator.mediaDevices.getUserMedia({audio: true})
+        it('responds with a sendrecv answer to sendrecv', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true})
             .then((stream) => {
               pc.addStream(stream);
               return pc.setRemoteDescription({type: 'offer', sdp});
             })
-            .then(() => {
-              return pc.createAnswer();
-            })
+            .then(() => pc.createAnswer())
             .then((answer) => {
               const sections = SDPUtils.getMediaSections(answer.sdp);
               expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
-              done();
             });
         });
 
-        it('responds with a sendonly answer to recvonly', (done) => {
-          navigator.mediaDevices.getUserMedia({audio: true})
+        it('responds with a sendonly answer to recvonly', () => {
+          return navigator.mediaDevices.getUserMedia({audio: true})
             .then((stream) => {
               pc.addStream(stream);
               return pc.setRemoteDescription({type: 'offer',
                 sdp: sdp.replace('sendrecv', 'recvonly')
               });
             })
-            .then(() => {
-              return pc.createAnswer();
-            })
+            .then(() => pc.createAnswer())
             .then((answer) => {
               const sections = SDPUtils.getMediaSections(answer.sdp);
               expect(sections.length).to.equal(1);
               expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
-              done();
             });
         });
       });
 
       describe('with a local track added after setRemoteDescription', () => {
-        it('responds with a sendrecv answer to sendrecv', (done) => {
-          pc.setRemoteDescription({type: 'offer', sdp})
+        it('responds with a sendrecv answer to sendrecv', () => {
+          return pc.setRemoteDescription({type: 'offer', sdp})
             .then(() => {
               return navigator.mediaDevices.getUserMedia({audio: true});
             })
@@ -2309,16 +2235,14 @@ describe('Edge shim', () => {
             .then((answer) => {
               const sections = SDPUtils.getMediaSections(answer.sdp);
               expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
-              done();
             });
         });
 
-        it('responds with a sendonly answer to recvonly', (done) => {
-          pc.setRemoteDescription({type: 'offer', sdp: sdp.replace('sendrecv',
-            'recvonly')})
-            .then(() => {
-              return navigator.mediaDevices.getUserMedia({audio: true});
-            })
+        it('responds with a sendonly answer to recvonly', () => {
+          return pc.setRemoteDescription({type: 'offer',
+            sdp: sdp.replace('sendrecv', 'recvonly')
+          })
+            .then(() => navigator.mediaDevices.getUserMedia({audio: true}))
             .then((stream) => {
               pc.addStream(stream);
               return pc.createAnswer();
@@ -2327,34 +2251,28 @@ describe('Edge shim', () => {
               const sections = SDPUtils.getMediaSections(answer.sdp);
               expect(sections.length).to.equal(1);
               expect(SDPUtils.getDirection(sections[0])).to.equal('sendonly');
-              done();
             });
         });
       });
 
       describe('with no local track', () => {
-        it('responds with a recvonly answer to sendrecv', (done) => {
-          pc.setRemoteDescription({type: 'offer', sdp})
-            .then(() => {
-              return pc.createAnswer();
-            })
+        it('responds with a recvonly answer to sendrecv', () => {
+          return pc.setRemoteDescription({type: 'offer', sdp})
+            .then(() => pc.createAnswer())
             .then((answer) => {
               const sections = SDPUtils.getMediaSections(answer.sdp);
               expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
-              done();
             });
         });
 
-        it('responds with a inactive answer to recvonly', (done) => {
-          pc.setRemoteDescription({type: 'offer', sdp: sdp.replace('sendrecv',
-            'recvonly')})
-            .then(() => {
-              return pc.createAnswer();
-            })
+        it('responds with a inactive answer to recvonly', () => {
+          return pc.setRemoteDescription({type: 'offer',
+            sdp: sdp.replace('sendrecv', 'recvonly')
+          })
+            .then(() => pc.createAnswer())
             .then((answer) => {
               const sections = SDPUtils.getMediaSections(answer.sdp);
               expect(SDPUtils.getDirection(sections[0])).to.equal('inactive');
-              done();
             });
         });
       });
@@ -2382,65 +2300,56 @@ describe('Edge shim', () => {
           'a=ssrc:1002 msid:stream1 track1\r\n' +
           'a=ssrc:1002 cname:some\r\n';
       describe('with no local track', () => {
-        it('creates an answer with RTX but no FID group', (done) => {
-          pc.setRemoteDescription({type: 'offer', sdp: sdp + remoteRTX})
-            .then(() => {
-              return pc.createAnswer();
-            })
+        it('creates an answer with RTX but no FID group', () => {
+          return pc.setRemoteDescription({type: 'offer', sdp: sdp + remoteRTX})
+            .then(() => pc.createAnswer())
             .then((answer) => {
               expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
               expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
               expect(answer.sdp).to.contain('a=fmtp:103 apt=102');
               expect(answer.sdp).not.to.contain('a=ssrc-group:FID ');
-              done();
             });
         });
       });
 
       describe('with a local track', () => {
-        it('creates an answer with RTX', (done) => {
-          navigator.mediaDevices.getUserMedia({video: true})
+        it('creates an answer with RTX', () => {
+          return navigator.mediaDevices.getUserMedia({video: true})
             .then((stream) => {
               pc.addStream(stream);
               return pc.setRemoteDescription({type: 'offer',
                 sdp: sdp + remoteRTX});
             })
-            .then(() => {
-              return pc.createAnswer();
-            })
+            .then(() => pc.createAnswer())
             .then((answer) => {
               expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
               expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
               expect(answer.sdp).to.contain('a=fmtp:103 apt=102');
               expect(answer.sdp).to.contain('a=ssrc-group:FID ');
-              done();
             });
         });
       });
 
       describe('with no remote track', () => {
-        it('creates an answer with RTX', (done) => {
-          navigator.mediaDevices.getUserMedia({video: true})
+        it('creates an answer with RTX', () => {
+          return navigator.mediaDevices.getUserMedia({video: true})
             .then((stream) => {
               pc.addStream(stream);
               return pc.setRemoteDescription({type: 'offer',
                 sdp: sdp.replace('sendrecv', 'recvonly')});
             })
-            .then(() => {
-              return pc.createAnswer();
-            })
+            .then(() => pc.createAnswer())
             .then((answer) => {
               expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
               expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
               expect(answer.sdp).to.contain('a=fmtp:103 apt=102');
               expect(answer.sdp).to.contain('a=ssrc-group:FID ');
-              done();
             });
         });
       });
 
       describe('but mismatching video codec', () => {
-        it('creates an answer without RTX', (done) => {
+        it('creates an answer without RTX', () => {
           const modifiedSDP = SDP_BOILERPLATE +
               'm=video 9 UDP/TLS/RTP/SAVPF 101 102 103\r\n' +
               'c=IN IP4 0.0.0.0\r\n' +
@@ -2457,16 +2366,13 @@ describe('Edge shim', () => {
               'a=rtpmap:102 no-such-codec/90000\r\n' +
               'a=rtpmap:103 rtx/90000\r\n' +
               'a=fmtp:103 apt=102\r\n';
-          pc.setRemoteDescription({type: 'offer', sdp: modifiedSDP})
-            .then(() => {
-              return pc.createAnswer();
-            })
+          return pc.setRemoteDescription({type: 'offer', sdp: modifiedSDP})
+            .then(() => pc.createAnswer())
             .then((answer) => {
               expect(answer.sdp).to.contain('a=rtpmap:101 vp8');
               expect(answer.sdp).not.to.contain('a=rtpmap:102 no-such-codec');
               expect(answer.sdp).not.to.contain('a=rtpmap:103 rtx');
               expect(answer.sdp).not.to.contain('a=fmtp:103 apt=102');
-              done();
             });
         });
       });
@@ -2488,18 +2394,15 @@ describe('Edge shim', () => {
           'a=rtpmap:102 vp8/90000\r\n' +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
-      it('there is no ssrc-group in the answer', (done) => {
-        navigator.mediaDevices.getUserMedia({video: true})
+      it('there is no ssrc-group in the answer', () => {
+        return navigator.mediaDevices.getUserMedia({video: true})
           .then((stream) => {
             pc.addStream(stream);
             return pc.setRemoteDescription({type: 'offer', sdp});
           })
-          .then(() => {
-            return pc.createAnswer();
-          })
+          .then(() => pc.createAnswer())
           .then((answer) => {
             expect(answer.sdp).not.to.contain('a=ssrc-group:FID ');
-            done();
           });
       });
     });
@@ -2511,9 +2414,7 @@ describe('Edge shim', () => {
             MINIMAL_AUDIO_MLINE.replace('m=audio 9', 'm=video 0')
               .replace('audio1', 'audio2');
         return pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
+          .then(() => pc.createAnswer())
           .then((answer) => {
             const sections = SDPUtils.getMediaSections(answer.sdp);
             expect(sections.length).to.equal(2);
@@ -2543,26 +2444,20 @@ describe('Edge shim', () => {
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
 
-      it('set if the offer contained rtcp-rsize', (done) => {
-        pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
+      it('set if the offer contained rtcp-rsize', () => {
+        return pc.setRemoteDescription({type: 'offer', sdp})
+          .then(() => pc.createAnswer())
           .then((answer) => {
             expect(answer.sdp).to.contain('a=rtcp-rsize\r\n');
-            done();
           });
       });
 
-      it('not set if the offer did not contain rtcp-rsize', (done) => {
-        pc.setRemoteDescription({type: 'offer',
+      it('not set if the offer did not contain rtcp-rsize', () => {
+        return pc.setRemoteDescription({type: 'offer',
           sdp: sdp.replace('a=rtcp-rsize\r\n', '')})
-          .then(() => {
-            return pc.createAnswer();
-          })
+          .then(() => pc.createAnswer())
           .then((answer) => {
             expect(answer.sdp).not.to.contain('a=rtcp-rsize\r\n');
-            done();
           });
       });
     });
@@ -2618,12 +2513,8 @@ describe('Edge shim', () => {
           }
         };
         pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            return pc.setLocalDescription(answer);
-          })
+          .then(() => pc.createAnswer())
+          .then((answer) => pc.setLocalDescription(answer))
           .then(() => {
             window.setTimeout(() => {
               clock.tick(500);
@@ -2634,34 +2525,26 @@ describe('Edge shim', () => {
     });
 
     describe('session version handling', () => {
-      it('starts at version 0', (done) => {
+      it('starts at version 0', () => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-        pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
+        return pc.setRemoteDescription({type: 'offer', sdp})
+          .then(() => pc.createAnswer())
           .then((answer) => {
             let ver = SDPUtils.matchPrefix(answer.sdp, 'o=')[0]
               .split(' ')[2] >>> 0;
             expect(ver).to.equal(0);
-            done();
           });
       });
 
-      it('subsequent calls increase the session version', (done) => {
+      it('subsequent calls increase the session version', () => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-        pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then(() => {
-            return pc.createAnswer();
-          })
+        return pc.setRemoteDescription({type: 'offer', sdp})
+          .then(() => pc.createAnswer())
+          .then(() => pc.createAnswer())
           .then((answer) => {
             let ver = SDPUtils.matchPrefix(answer.sdp, 'o=')[0]
               .split(' ')[2] >>> 0;
             expect(ver).to.equal(1);
-            done();
           });
       });
     });
@@ -2669,13 +2552,11 @@ describe('Edge shim', () => {
     describe('with an audio-only offer adding an ' +
         'audio/video stream', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-      it('does not try to add a video m-line', (done) => {
+      it('does not try to add a video m-line', () => {
         // https://github.com/webrtc/adapter/issues/638
-        pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return navigator.mediaDevices.getUserMedia({audio: true,
-              video: true});
-          })
+        return pc.setRemoteDescription({type: 'offer', sdp})
+          .then(() => navigator.mediaDevices.getUserMedia({audio: true,
+            video: true}))
           .then((stream) => {
             pc.addStream(stream);
             return pc.createAnswer();
@@ -2683,7 +2564,6 @@ describe('Edge shim', () => {
           .then((answer) => {
             const sections = SDPUtils.getMediaSections(answer.sdp);
             expect(sections.length).to.equal(1);
-            done();
           });
       });
     });
@@ -2767,59 +2647,55 @@ describe('Edge shim', () => {
         'a=ssrc:1001 cname:some\r\n' +
         'a=ssrc:1002 msid:stream1 track1\r\n' +
         'a=ssrc:1002 cname:some\r\n';
-    const candidateString = 'candidate:702786350 1 udp 41819902 8.8.8.8 ' +
+    const candidate = 'candidate:702786350 1 udp 41819902 8.8.8.8 ' +
         '60769 typ host';
     const sdpMid = 'audio1';
 
     let pc;
-    beforeEach((done) => {
+    beforeEach(() => {
       pc = new RTCPeerConnection();
-      pc.setRemoteDescription({type: 'offer', sdp})
-        .then(done);
+      return pc.setRemoteDescription({type: 'offer', sdp});
     });
     afterEach(() => {
       pc.close();
     });
 
     it('returns a promise', (done) => {
-      pc.addIceCandidate({sdpMid, candidate: candidateString})
+      pc.addIceCandidate({sdpMid, candidate})
         .then(done);
     });
 
     it('calls the legacy success callback', (done) => {
-      pc.addIceCandidate({sdpMid, candidate: candidateString}, done, () => {});
+      pc.addIceCandidate({sdpMid, candidate}, done, () => {});
     });
 
     it('throws a TypeError when called without sdpMid or ' +
-        'sdpMLineIndex', (done) => {
-      pc.addIceCandidate({})
+        'sdpMLineIndex', () => {
+      return pc.addIceCandidate({})
         .catch((e) => {
           expect(e.name).to.equal('TypeError');
-          done();
         });
     });
 
     describe('rejects with an OperationError when called with an', () => {
-      it('invalid sdpMid', (done) => {
-        pc.addIceCandidate({sdpMid: 'invalid', candidate: candidateString})
+      it('invalid sdpMid', () => {
+        return pc.addIceCandidate({sdpMid: 'invalid', candidate})
           .catch((e) => {
             expect(e.name).to.equal('OperationError');
-            done();
           });
       });
 
-      it('invalid sdpMLineIndex', (done) => {
-        pc.addIceCandidate({sdpMLineIndex: 99, candidate: candidateString})
+      it('invalid sdpMLineIndex', () => {
+        return pc.addIceCandidate({sdpMLineIndex: 99, candidate})
           .catch((e) => {
             expect(e.name).to.equal('OperationError');
-            done();
           });
       });
     });
 
     it('calls the legacy error callback when called with an ' +
         'invalid sdpMLineIndex', (done) => {
-      pc.addIceCandidate({sdpMLineIndex: 99, candidate: candidateString},
+      pc.addIceCandidate({sdpMLineIndex: 99, candidate},
         () => {},
         (e) => {
           expect(e.name).to.equal('OperationError');
@@ -2829,110 +2705,101 @@ describe('Edge shim', () => {
     });
 
     it('rejects with an InvalidStateError when called before ' +
-       'setRemoteDescription', (done) => {
+       'setRemoteDescription', () => {
       pc = new RTCPeerConnection(); // recreate pc.
-      pc.addIceCandidate({sdpMid, candidate: candidateString})
+      return pc.addIceCandidate({sdpMid, candidate})
         .catch((e) => {
           expect(e.name).to.equal('InvalidStateError');
-          done();
         });
     });
 
-    it('adds the candidate to the remote description', (done) => {
-      pc.addIceCandidate({sdpMid, candidate: candidateString})
+    it('adds the candidate to the remote description', () => {
+      return pc.addIceCandidate({sdpMid, candidate})
         .then(() => {
           const sections = SDPUtils.getMediaSections(pc.remoteDescription.sdp);
           expect(SDPUtils.matchPrefix(sections[0],
             'a=candidate:')).to.have.length(1);
-          done();
         });
     });
 
     it('adds the candidate to the remote description ' +
-       'with legacy a=candidate syntax', (done) => {
-      pc.addIceCandidate({sdpMid, candidate: 'a=' + candidateString})
+       'with legacy a=candidate syntax', () => {
+      return pc.addIceCandidate({sdpMid, candidate: 'a=' + candidate})
         .then(() => {
           expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
             'a=candidate:')).to.have.length(1);
-          done();
         });
     });
 
-    it('adds end-of-candidates when receiving the null candidate', (done) => {
+    it('adds end-of-candidates when receiving the null candidate', () => {
       // add at least one valid candidate.
-      pc.addIceCandidate({sdpMid, candidate: candidateString});
-      pc.addIceCandidate()
+      pc.addIceCandidate({sdpMid, candidate});
+      return pc.addIceCandidate()
         .then(() => {
           expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
             'a=end-of-candidates')).to.have.length(1);
-          done();
         });
     });
 
-    it('adds end-of-candidates when receiving the \'\' candidate', (done) => {
+    it('adds end-of-candidates when receiving the \'\' candidate', () => {
       // add at least one valid candidate.
-      pc.addIceCandidate({sdpMid, candidate: candidateString});
-      pc.addIceCandidate({sdpMid, candidate: ''})
+      pc.addIceCandidate({sdpMid, candidate});
+      return pc.addIceCandidate({sdpMid, candidate: ''})
         .then(() => {
           expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
             'a=end-of-candidates')).to.have.length(1);
-          done();
         });
     });
 
     describe('ignores candidates with', () => {
-      it('component=2 and does not add them to the sdp', (done) => {
+      it('component=2 and does not add them to the sdp', () => {
         const iceTransport = pc.getReceivers()[0].transport.transport;
         sinon.spy(iceTransport, 'addRemoteCandidate');
-        pc.addIceCandidate({sdpMid, candidate:
-          candidateString.replace('1 udp', '2 udp')})
+        return pc.addIceCandidate({sdpMid, candidate:
+          candidate.replace('1 udp', '2 udp')})
           .then(() => {
             expect(iceTransport.addRemoteCandidate)
               .not.to.have.been.calledWith();
             expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
               'a=candidate:')).to.have.length(0);
-            done();
           });
       });
 
-      it('non-master mid but does add them to the sdp', (done) => {
+      it('non-master mid but does add them to the sdp', () => {
         const iceTransport = pc.getReceivers()[0].transport.transport;
         sinon.spy(iceTransport, 'addRemoteCandidate');
-        pc.addIceCandidate({sdpMid: 'video1', candidate: candidateString})
+        return pc.addIceCandidate({sdpMid: 'video1', candidate})
           .then(() => {
             expect(iceTransport.addRemoteCandidate)
               .not.to.have.been.calledWith();
             expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
               'a=candidate:')).to.have.length(1);
-            done();
           });
       });
 
-      it('port 0 and does not add them to the sdp', (done) => {
+      it('port 0 and does not add them to the sdp', () => {
         const iceTransport = pc.getReceivers()[0].transport.transport;
         sinon.spy(iceTransport, 'addRemoteCandidate');
-        pc.addIceCandidate({sdpMid, candidate:
-          candidateString.replace('60769', '0').replace('udp', 'tcp')})
+        return pc.addIceCandidate({sdpMid, candidate:
+          candidate.replace('60769', '0').replace('udp', 'tcp')})
           .then(() => {
             expect(iceTransport.addRemoteCandidate)
               .not.to.have.been.calledWith();
             expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
               'a=candidate:')).to.have.length(0);
-            done();
           });
       });
 
-      it('port 9 and does not add them to the sdp', (done) => {
+      it('port 9 and does not add them to the sdp', () => {
         const iceTransport = pc.getReceivers()[0].transport.transport;
         sinon.spy(iceTransport, 'addRemoteCandidate');
-        pc.addIceCandidate({sdpMid, candidate:
-          candidateString.replace('60769', '9').replace('udp', 'tcp')})
+        return pc.addIceCandidate({sdpMid, candidate:
+          candidate.replace('60769', '9').replace('udp', 'tcp')})
           .then(() => {
             expect(iceTransport.addRemoteCandidate)
               .not.to.have.been.calledWith();
             expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
               'a=candidate:')).to.have.length(0);
-            done();
           });
       });
     });
@@ -3026,8 +2893,8 @@ describe('Edge shim', () => {
     });
 
     it('completes a full createOffer-SLD-SRD-createAnswer-SLD-SRD ' +
-       'cycle', (done) => {
-      navigator.mediaDevices.getUserMedia({audio: true, video: true})
+       'cycle', () => {
+      return navigator.mediaDevices.getUserMedia({audio: true, video: true})
         .then((stream) => {
           pc1.addStream(stream);
           pc2.addStream(stream);
@@ -3041,7 +2908,6 @@ describe('Edge shim', () => {
         .then(() => {
           expect(pc1.signalingState).to.equal('stable');
           expect(pc2.signalingState).to.equal('stable');
-          done();
         });
     });
   });
@@ -3058,8 +2924,8 @@ describe('Edge shim', () => {
       pc2.close();
     });
 
-    it('retains SSRCs', (done) => {
-      navigator.mediaDevices.getUserMedia({audio: true, video: true})
+    it('retains SSRCs', () => {
+      return navigator.mediaDevices.getUserMedia({audio: true, video: true})
         .then((stream) => {
           pc1.addStream(stream);
           return pc1.createOffer();
@@ -3085,12 +2951,11 @@ describe('Edge shim', () => {
           expect(audioEncodingParameters[0].ssrc).to.equal(2002);
           expect(videoEncodingParameters[0].ssrc).to.equal(4004);
           expect(videoEncodingParameters[0].rtx.ssrc).to.equal(4005);
-          done();
         });
     });
 
-    it('sets the right DTLS role in the answer', (done) => {
-      navigator.mediaDevices.getUserMedia({audio: true, video: true})
+    it('sets the right DTLS role in the answer', () => {
+      return navigator.mediaDevices.getUserMedia({audio: true, video: true})
         .then((stream) => {
           pc1.addStream(stream);
           return pc1.createOffer();
@@ -3114,29 +2979,26 @@ describe('Edge shim', () => {
           expect(sections.length).to.equal(2);
           const setupLine = SDPUtils.matchPrefix(sections[0], 'a=setup:');
           expect(setupLine[0]).to.equal('a=setup:passive');
-          done();
         });
     });
   });
 
   describe('bundlePolicy', () => {
-    it('creates an offer with a=group:BUNDLE by default', (done) => {
+    it('creates an offer with a=group:BUNDLE by default', () => {
       const pc = new RTCPeerConnection();
 
-      pc.createOffer({offerToReceiveAudio: true})
+      return pc.createOffer({offerToReceiveAudio: true})
         .then((offer) => {
           expect(offer.sdp).to.contain('a=group:BUNDLE');
-          done();
         });
     });
 
-    it('max-compat creates an offer without a=group:BUNDLE', (done) => {
+    it('max-compat creates an offer without a=group:BUNDLE', () => {
       const pc = new RTCPeerConnection({bundlePolicy: 'max-compat'});
 
-      pc.createOffer({offerToReceiveAudio: true})
+      return pc.createOffer({offerToReceiveAudio: true})
         .then((offer) => {
           expect(offer.sdp).not.to.contain('a=group:BUNDLE');
-          done();
         });
     });
 
@@ -3166,9 +3028,7 @@ describe('Edge shim', () => {
         };
 
         pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true})
-          .then((offer) => {
-            return pc.setLocalDescription(offer);
-          })
+          .then((offer) => pc.setLocalDescription(offer))
           .then(() => {
             window.setTimeout(() => {
               clock.tick(500);
@@ -3194,9 +3054,7 @@ describe('Edge shim', () => {
         };
 
         pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true})
-          .then((offer) => {
-            return pc.setLocalDescription(offer);
-          })
+          .then((offer) => pc.setLocalDescription(offer))
           .then(() => {
             window.setTimeout(() => {
               clock.tick(500);
@@ -3220,15 +3078,14 @@ describe('Edge shim', () => {
       expect(pc.getSenders().length).to.equal(0);
     });
 
-    it('returns a single element after addTrack', (done) => {
-      navigator.mediaDevices.getUserMedia({audio: true})
+    it('returns a single element after addTrack', () => {
+      return navigator.mediaDevices.getUserMedia({audio: true})
         .then((stream) => {
           const track = stream.getTracks()[0];
           pc.addTrack(track, stream);
           const senders = pc.getSenders();
           expect(senders.length).to.equal(1);
           expect(senders[0].track).to.equal(track);
-          done();
         });
     });
   });
@@ -3246,16 +3103,15 @@ describe('Edge shim', () => {
       expect(pc.getReceivers().length).to.equal(0);
     });
 
-    it('returns a single element after SRD with a track', (done) => {
+    it('returns a single element after SRD with a track', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
-      pc.setRemoteDescription({type: 'offer', sdp})
+      return pc.setRemoteDescription({type: 'offer', sdp})
         .then(() => {
           const receivers = pc.getReceivers();
           expect(receivers.length).to.equal(1);
           expect(receivers[0].track.kind).to.equal('audio');
-          done();
         });
     });
   });
@@ -3274,8 +3130,8 @@ describe('Edge shim', () => {
     });
 
     describe('returns a single element after', () => {
-      it('addTrack was called once', (done) => {
-        navigator.mediaDevices.getUserMedia({audio: true})
+      it('addTrack was called once', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true})
           .then((stream) => {
             const track = stream.getTracks()[0];
             pc.addTrack(track, stream);
@@ -3283,13 +3139,12 @@ describe('Edge shim', () => {
           .then(() => {
             const localStreams = pc.getLocalStreams();
             expect(localStreams.length).to.equal(1);
-            done();
           });
       });
 
       it('addTrack was called twice with tracks from the ' +
-         'same stream', (done) => {
-        navigator.mediaDevices.getUserMedia({audio: true, video: true})
+         'same stream', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true, video: true})
           .then((stream) => {
             stream.getTracks().forEach(track => {
               pc.addTrack(track, stream);
@@ -3298,27 +3153,25 @@ describe('Edge shim', () => {
           .then(() => {
             const localStreams = pc.getLocalStreams();
             expect(localStreams.length).to.equal(1);
-            done();
           });
       });
 
-      it('addStream was called', (done) => {
-        navigator.mediaDevices.getUserMedia({audio: true, video: true})
+      it('addStream was called', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true, video: true})
           .then((stream) => {
             pc.addStream(stream);
           })
           .then(() => {
             const localStreams = pc.getLocalStreams();
             expect(localStreams.length).to.equal(1);
-            done();
           });
       });
     });
 
     describe('returns two streams after', () => {
       it('addTrack was called twice with tracks from two ' +
-         'streams', (done) => {
-        navigator.mediaDevices.getUserMedia({audio: true})
+         'streams', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true})
           .then((stream) => {
             stream.getTracks().forEach(track => {
               pc.addTrack(track, stream);
@@ -3333,12 +3186,11 @@ describe('Edge shim', () => {
           .then(() => {
             const localStreams = pc.getLocalStreams();
             expect(localStreams.length).to.equal(2);
-            done();
           });
       });
 
-      it('addStream was called twice', (done) => {
-        navigator.mediaDevices.getUserMedia({audio: true})
+      it('addStream was called twice', () => {
+        return navigator.mediaDevices.getUserMedia({audio: true})
           .then((stream) => {
             pc.addStream(stream);
             return navigator.mediaDevices.getUserMedia({video: true});
@@ -3349,7 +3201,6 @@ describe('Edge shim', () => {
           .then(() => {
             const localStreams = pc.getLocalStreams();
             expect(localStreams.length).to.equal(2);
-            done();
           });
       });
     });
@@ -3369,47 +3220,44 @@ describe('Edge shim', () => {
     });
 
     describe('returns a single element after SRD', () => {
-      it('with a single track', (done) => {
+      it('with a single track', () => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
             'a=ssrc:1001 msid:stream1 track1\r\n' +
             'a=ssrc:1001 cname:some\r\n';
-        pc.setRemoteDescription({type: 'offer', sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             const remoteStreams = pc.getRemoteStreams();
             expect(remoteStreams.length).to.equal(1);
-            done();
           });
       });
 
-      it('with two tracks in a single stream', (done) => {
+      it('with two tracks in a single stream', () => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
             'a=ssrc:1001 msid:stream1 track1\r\n' +
             'a=ssrc:1001 cname:some\r\n' +
             MINIMAL_AUDIO_MLINE.replace('audio1', 'audio2') +
             'a=ssrc:1001 msid:stream1 track2\r\n' +
             'a=ssrc:1001 cname:some\r\n';
-        pc.setRemoteDescription({type: 'offer', sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             const remoteStreams = pc.getRemoteStreams();
             expect(remoteStreams.length).to.equal(1);
-            done();
           });
       });
     });
 
     describe('returns two streams after SRD', () => {
-      it('with two tracks in two streams', (done) => {
+      it('with two tracks in two streams', () => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
             'a=ssrc:1001 msid:stream1 track1\r\n' +
             'a=ssrc:1001 cname:some\r\n' +
             MINIMAL_AUDIO_MLINE.replace('audio1', 'audio2') +
             'a=ssrc:1001 msid:stream2 track1\r\n' +
             'a=ssrc:1001 cname:some\r\n';
-        pc.setRemoteDescription({type: 'offer', sdp})
+        return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             const remoteStreams = pc.getRemoteStreams();
             expect(remoteStreams.length).to.equal(2);
-            done();
           });
       });
     });
@@ -3596,16 +3444,15 @@ describe('Edge shim', () => {
   describe('getStats', () => {
     let pc;
     const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
-    beforeEach((done) => {
+    beforeEach(() => {
       pc = new RTCPeerConnection();
-      navigator.mediaDevices.getUserMedia({audio: true})
+      return navigator.mediaDevices.getUserMedia({audio: true})
         .then((stream) => {
           pc.addTrack(stream.getAudioTracks()[0], stream);
           return pc.setRemoteDescription({type: 'offer', sdp});
         })
         .then(() => pc.createAnswer())
-        .then(answer => pc.setLocalDescription(answer))
-        .then(() => done());
+        .then(answer => pc.setLocalDescription(answer));
     });
     afterEach(() => {
       pc.close();
@@ -3844,12 +3691,11 @@ describe('Edge shim', () => {
   describe('addTrack', () => {
     let pc;
     let audioTrack;
-    beforeEach((done) => {
+    beforeEach(() => {
       pc = new RTCPeerConnection();
-      navigator.mediaDevices.getUserMedia({audio: true})
+      return navigator.mediaDevices.getUserMedia({audio: true})
         .then((stream) => {
           audioTrack = stream.getAudioTracks()[0];
-          done();
         });
     });
 
@@ -3870,15 +3716,14 @@ describe('Edge shim', () => {
       pc.close();
     });
 
-    it('does not create an offer with RTX', (done) => {
-      pc.createOffer({offerToReceiveVideo: true})
+    it('does not create an offer with RTX', () => {
+      return pc.createOffer({offerToReceiveVideo: true})
         .then((offer) => {
           expect(offer.sdp).not.to.contain(' rtx/90000');
-          done();
         });
     });
 
-    it('does not answer with RTX', (done) => {
+    it('does not answer with RTX', () => {
       const sdp = SDP_BOILERPLATE +
           'm=video 9 UDP/TLS/RTP/SAVPF 102 103\r\n' +
           'c=IN IP4 0.0.0.0\r\n' +
@@ -3899,17 +3744,14 @@ describe('Edge shim', () => {
           'a=ssrc:1001 cname:some\r\n' +
           'a=ssrc:1002 msid:stream1 track1\r\n' +
           'a=ssrc:1002 cname:some\r\n';
-      navigator.mediaDevices.getUserMedia({video: true})
+      return navigator.mediaDevices.getUserMedia({video: true})
         .then((stream) => {
           pc.addTrack(stream.getTracks()[0], stream);
           return pc.setRemoteDescription({type: 'offer', sdp});
         })
-        .then(() => {
-          return pc.createAnswer();
-        })
+        .then(() => pc.createAnswer())
         .then((answer) => {
           expect(answer.sdp).not.to.contain(' rtx/90000');
-          done();
         });
     });
   });
@@ -3934,7 +3776,7 @@ describe('Edge shim', () => {
         .then(() => {
           const localMid = SDPUtils.getMid(
             SDPUtils.splitSections(pc.localDescription.sdp)[1]);
-          const candidateString = 'a=candidate:702786350 1 udp 41819902 ' +
+          const candidate = 'a=candidate:702786350 1 udp 41819902 ' +
               '8.8.8.8 60769 typ host';
           const sdp = 'v=0\r\n' +
               'o=- 0 0 IN IP4 127.0.0.1\r\n' +
@@ -3954,7 +3796,7 @@ describe('Edge shim', () => {
               'a=ice-ufrag:S5Zq\r\n' +
               'a=ice-pwd:6E1muhzVwnphsbN6uokNU/\r\n' +
               'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
-              candidateString + '\r\n' +
+              candidate + '\r\n' +
               'a=end-of-candidates\r\n' +
               'a=rtcp-mux\r\n';
           return pc.setRemoteDescription({type: 'answer', sdp});
