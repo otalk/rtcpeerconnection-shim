@@ -653,7 +653,10 @@ module.exports = function(window, edgeVersion) {
       sessionpart = sections.shift();
       sections.forEach(function(mediaSection, sdpMLineIndex) {
         var caps = SDPUtils.parseRtpParameters(mediaSection);
-        pc._transceivers[sdpMLineIndex].localCapabilities = caps;
+        var transceiver = pc._transceivers.find(function(t) {
+          return t.mid === SDPUtils.getMid(mediaSection);
+        });
+        transceiver.localCapabilities = caps;
       });
 
       pc._transceivers.forEach(function(transceiver, sdpMLineIndex) {
@@ -665,7 +668,9 @@ module.exports = function(window, edgeVersion) {
       var isIceLite = SDPUtils.matchPrefix(sessionpart,
         'a=ice-lite').length > 0;
       sections.forEach(function(mediaSection, sdpMLineIndex) {
-        var transceiver = pc._transceivers[sdpMLineIndex];
+        var transceiver = pc._transceivers.find(function(t) {
+          return t.mid === SDPUtils.getMid(mediaSection);
+        });
         var iceGatherer = transceiver.iceGatherer;
         var iceTransport = transceiver.iceTransport;
         var dtlsTransport = transceiver.dtlsTransport;
@@ -799,27 +804,52 @@ module.exports = function(window, edgeVersion) {
 
       var mid = SDPUtils.getMid(mediaSection) || SDPUtils.generateIdentifier();
 
+      var transceiver;
+      transceiver = pc._transceivers.find(function(t) {
+        return t.mid === mid;
+      });
+      if (!transceiver) {
+        // TODO: only do this for offers? If in an answer reject.
+        //
+        // Search for a matching transceiver with the same kind that is not
+        // associated yet.
+        transceiver = pc._transceivers.find(function(t) {
+          return t.kind === kind && t.sdpMLineIndex === undefined;
+        });
+        if (transceiver) {
+          transceiver.sdpMLineIndex = sdpMLineIndex;
+        }
+      }
+
       // Reject datachannels which are not implemented yet.
       if (rejected || (kind === 'application' && (protocol === 'DTLS/SCTP' ||
           protocol === 'UDP/DTLS/SCTP'))) {
         // TODO: this is dangerous in the case where a non-rejected m-line
         //     becomes rejected.
-        pc._transceivers[sdpMLineIndex] = {
-          mid: mid,
-          kind: kind,
-          protocol: protocol,
-          rejected: true
-        };
+        if (!transceiver) {
+          pc._transceivers.push({
+            mid: mid,
+            kind: kind,
+            protocol: protocol,
+            sdpMLineIndex: sdpMLineIndex,
+            rejected: true
+          });
+        }
         return;
       }
 
-      if (!rejected && pc._transceivers[sdpMLineIndex] &&
-          pc._transceivers[sdpMLineIndex].rejected) {
+      if (!rejected && (transceiver && transceiver.rejected)) {
         // recycle a rejected transceiver.
-        pc._transceivers[sdpMLineIndex] = pc._createTransceiver(kind, true);
+        pc._transceivers[transceiver.sdpMLineIndex] =
+          pc._createTransceiver(kind, true);
+        transceiver = pc._transceivers[sdpMLineIndex];
+        transceiver.sdpMLineIndex = sdpMLineIndex;
+      }
+      if (description.type === 'offer' && !transceiver) {
+        transceiver = pc._createTransceiver(kind);
+        transceiver.sdpMLineIndex = sdpMLineIndex;
       }
 
-      var transceiver;
       var iceGatherer;
       var iceTransport;
       var dtlsTransport;
@@ -856,32 +886,28 @@ module.exports = function(window, edgeVersion) {
 
       // Check if we can use BUNDLE and dispose transports.
       if ((description.type === 'offer' || description.type === 'answer') &&
-          !rejected && usingBundle && sdpMLineIndex > 0 &&
-          pc._transceivers[sdpMLineIndex]) {
-        pc._disposeIceAndDtlsTransports(sdpMLineIndex);
-        pc._transceivers[sdpMLineIndex].iceGatherer =
-            pc._transceivers[0].iceGatherer;
-        pc._transceivers[sdpMLineIndex].iceTransport =
-            pc._transceivers[0].iceTransport;
-        pc._transceivers[sdpMLineIndex].dtlsTransport =
-            pc._transceivers[0].dtlsTransport;
-        if (pc._transceivers[sdpMLineIndex].rtpSender) {
-          pc._transceivers[sdpMLineIndex].rtpSender.setTransport(
+          !rejected && usingBundle && sdpMLineIndex > 0 && transceiver) {
+        pc._disposeIceAndDtlsTransports(transceiver.sdpMLineIndex);
+        // TODO: this needs to search for the transceiver with
+        // sdpMLinexIndex 0, not the transceiver at [0]
+        transceiver.iceGatherer = pc._transceivers[0].iceGatherer;
+        transceiver.iceTransport = pc._transceivers[0].iceTransport;
+        transceiver.dtlsTransport = pc._transceivers[0].dtlsTransport;
+        if (transceiver.rtpSender) {
+          transceiver.rtpSender.setTransport(
             pc._transceivers[0].dtlsTransport);
         }
-        if (pc._transceivers[sdpMLineIndex].rtpReceiver) {
-          pc._transceivers[sdpMLineIndex].rtpReceiver.setTransport(
+        if (transceiver.rtpReceiver) {
+          transceiver.rtpReceiver.setTransport(
             pc._transceivers[0].dtlsTransport);
         }
       }
       if (description.type === 'offer' && !rejected) {
-        transceiver = pc._transceivers[sdpMLineIndex] ||
-            pc._createTransceiver(kind);
         transceiver.mid = mid;
 
         if (!transceiver.iceGatherer) {
-          transceiver.iceGatherer = pc._createIceGatherer(sdpMLineIndex,
-            usingBundle);
+          transceiver.iceGatherer = pc._createIceGatherer(
+            transceiver.sdpMLineIndex, usingBundle);
         }
 
         if (cands.length && transceiver.iceTransport.state === 'new') {
@@ -967,14 +993,12 @@ module.exports = function(window, edgeVersion) {
         transceiver.rtcpParameters = rtcpParameters;
         transceiver.sendEncodingParameters = sendEncodingParameters;
         transceiver.recvEncodingParameters = recvEncodingParameters;
+        transceiver.sdpMLineIndex = sdpMLineIndex;
 
         // Start the RTCRtpReceiver now. The RTPSender is started in
         // setLocalDescription.
-        pc._transceive(pc._transceivers[sdpMLineIndex],
-          false,
-          isNewTrack);
+        pc._transceive(transceiver, false, isNewTrack);
       } else if (description.type === 'answer' && !rejected) {
-        transceiver = pc._transceivers[sdpMLineIndex];
         iceGatherer = transceiver.iceGatherer;
         iceTransport = transceiver.iceTransport;
         dtlsTransport = transceiver.dtlsTransport;
@@ -982,11 +1006,9 @@ module.exports = function(window, edgeVersion) {
         sendEncodingParameters = transceiver.sendEncodingParameters;
         localCapabilities = transceiver.localCapabilities;
 
-        pc._transceivers[sdpMLineIndex].recvEncodingParameters =
-            recvEncodingParameters;
-        pc._transceivers[sdpMLineIndex].remoteCapabilities =
-            remoteCapabilities;
-        pc._transceivers[sdpMLineIndex].rtcpParameters = rtcpParameters;
+        transceiver.recvEncodingParameters = recvEncodingParameters;
+        transceiver.remoteCapabilities = remoteCapabilities;
+        transceiver.rtcpParameters = rtcpParameters;
 
         if (cands.length && iceTransport.state === 'new') {
           if ((isIceLite || isComplete) &&
@@ -1219,6 +1241,9 @@ module.exports = function(window, edgeVersion) {
       var kind = transceiver.kind;
       var mid = transceiver.mid || SDPUtils.generateIdentifier();
       transceiver.mid = mid;
+      if (transceiver.sdpMLineIndex === undefined) {
+        transceiver.sdpMLineIndex = sdpMLineIndex;
+      }
 
       if (!transceiver.iceGatherer) {
         transceiver.iceGatherer = pc._createIceGatherer(sdpMLineIndex,
@@ -1313,7 +1338,7 @@ module.exports = function(window, edgeVersion) {
           mediaSection += 'a=end-of-candidates\r\n';
         }
       }
-      mediaSections[sdpMLineIndex] = mediaSection;
+      mediaSections[transceiver.sdpMLineIndex] = mediaSection;
     });
     sdp += mediaSections.join('');
 
@@ -1347,13 +1372,12 @@ module.exports = function(window, edgeVersion) {
     }
     sdp += 'a=ice-options:trickle\r\n';
 
-    var mediaSectionsInOffer = SDPUtils.getMediaSections(
-      pc._remoteDescription.sdp).length;
     var mediaSections = [];
-    pc._transceivers.forEach(function(transceiver, sdpMLineIndex) {
-      if (sdpMLineIndex + 1 > mediaSectionsInOffer) {
+    pc._transceivers.forEach(function(transceiver) {
+      if (transceiver.sdpMLineIndex === undefined) {
         return;
       }
+      var sdpMLineIndex = transceiver.sdpMLineIndex;
       var mediaSection = '';
       if (transceiver.rejected) {
         if (transceiver.kind === 'application') {
@@ -1463,7 +1487,9 @@ module.exports = function(window, edgeVersion) {
             }
           }
         }
-        var transceiver = pc._transceivers[sdpMLineIndex];
+        var transceiver = pc._transceivers.find(function(t) {
+          return t.sdpMLineIndex === sdpMLineIndex;
+        });
         if (transceiver) {
           if (transceiver.rejected) {
             return resolve();
@@ -1494,7 +1520,7 @@ module.exports = function(window, edgeVersion) {
             candidateString = candidateString.substr(2);
           }
           sections = SDPUtils.getMediaSections(pc._remoteDescription.sdp);
-          sections[sdpMLineIndex] += 'a=' +
+          sections[transceiver.sdpMLineIndex] += 'a=' +
               (cand.type ? candidateString : 'end-of-candidates')
               + '\r\n';
           pc._remoteDescription.sdp =

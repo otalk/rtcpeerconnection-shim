@@ -2179,6 +2179,18 @@ describe('Edge shim', () => {
           });
       });
 
+      it('in setRemoteDescription with a local track', () => {
+        // test that we don't forget about the track.
+        return navigator.mediaDevices.getUserMedia({audio: true})
+          .then((stream) => {
+            pc.addTrack(stream.getTracks()[0], stream);
+            return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+          })
+          .then(() => {
+            expect(pc.getSenders()).to.have.length(1);
+          });
+      });
+
       it('ignores candidates', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
@@ -2496,7 +2508,8 @@ describe('Edge shim', () => {
       it('rejects the m-line in the answer', () => {
         const sdp = SDP_BOILERPLATE +
             MINIMAL_AUDIO_MLINE.replace('m=audio 9', 'm=audio 0') +
-            MINIMAL_AUDIO_MLINE.replace('m=audio 9', 'm=video 0');
+            MINIMAL_AUDIO_MLINE.replace('m=audio 9', 'm=video 0')
+              .replace('audio1', 'audio2');
         return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
             return pc.createAnswer();
@@ -2673,6 +2686,48 @@ describe('Edge shim', () => {
             done();
           });
       });
+    });
+
+    it('keeps the order from the remote offer', () => {
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
+        'm=video 9 UDP/TLS/RTP/SAVPF 102\r\n' +
+        'c=IN IP4 0.0.0.0\r\n' +
+        'a=rtcp:9 IN IP4 0.0.0.0\r\n' +
+        'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+        'a=ice-pwd:' + ICEPWD + '\r\n' +
+        'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+        'a=setup:actpass\r\n' +
+        'a=mid:video1\r\n' +
+        'a=sendrecv\r\n' +
+        'a=rtcp-mux\r\n' +
+        'a=rtcp-rsize\r\n' +
+        'a=rtpmap:102 vp8/90000\r\n';
+      return navigator.mediaDevices.getUserMedia({audio: true, video: true})
+        .then((stream) => {
+          pc.addTrack(stream.getVideoTracks()[0], stream);
+          pc.addTrack(stream.getAudioTracks()[0], stream);
+        })
+        .then(() => pc.setRemoteDescription({type: 'offer', sdp}))
+        .then(() => pc.createAnswer())
+        .then((answer) => {
+          console.log(answer.sdp);
+          const sections = SDPUtils.getMediaSections(answer.sdp);
+          expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+          expect(SDPUtils.getKind(sections[1])).to.equal('video');
+        });
+    });
+
+    it('only includes m-lines from the offer', () => {
+      const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
+      return navigator.mediaDevices.getUserMedia({video: true})
+        .then((stream => pc.addTrack(stream.getTracks()[0], stream)))
+        .then(() => pc.setRemoteDescription({type: 'offer', sdp}))
+        .then(() => pc.createAnswer())
+        .then((answer) => {
+          const sections = SDPUtils.getMediaSections(answer.sdp);
+          expect(sections.length).to.equal(1);
+          expect(SDPUtils.getKind(sections[0])).to.equal('audio');
+        });
     });
   });
 
