@@ -1295,23 +1295,27 @@ module.exports = function(window, edgeVersion) {
     }
     sdp += 'a=ice-options:trickle\r\n';
 
+    var mediaSections = [];
     pc._transceivers.forEach(function(transceiver, sdpMLineIndex) {
-      sdp += writeMediaSection(transceiver, transceiver.localCapabilities,
-        'offer', transceiver.stream, pc._dtlsRole);
-      sdp += 'a=rtcp-rsize\r\n';
+      var mediaSection = writeMediaSection(transceiver,
+        transceiver.localCapabilities, 'offer', transceiver.stream,
+        pc._dtlsRole);
+      mediaSection += 'a=rtcp-rsize\r\n';
 
       if (transceiver.iceGatherer && pc._iceGatheringState !== 'new' &&
           (sdpMLineIndex === 0 || !pc._usingBundle)) {
         transceiver.iceGatherer.getLocalCandidates().forEach(function(cand) {
           cand.component = 1;
-          sdp += 'a=' + SDPUtils.writeCandidate(cand) + '\r\n';
+          mediaSection += 'a=' + SDPUtils.writeCandidate(cand) + '\r\n';
         });
 
         if (transceiver.iceGatherer.state === 'complete') {
-          sdp += 'a=end-of-candidates\r\n';
+          mediaSection += 'a=end-of-candidates\r\n';
         }
       }
+      mediaSections[sdpMLineIndex] = mediaSection;
     });
+    sdp += mediaSections.join('');
 
     var desc = new window.RTCSessionDescription({
       type: 'offer',
@@ -1345,28 +1349,31 @@ module.exports = function(window, edgeVersion) {
 
     var mediaSectionsInOffer = SDPUtils.getMediaSections(
       pc._remoteDescription.sdp).length;
+    var mediaSections = [];
     pc._transceivers.forEach(function(transceiver, sdpMLineIndex) {
       if (sdpMLineIndex + 1 > mediaSectionsInOffer) {
         return;
       }
+      var mediaSection = '';
       if (transceiver.rejected) {
         if (transceiver.kind === 'application') {
           if (transceiver.protocol === 'DTLS/SCTP') { // legacy fmt
-            sdp += 'm=application 0 DTLS/SCTP 5000\r\n';
+            mediaSection += 'm=application 0 DTLS/SCTP 5000\r\n';
           } else {
-            sdp += 'm=application 0 ' + transceiver.protocol +
+            mediaSection += 'm=application 0 ' + transceiver.protocol +
                 ' webrtc-datachannel\r\n';
           }
         } else if (transceiver.kind === 'audio') {
-          sdp += 'm=audio 0 UDP/TLS/RTP/SAVPF 0\r\n' +
+          mediaSection += 'm=audio 0 UDP/TLS/RTP/SAVPF 0\r\n' +
               'a=rtpmap:0 PCMU/8000\r\n';
         } else if (transceiver.kind === 'video') {
-          sdp += 'm=video 0 UDP/TLS/RTP/SAVPF 120\r\n' +
+          mediaSection += 'm=video 0 UDP/TLS/RTP/SAVPF 120\r\n' +
               'a=rtpmap:120 VP8/90000\r\n';
         }
-        sdp += 'c=IN IP4 0.0.0.0\r\n' +
+        mediaSection += 'c=IN IP4 0.0.0.0\r\n' +
             'a=inactive\r\n' +
             'a=mid:' + transceiver.mid + '\r\n';
+        mediaSections[sdpMLineIndex] = mediaSection;
         return;
       }
 
@@ -1401,13 +1408,15 @@ module.exports = function(window, edgeVersion) {
         delete transceiver.sendEncodingParameters[0].rtx;
       }
 
-      sdp += writeMediaSection(transceiver, commonCapabilities,
+      mediaSection += writeMediaSection(transceiver, commonCapabilities,
         'answer', transceiver.stream, pc._dtlsRole);
       if (transceiver.rtcpParameters &&
           transceiver.rtcpParameters.reducedSize) {
-        sdp += 'a=rtcp-rsize\r\n';
+        mediaSection += 'a=rtcp-rsize\r\n';
       }
+      mediaSections[sdpMLineIndex] = mediaSection;
     });
+    sdp += mediaSections.join('');
 
     var desc = new window.RTCSessionDescription({
       type: 'answer',
