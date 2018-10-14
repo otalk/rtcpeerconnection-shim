@@ -819,11 +819,11 @@ describe('Edge shim', () => {
         window.RTCIceTransport.prototype.addRemoteCandidate.restore();
         window.RTCIceTransport.prototype.setRemoteCandidates.restore();
       });
-      const candidateString = 'a=candidate:702786350 1 udp 41819902 ' +
+      const candidate = 'a=candidate:702786350 1 udp 41819902 ' +
           '8.8.8.8 60769 typ host';
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE +
           'a=ssrc:1001 msid:stream1 track1\r\n' +
-          candidateString + '\r\n';
+          candidate + '\r\n';
       it('adds the candidates to the ice transport', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => {
@@ -864,8 +864,7 @@ describe('Edge shim', () => {
             const receiver = pc.getReceivers()[0];
             const iceTransport = receiver.transport.transport;
 
-            pc.addIceCandidate({sdpMid: 'audio1', sdpMLineIndex: 0,
-              candidate: candidateString})
+            pc.addIceCandidate({sdpMid: 'audio1', sdpMLineIndex: 0, candidate})
               .catch(() => {});
             expect(iceTransport.addRemoteCandidate).to.have.been.calledOnce();
           });
@@ -896,13 +895,13 @@ describe('Edge shim', () => {
         window.RTCIceTransport.prototype.setRemoteCandidates.restore();
       });
 
-      const candidateString = 'a=candidate:702786350 1 udp 41819902 ' +
+      const candidate = 'a=candidate:702786350 1 udp 41819902 ' +
           '8.8.8.8 60769 typ host';
 
       it('adds the candidates to the ice transport', () => {
         return pc2.createAnswer()
           .then((answer) => {
-            answer.sdp += candidateString;
+            answer.sdp += candidate + '\r\n';
             return pc.setRemoteDescription(answer);
           })
           .then(() => {
@@ -915,7 +914,7 @@ describe('Edge shim', () => {
       it('interprets end-of-candidates', () => {
         return pc2.createAnswer()
           .then((answer) => {
-            answer.sdp += candidateString + '\r\n';
+            answer.sdp += candidate + '\r\n';
             answer.sdp += 'a=end-of-candidates\r\n';
             return pc.setRemoteDescription(answer);
           })
@@ -2557,7 +2556,7 @@ describe('Edge shim', () => {
         // https://github.com/webrtc/adapter/issues/638
         return pc.setRemoteDescription({type: 'offer', sdp})
           .then(() => navigator.mediaDevices.getUserMedia({audio: true,
-              video: true}))
+            video: true}))
           .then((stream) => {
             pc.addStream(stream);
             return pc.createAnswer();
@@ -2648,7 +2647,7 @@ describe('Edge shim', () => {
         'a=ssrc:1001 cname:some\r\n' +
         'a=ssrc:1002 msid:stream1 track1\r\n' +
         'a=ssrc:1002 cname:some\r\n';
-    const candidateString = 'candidate:702786350 1 udp 41819902 8.8.8.8 ' +
+    const candidate = 'candidate:702786350 1 udp 41819902 8.8.8.8 ' +
         '60769 typ host';
     const sdpMid = 'audio1';
 
@@ -2662,12 +2661,12 @@ describe('Edge shim', () => {
     });
 
     it('returns a promise', (done) => {
-      pc.addIceCandidate({sdpMid, candidate: candidateString})
+      pc.addIceCandidate({sdpMid, candidate})
         .then(done);
     });
 
     it('calls the legacy success callback', (done) => {
-      pc.addIceCandidate({sdpMid, candidate: candidateString}, done, () => {});
+      pc.addIceCandidate({sdpMid, candidate}, done, () => {});
     });
 
     it('throws a TypeError when called without sdpMid or ' +
@@ -2680,16 +2679,14 @@ describe('Edge shim', () => {
 
     describe('rejects with an OperationError when called with an', () => {
       it('invalid sdpMid', () => {
-        return pc.addIceCandidate({sdpMid: 'invalid',
-          candidate: candidateString})
+        return pc.addIceCandidate({sdpMid: 'invalid', candidate})
           .catch((e) => {
             expect(e.name).to.equal('OperationError');
           });
       });
 
       it('invalid sdpMLineIndex', () => {
-        return pc.addIceCandidate({sdpMLineIndex: 99,
-          candidate: candidateString})
+        return pc.addIceCandidate({sdpMLineIndex: 99, candidate})
           .catch((e) => {
             expect(e.name).to.equal('OperationError');
           });
@@ -2698,7 +2695,7 @@ describe('Edge shim', () => {
 
     it('calls the legacy error callback when called with an ' +
         'invalid sdpMLineIndex', (done) => {
-      pc.addIceCandidate({sdpMLineIndex: 99, candidate: candidateString},
+      pc.addIceCandidate({sdpMLineIndex: 99, candidate},
         () => {},
         (e) => {
           expect(e.name).to.equal('OperationError');
@@ -2710,14 +2707,14 @@ describe('Edge shim', () => {
     it('rejects with an InvalidStateError when called before ' +
        'setRemoteDescription', () => {
       pc = new RTCPeerConnection(); // recreate pc.
-      return pc.addIceCandidate({sdpMid, candidate: candidateString})
+      return pc.addIceCandidate({sdpMid, candidate})
         .catch((e) => {
           expect(e.name).to.equal('InvalidStateError');
         });
     });
 
     it('adds the candidate to the remote description', () => {
-      return pc.addIceCandidate({sdpMid, candidate: candidateString})
+      return pc.addIceCandidate({sdpMid, candidate})
         .then(() => {
           const sections = SDPUtils.getMediaSections(pc.remoteDescription.sdp);
           expect(SDPUtils.matchPrefix(sections[0],
@@ -2727,7 +2724,7 @@ describe('Edge shim', () => {
 
     it('adds the candidate to the remote description ' +
        'with legacy a=candidate syntax', () => {
-      return pc.addIceCandidate({sdpMid, candidate: 'a=' + candidateString})
+      return pc.addIceCandidate({sdpMid, candidate: 'a=' + candidate})
         .then(() => {
           expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
             'a=candidate:')).to.have.length(1);
@@ -2736,7 +2733,7 @@ describe('Edge shim', () => {
 
     it('adds end-of-candidates when receiving the null candidate', () => {
       // add at least one valid candidate.
-      pc.addIceCandidate({sdpMid, candidate: candidateString});
+      pc.addIceCandidate({sdpMid, candidate});
       return pc.addIceCandidate()
         .then(() => {
           expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
@@ -2746,7 +2743,7 @@ describe('Edge shim', () => {
 
     it('adds end-of-candidates when receiving the \'\' candidate', () => {
       // add at least one valid candidate.
-      pc.addIceCandidate({sdpMid, candidate: candidateString});
+      pc.addIceCandidate({sdpMid, candidate});
       return pc.addIceCandidate({sdpMid, candidate: ''})
         .then(() => {
           expect(SDPUtils.matchPrefix(pc.remoteDescription.sdp,
@@ -2759,7 +2756,7 @@ describe('Edge shim', () => {
         const iceTransport = pc.getReceivers()[0].transport.transport;
         sinon.spy(iceTransport, 'addRemoteCandidate');
         return pc.addIceCandidate({sdpMid, candidate:
-          candidateString.replace('1 udp', '2 udp')})
+          candidate.replace('1 udp', '2 udp')})
           .then(() => {
             expect(iceTransport.addRemoteCandidate)
               .not.to.have.been.calledWith();
@@ -2771,8 +2768,7 @@ describe('Edge shim', () => {
       it('non-master mid but does add them to the sdp', () => {
         const iceTransport = pc.getReceivers()[0].transport.transport;
         sinon.spy(iceTransport, 'addRemoteCandidate');
-        return pc.addIceCandidate({sdpMid: 'video1',
-          candidate: candidateString})
+        return pc.addIceCandidate({sdpMid: 'video1', candidate})
           .then(() => {
             expect(iceTransport.addRemoteCandidate)
               .not.to.have.been.calledWith();
@@ -2785,7 +2781,7 @@ describe('Edge shim', () => {
         const iceTransport = pc.getReceivers()[0].transport.transport;
         sinon.spy(iceTransport, 'addRemoteCandidate');
         return pc.addIceCandidate({sdpMid, candidate:
-          candidateString.replace('60769', '0').replace('udp', 'tcp')})
+          candidate.replace('60769', '0').replace('udp', 'tcp')})
           .then(() => {
             expect(iceTransport.addRemoteCandidate)
               .not.to.have.been.calledWith();
@@ -2798,7 +2794,7 @@ describe('Edge shim', () => {
         const iceTransport = pc.getReceivers()[0].transport.transport;
         sinon.spy(iceTransport, 'addRemoteCandidate');
         return pc.addIceCandidate({sdpMid, candidate:
-          candidateString.replace('60769', '9').replace('udp', 'tcp')})
+          candidate.replace('60769', '9').replace('udp', 'tcp')})
           .then(() => {
             expect(iceTransport.addRemoteCandidate)
               .not.to.have.been.calledWith();
@@ -3780,7 +3776,7 @@ describe('Edge shim', () => {
         .then(() => {
           const localMid = SDPUtils.getMid(
             SDPUtils.splitSections(pc.localDescription.sdp)[1]);
-          const candidateString = 'a=candidate:702786350 1 udp 41819902 ' +
+          const candidate = 'a=candidate:702786350 1 udp 41819902 ' +
               '8.8.8.8 60769 typ host';
           const sdp = 'v=0\r\n' +
               'o=- 0 0 IN IP4 127.0.0.1\r\n' +
@@ -3800,7 +3796,7 @@ describe('Edge shim', () => {
               'a=ice-ufrag:S5Zq\r\n' +
               'a=ice-pwd:6E1muhzVwnphsbN6uokNU/\r\n' +
               'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
-              candidateString + '\r\n' +
+              candidate + '\r\n' +
               'a=end-of-candidates\r\n' +
               'a=rtcp-mux\r\n';
           return pc.setRemoteDescription({type: 'answer', sdp});
