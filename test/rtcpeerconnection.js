@@ -455,9 +455,7 @@ describe('Edge shim', () => {
 
       it('sets the RTPSender transport', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return navigator.mediaDevices.getUserMedia({audio: true});
-          })
+          .then(() => navigator.mediaDevices.getUserMedia({audio: true}))
           .then((stream) => {
             pc.addTrack(stream.getAudioTracks()[0], stream);
             return pc.createAnswer();
@@ -2245,9 +2243,7 @@ describe('Edge shim', () => {
           return pc.setRemoteDescription({type: 'offer',
             sdp: sdp.replace('sendrecv', 'recvonly')
           })
-            .then(() => {
-              return navigator.mediaDevices.getUserMedia({audio: true});
-            })
+            .then(() => navigator.mediaDevices.getUserMedia({audio: true}))
             .then((stream) => {
               pc.addStream(stream);
               return pc.createAnswer();
@@ -2560,10 +2556,8 @@ describe('Edge shim', () => {
       it('does not try to add a video m-line', () => {
         // https://github.com/webrtc/adapter/issues/638
         return pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return navigator.mediaDevices.getUserMedia({audio: true,
-              video: true});
-          })
+          .then(() => navigator.mediaDevices.getUserMedia({audio: true,
+              video: true}))
           .then((stream) => {
             pc.addStream(stream);
             return pc.createAnswer();
