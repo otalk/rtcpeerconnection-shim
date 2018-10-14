@@ -201,9 +201,7 @@ describe('Edge shim', () => {
 
     it('returns a promise', (done) => {
       pc.createOffer({offerToReceiveAudio: true})
-        .then((offer) => {
-          return pc.setLocalDescription(offer);
-        })
+        .then((offer) => pc.setLocalDescription(offer))
         .then(done);
     });
 
@@ -249,9 +247,7 @@ describe('Edge shim', () => {
 
     it('changes the signalingState to have-local-offer', () => {
       return pc.createOffer({offerToReceiveAudio: true})
-        .then((offer) => {
-          return pc.setLocalDescription(offer);
-        })
+        .then((offer) => pc.setLocalDescription(offer))
         .then(() => {
           expect(pc.localDescription.type).to.equal('offer');
           expect(pc.signalingState = 'have-local-offer');
@@ -261,9 +257,7 @@ describe('Edge shim', () => {
     it('calls the signalingstatechange event', () => {
       pc.onsignalingstatechange = sinon.stub();
       return pc.createOffer({offerToReceiveAudio: true})
-        .then((offer) => {
-          return pc.setLocalDescription(offer);
-        })
+        .then((offer) => pc.setLocalDescription(offer))
         .then(() => {
           expect(pc.onsignalingstatechange).to.have.been.calledOnce();
         });
@@ -273,9 +267,7 @@ describe('Edge shim', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       it('an offer in signalingState have-remote-offer', (done) => {
         pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.setLocalDescription({type: 'offer'});
-          })
+          .then(() => pc.setLocalDescription({type: 'offer'}))
           .catch((e) => {
             expect(e.name).to.equal('InvalidStateError');
             done();
@@ -284,12 +276,8 @@ describe('Edge shim', () => {
 
       it('an answer in signalingState have-local-offer', (done) => {
         pc.createOffer({offerToReceiveAudio: true})
-          .then((offer) => {
-            return pc.setLocalDescription(offer);
-          })
-          .then(() => {
-            return pc.setLocalDescription({type: 'answer'});
-          })
+          .then((offer) => pc.setLocalDescription(offer))
+          .then(() => pc.setLocalDescription({type: 'answer'}))
           .catch((e) => {
             expect(e.name).to.equal('InvalidStateError');
             done();
@@ -427,12 +415,8 @@ describe('Edge shim', () => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       it('starts the ice transport', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            return pc.setLocalDescription(answer);
-          })
+          .then(() => pc.createAnswer())
+          .then((answer) => pc.setLocalDescription(answer))
           .then(() => {
             const receiver = pc.getReceivers()[0];
             const iceTransport = receiver.transport.transport;
@@ -449,12 +433,8 @@ describe('Edge shim', () => {
 
       it('starts the dtls transport', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            return pc.setLocalDescription(answer);
-          })
+          .then(() => pc.createAnswer())
+          .then((answer) => pc.setLocalDescription(answer))
           .then(() => {
             const receiver = pc.getReceivers()[0];
             const dtlsTransport = receiver.transport;
@@ -482,9 +462,7 @@ describe('Edge shim', () => {
             pc.addTrack(stream.getAudioTracks()[0], stream);
             return pc.createAnswer();
           })
-          .then((answer) => {
-            return pc.setLocalDescription(answer);
-          })
+          .then((answer) => pc.setLocalDescription(answer))
           .then(() => {
             const sender = pc.getSenders()[0];
             expect(sender.setTransport).to.have.been.calledOnce();
@@ -961,12 +939,8 @@ describe('Edge shim', () => {
 
       it('an offer in signalingState have-local-offer', () => {
         return pc.createOffer({offerToReceiveAudio: true})
-          .then((offer) => {
-            return pc.setLocalDescription(offer);
-          })
-          .then(() => {
-            return pc.setRemoteDescription({type: 'offer'});
-          })
+          .then((offer) => pc.setLocalDescription(offer))
+          .then(() => pc.setRemoteDescription({type: 'offer'}))
           .catch((e) => {
             expect(e.name).to.equal('InvalidStateError');
           });
@@ -1137,12 +1111,8 @@ describe('Edge shim', () => {
 
       it('set the ice role to controlling', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            return pc.setLocalDescription(answer);
-          })
+          .then(() => pc.createAnswer())
+          .then((answer) => pc.setLocalDescription(answer))
           .then(() => {
             const receiver = pc.getReceivers()[0];
             const dtlsTransport = receiver.transport;
@@ -1158,12 +1128,8 @@ describe('Edge shim', () => {
 
       it('sets the dtls role to server', () => {
         return pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            return pc.setLocalDescription(answer);
-          })
+          .then(() => pc.createAnswer())
+          .then((answer) => pc.setLocalDescription(answer))
           .then(() => {
             const receiver = pc.getReceivers()[0];
             const dtlsTransport = receiver.transport;
@@ -1839,9 +1805,7 @@ describe('Edge shim', () => {
             });
         };
         pc.createOffer({offerToReceiveAudio: true})
-          .then((offer) => {
-            return pc.setLocalDescription(offer);
-          })
+          .then((offer) => pc.setLocalDescription(offer))
           .then(() => {
             window.setTimeout(() => {
               clock.tick(500);
@@ -1973,9 +1937,7 @@ describe('Edge shim', () => {
     it('returns a promise', (done) => {
       const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
       pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
+        .then(() => pc.createAnswer())
         .then(() => {
           done();
         });
@@ -2070,9 +2032,7 @@ describe('Edge shim', () => {
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
       pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
+        .then(() => pc.createAnswer())
         .then((answer) => {
           expect(answer.sdp).to.contain('a=rtpmap:98 opus');
           done();
@@ -2100,9 +2060,7 @@ describe('Edge shim', () => {
           'a=ssrc:1001 cname:some\r\n' +
           'a=extmap:5 ' + extmapUri + '\r\n';
       pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
+        .then(() => pc.createAnswer())
         .then((answer) => {
           expect(answer.sdp).to.contain('a=extmap:5 ' + extmapUri + '\r\n');
           done();
@@ -2129,9 +2087,7 @@ describe('Edge shim', () => {
           'a=ssrc:1001 msid:stream1 track1\r\n' +
           'a=ssrc:1001 cname:some\r\n';
       pc.setRemoteDescription({type: 'offer', sdp})
-        .then(() => {
-          return pc.createAnswer();
-        })
+        .then(() => pc.createAnswer())
         .then((answer) => {
           expect(answer.sdp).to.contain('a=rtcp-fb:102 nack\r\n');
           expect(answer.sdp).to.contain('a=rtcp-fb:102 nack pli\r\n');
@@ -2145,9 +2101,7 @@ describe('Edge shim', () => {
       pc.setRemoteDescription({type: 'offer',
         sdp: sdp.replace('opus', 'nosuchcodec')
       })
-        .then(() => {
-          return pc.createAnswer();
-        })
+        .then(() => pc.createAnswer())
         .then((answer) => {
           const sections = SDPUtils.getMediaSections(answer.sdp);
           const rejected = SDPUtils.isRejected(sections[0]);
@@ -2168,9 +2122,7 @@ describe('Edge shim', () => {
           'a=sctpmap:5000 webrtc-datachannel 1024\r\n';
       it('in setRemoteDescription', (done) => {
         pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
+          .then(() => pc.createAnswer())
           .then((answer) => {
             const sections = SDPUtils.getMediaSections(answer.sdp);
             const rejected = SDPUtils.isRejected(sections[0]);
@@ -2248,9 +2200,7 @@ describe('Edge shim', () => {
       it('responds with a inactive answer to inactive', (done) => {
         pc.setRemoteDescription({type: 'offer', sdp: sdp.replace('sendrecv',
           'recvonly')})
-          .then(() => {
-            return pc.createAnswer();
-          })
+          .then(() => pc.createAnswer())
           .then((answer) => {
             const sections = SDPUtils.getMediaSections(answer.sdp);
             expect(sections.length).to.equal(1);
@@ -2266,9 +2216,7 @@ describe('Edge shim', () => {
               pc.addStream(stream);
               return pc.setRemoteDescription({type: 'offer', sdp});
             })
-            .then(() => {
-              return pc.createAnswer();
-            })
+            .then(() => pc.createAnswer())
             .then((answer) => {
               const sections = SDPUtils.getMediaSections(answer.sdp);
               expect(SDPUtils.getDirection(sections[0])).to.equal('sendrecv');
@@ -2284,9 +2232,7 @@ describe('Edge shim', () => {
                 sdp: sdp.replace('sendrecv', 'recvonly')
               });
             })
-            .then(() => {
-              return pc.createAnswer();
-            })
+            .then(() => pc.createAnswer())
             .then((answer) => {
               const sections = SDPUtils.getMediaSections(answer.sdp);
               expect(sections.length).to.equal(1);
@@ -2335,9 +2281,7 @@ describe('Edge shim', () => {
       describe('with no local track', () => {
         it('responds with a recvonly answer to sendrecv', (done) => {
           pc.setRemoteDescription({type: 'offer', sdp})
-            .then(() => {
-              return pc.createAnswer();
-            })
+            .then(() => pc.createAnswer())
             .then((answer) => {
               const sections = SDPUtils.getMediaSections(answer.sdp);
               expect(SDPUtils.getDirection(sections[0])).to.equal('recvonly');
@@ -2348,9 +2292,7 @@ describe('Edge shim', () => {
         it('responds with a inactive answer to recvonly', (done) => {
           pc.setRemoteDescription({type: 'offer', sdp: sdp.replace('sendrecv',
             'recvonly')})
-            .then(() => {
-              return pc.createAnswer();
-            })
+            .then(() => pc.createAnswer())
             .then((answer) => {
               const sections = SDPUtils.getMediaSections(answer.sdp);
               expect(SDPUtils.getDirection(sections[0])).to.equal('inactive');
@@ -2384,9 +2326,7 @@ describe('Edge shim', () => {
       describe('with no local track', () => {
         it('creates an answer with RTX but no FID group', (done) => {
           pc.setRemoteDescription({type: 'offer', sdp: sdp + remoteRTX})
-            .then(() => {
-              return pc.createAnswer();
-            })
+            .then(() => pc.createAnswer())
             .then((answer) => {
               expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
               expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
@@ -2405,9 +2345,7 @@ describe('Edge shim', () => {
               return pc.setRemoteDescription({type: 'offer',
                 sdp: sdp + remoteRTX});
             })
-            .then(() => {
-              return pc.createAnswer();
-            })
+            .then(() => pc.createAnswer())
             .then((answer) => {
               expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
               expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
@@ -2426,9 +2364,7 @@ describe('Edge shim', () => {
               return pc.setRemoteDescription({type: 'offer',
                 sdp: sdp.replace('sendrecv', 'recvonly')});
             })
-            .then(() => {
-              return pc.createAnswer();
-            })
+            .then(() => pc.createAnswer())
             .then((answer) => {
               expect(answer.sdp).to.contain('a=rtpmap:102 vp8');
               expect(answer.sdp).to.contain('a=rtpmap:103 rtx');
@@ -2458,9 +2394,7 @@ describe('Edge shim', () => {
               'a=rtpmap:103 rtx/90000\r\n' +
               'a=fmtp:103 apt=102\r\n';
           pc.setRemoteDescription({type: 'offer', sdp: modifiedSDP})
-            .then(() => {
-              return pc.createAnswer();
-            })
+            .then(() => pc.createAnswer())
             .then((answer) => {
               expect(answer.sdp).to.contain('a=rtpmap:101 vp8');
               expect(answer.sdp).not.to.contain('a=rtpmap:102 no-such-codec');
@@ -2494,9 +2428,7 @@ describe('Edge shim', () => {
             pc.addStream(stream);
             return pc.setRemoteDescription({type: 'offer', sdp});
           })
-          .then(() => {
-            return pc.createAnswer();
-          })
+          .then(() => pc.createAnswer())
           .then((answer) => {
             expect(answer.sdp).not.to.contain('a=ssrc-group:FID ');
             done();
@@ -2511,9 +2443,7 @@ describe('Edge shim', () => {
             MINIMAL_AUDIO_MLINE.replace('m=audio 9', 'm=video 0')
               .replace('audio1', 'audio2');
         return pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
+          .then(() => pc.createAnswer())
           .then((answer) => {
             const sections = SDPUtils.getMediaSections(answer.sdp);
             expect(sections.length).to.equal(2);
@@ -2545,9 +2475,7 @@ describe('Edge shim', () => {
 
       it('set if the offer contained rtcp-rsize', (done) => {
         pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
+          .then(() => pc.createAnswer())
           .then((answer) => {
             expect(answer.sdp).to.contain('a=rtcp-rsize\r\n');
             done();
@@ -2557,9 +2485,7 @@ describe('Edge shim', () => {
       it('not set if the offer did not contain rtcp-rsize', (done) => {
         pc.setRemoteDescription({type: 'offer',
           sdp: sdp.replace('a=rtcp-rsize\r\n', '')})
-          .then(() => {
-            return pc.createAnswer();
-          })
+          .then(() => pc.createAnswer())
           .then((answer) => {
             expect(answer.sdp).not.to.contain('a=rtcp-rsize\r\n');
             done();
@@ -2618,12 +2544,8 @@ describe('Edge shim', () => {
           }
         };
         pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then((answer) => {
-            return pc.setLocalDescription(answer);
-          })
+          .then(() => pc.createAnswer())
+          .then((answer) => pc.setLocalDescription(answer))
           .then(() => {
             window.setTimeout(() => {
               clock.tick(500);
@@ -2637,9 +2559,7 @@ describe('Edge shim', () => {
       it('starts at version 0', (done) => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
         pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
+          .then(() => pc.createAnswer())
           .then((answer) => {
             let ver = SDPUtils.matchPrefix(answer.sdp, 'o=')[0]
               .split(' ')[2] >>> 0;
@@ -2651,12 +2571,8 @@ describe('Edge shim', () => {
       it('subsequent calls increase the session version', (done) => {
         const sdp = SDP_BOILERPLATE + MINIMAL_AUDIO_MLINE;
         pc.setRemoteDescription({type: 'offer', sdp})
-          .then(() => {
-            return pc.createAnswer();
-          })
-          .then(() => {
-            return pc.createAnswer();
-          })
+          .then(() => pc.createAnswer())
+          .then(() => pc.createAnswer())
           .then((answer) => {
             let ver = SDPUtils.matchPrefix(answer.sdp, 'o=')[0]
               .split(' ')[2] >>> 0;
@@ -3166,9 +3082,7 @@ describe('Edge shim', () => {
         };
 
         pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true})
-          .then((offer) => {
-            return pc.setLocalDescription(offer);
-          })
+          .then((offer) => pc.setLocalDescription(offer))
           .then(() => {
             window.setTimeout(() => {
               clock.tick(500);
@@ -3194,9 +3108,7 @@ describe('Edge shim', () => {
         };
 
         pc.createOffer({offerToReceiveAudio: true, offerToReceiveVideo: true})
-          .then((offer) => {
-            return pc.setLocalDescription(offer);
-          })
+          .then((offer) => pc.setLocalDescription(offer))
           .then(() => {
             window.setTimeout(() => {
               clock.tick(500);
@@ -3904,9 +3816,7 @@ describe('Edge shim', () => {
           pc.addTrack(stream.getTracks()[0], stream);
           return pc.setRemoteDescription({type: 'offer', sdp});
         })
-        .then(() => {
-          return pc.createAnswer();
-        })
+        .then(() => pc.createAnswer())
         .then((answer) => {
           expect(answer.sdp).not.to.contain(' rtx/90000');
           done();
