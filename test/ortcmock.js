@@ -184,7 +184,8 @@ module.exports = function(window) {
       kind: 'audio',
       clockRate: 48000,
       preferredPayloadType: 111,
-      numChannels: 2
+      numChannels: 2,
+      rtcpFeedback: [],
     };
     var vp8 = {
       name: 'vp8',
