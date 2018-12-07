@@ -1303,7 +1303,9 @@ module.exports = function(window, edgeVersion) {
       failed: 0
     };
     this.transceivers.forEach(function(transceiver) {
-      states[transceiver.iceTransport.state]++;
+      if (transceiver.iceTransport && !transceiver.rejected) {
+        states[transceiver.iceTransport.state]++;
+      }
     });
 
     newState = 'new';
@@ -1341,8 +1343,11 @@ module.exports = function(window, edgeVersion) {
       failed: 0
     };
     this.transceivers.forEach(function(transceiver) {
-      states[transceiver.iceTransport.state]++;
-      states[transceiver.dtlsTransport.state]++;
+      if (transceiver.iceTransport && transceiver.dtlsTransport &&
+          !transceiver.rejected) {
+        states[transceiver.iceTransport.state]++;
+        states[transceiver.dtlsTransport.state]++;
+      }
     });
     // ICETransport.completed and connected are the same for this purpose.
     states.connected += states.completed;
