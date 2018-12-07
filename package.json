@@ -14,6 +14,7 @@
   ],
   "scripts": {
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
+    "prepublishonly": "npm test",
     "test": "eslint *.js test/*.js && nyc --reporter html mocha test/"
   },
   "engines": {
