@@ -1,4 +1,4 @@
-Copyright (c) 2017 Philipp Hancke. All rights reserved.
+Copyright (c) 2017 rtcpeerconnection-shim authors. All rights reserved.
 
 Copyright (c) 2014, The WebRTC project authors. All rights reserved.
 
