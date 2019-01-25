@@ -1893,6 +1893,47 @@ describe('Edge shim', () => {
       });
     });
 
+    describe('when called after rejecting a', () => {
+      const legacy = SDP_BOILERPLATE +
+        'm=application 9 DTLS/SCTP 5000\r\n' +
+        'c=IN IP4 0.0.0.0\r\n' +
+        'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+        'a=ice-pwd:' + ICEPWD + '\r\n' +
+        'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+        'a=setup:actpass\r\n' +
+        'a=mid:data\r\n' +
+        'a=sctpmap:5000 webrtc-datachannel 1024\r\n';
+      const newStyle = SDP_BOILERPLATE +
+        'm=application 9 UDP/DTLS/SCTP webrtc-datachannel\r\n' +
+        'c=IN IP4 0.0.0.0\r\n' +
+        'a=ice-ufrag:' + ICEUFRAG + '\r\n' +
+        'a=ice-pwd:' + ICEPWD + '\r\n' +
+        'a=fingerprint:sha-256 ' + FINGERPRINT_SHA256 + '\r\n' +
+        'a=setup:actpass\r\n' +
+        'a=mid:data\r\n' +
+        'a=sctp-port:5000\r\n' +
+        'a=max-message-size:1073741823\r\n';
+      new Map([['legacy', legacy],['new-style', newStyle]]).forEach(
+        (sdp, style) => {
+          it(`"${style}" datachannel offer`, () => {
+            return navigator.mediaDevices.getUserMedia({audio: true})
+              .then((stream) => {
+                pc.addTrack(stream.getTracks()[0], stream);
+                return pc.setRemoteDescription({type: 'offer', sdp: sdp});
+              })
+              .then(() => pc.createAnswer())
+              .then((answer) => pc.setLocalDescription(answer))
+              .then(() => pc.createOffer())
+              .then((offer) => {
+                const sections = SDPUtils.getMediaSections(offer.sdp);
+                expect(sections).to.have.length(2);
+                expect(SDPUtils.isRejected(sections[0])).to.equal(true);
+                expect(SDPUtils.getKind(sections[1])).to.equal('audio');
+              });
+          });
+        });
+    });
+
     describe('after replaceTrack', () => {
       it('retains the original track id', () => {
         return navigator.mediaDevices.getUserMedia({audio: true})

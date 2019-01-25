@@ -9,7 +9,7 @@
 
 var SDPUtils = require('sdp');
 /* generates a m= SDP from a transceiver. */
-module.exports = function(transceiver, caps, type, stream, dtlsRole) {
+function writeMediaSection(transceiver, caps, type, stream, dtlsRole) {
   var sdp = SDPUtils.writeRtpDescription(transceiver.kind, caps);
 
   // Map ICE parameters (ufrag, pwd) to SDP.
@@ -63,4 +63,32 @@ module.exports = function(transceiver, caps, type, stream, dtlsRole) {
         ' cname:' + SDPUtils.localCName + '\r\n';
   }
   return sdp;
+}
+
+/* generates a m= SDP from a rejected transceiver. */
+function writeRejectedMediaSection(transceiver) {
+  var sdp = '';
+  if (transceiver.kind === 'application') {
+    if (transceiver.protocol === 'DTLS/SCTP') { // legacy fmt
+      sdp += 'm=application 0 DTLS/SCTP 5000\r\n';
+    } else {
+      sdp += 'm=application 0 ' + transceiver.protocol +
+        ' webrtc-datachannel\r\n';
+    }
+  } else if (transceiver.kind === 'audio') {
+    sdp += 'm=audio 0 UDP/TLS/RTP/SAVPF 0\r\n' +
+      'a=rtpmap:0 PCMU/8000\r\n';
+  } else if (transceiver.kind === 'video') {
+    sdp += 'm=video 0 UDP/TLS/RTP/SAVPF 120\r\n' +
+      'a=rtpmap:120 VP8/90000\r\n';
+  }
+  sdp += 'c=IN IP4 0.0.0.0\r\n' +
+    'a=inactive\r\n' +
+    'a=mid:' + transceiver.mid + '\r\n';
+  return sdp;
+}
+
+module.exports = {
+  writeMediaSection: writeMediaSection,
+  writeRejectedMediaSection: writeRejectedMediaSection
 };

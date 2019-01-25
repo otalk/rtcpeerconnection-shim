@@ -13,7 +13,9 @@ var shimIceGatherer = require('./rtcicegatherer');
 var shimIceTransport = require('./rtcicetransport');
 var shimDtlsTransport = require('./rtcdtlstransport');
 var getCommonCapabilities = require('./getcommoncapabilities');
-var writeMediaSection = require('./writemediasection');
+var writeMediaSection = require('./writemediasection').writeMediaSection;
+var writeRejectedMediaSection =
+  require('./writemediasection').writeRejectedMediaSection;
 var util = require('./util');
 
 module.exports = function(window, edgeVersion) {
@@ -168,9 +170,9 @@ module.exports = function(window, edgeVersion) {
     return transceiver;
   };
 
-  RTCPeerConnection.prototype._createIceGatherer = function(sdpMLineIndex,
+  RTCPeerConnection.prototype._createIceGatherer = function(transceiver,
     usingBundle) {
-    if (usingBundle && sdpMLineIndex > 0) {
+    if (usingBundle && transceiver.sdpMLineIndex > 0) {
       return this._transceivers[0].iceGatherer;
     } else if (this._iceGatherers.length) {
       return this._iceGatherers.shift();
@@ -183,9 +185,11 @@ module.exports = function(window, edgeVersion) {
   };
 
   // start gathering from an RTCIceGatherer.
-  RTCPeerConnection.prototype._gather = function(mid, sdpMLineIndex) {
+  RTCPeerConnection.prototype._gather = function(transceiver) {
     var pc = this;
-    var iceGatherer = this._transceivers[sdpMLineIndex].iceGatherer;
+    var mid = transceiver.mid;
+    var sdpMLineIndex = transceiver.sdpMLineIndex;
+    var iceGatherer = transceiver.iceGatherer;
     if (iceGatherer.onlocalcandidate) {
       return;
     }
@@ -242,9 +246,8 @@ module.exports = function(window, edgeVersion) {
         pc._dispatchEvent('icecandidate', event);
       }
 
-      var complete = pc._transceivers.every(function(transceiver) {
-        return transceiver.iceGatherer &&
-            transceiver.iceGatherer.state === 'complete';
+      var complete = pc._transceivers.every(function(t) {
+        return t.iceGatherer && t.iceGatherer.state === 'complete';
       });
       if (complete) {
         pc._updateIceGatheringState('complete');
@@ -294,15 +297,15 @@ module.exports = function(window, edgeVersion) {
   // Destroy ICE gatherer, ICE transport and DTLS transport.
   // Without triggering the callbacks.
   RTCPeerConnection.prototype._disposeIceAndDtlsTransports = function(
-    sdpMLineIndex) {
-    var iceGatherer = this._transceivers[sdpMLineIndex].iceGatherer;
+    transceiver) {
+    var iceGatherer = transceiver.iceGatherer;
     if (iceGatherer) {
       delete iceGatherer.onlocalcandidate;
-      delete this._transceivers[sdpMLineIndex].iceGatherer;
+      delete transceiver.iceGatherer;
     }
-    delete this._transceivers[sdpMLineIndex].iceTransport;
+    delete transceiver.iceTransport;
 
-    delete this._transceivers[sdpMLineIndex].dtlsTransport;
+    delete transceiver.dtlsTransport;
   };
 
   // Start the RTP Sender and Receiver for a transceiver.
@@ -403,7 +406,9 @@ module.exports = function(window, edgeVersion) {
       failed: 0
     };
     this._transceivers.forEach(function(transceiver) {
-      states[transceiver.iceTransport.state]++;
+      if (transceiver.iceTransport && !transceiver.rejected) {
+        states[transceiver.iceTransport.state]++;
+      }
     });
 
     newState = 'new';
@@ -441,8 +446,11 @@ module.exports = function(window, edgeVersion) {
       failed: 0
     };
     this._transceivers.forEach(function(transceiver) {
-      states[transceiver.iceTransport.state]++;
-      states[transceiver.dtlsTransport.state]++;
+      if (transceiver.iceTransport && transceiver.dtlsTransport &&
+          !transceiver.rejected) {
+        states[transceiver.iceTransport.state]++;
+        states[transceiver.dtlsTransport.state]++;
+      }
     });
     // ICETransport.completed and connected are the same for this purpose.
     states.connected += states.completed;
@@ -659,8 +667,8 @@ module.exports = function(window, edgeVersion) {
         transceiver.localCapabilities = caps;
       });
 
-      pc._transceivers.forEach(function(transceiver, sdpMLineIndex) {
-        pc._gather(transceiver.mid, sdpMLineIndex);
+      pc._transceivers.forEach(function(transceiver) {
+        pc._gather(transceiver);
       });
     } else if (description.type === 'answer') {
       sections = SDPUtils.splitSections(pc._remoteDescription.sdp);
@@ -694,7 +702,7 @@ module.exports = function(window, edgeVersion) {
           }
 
           if (!pc._usingBundle || sdpMLineIndex === 0) {
-            pc._gather(transceiver.mid, sdpMLineIndex);
+            pc._gather(transceiver);
             if (iceTransport.state === 'new') {
               iceTransport.start(iceGatherer, remoteIceParameters,
                 isIceLite ? 'controlling' : 'controlled');
@@ -887,7 +895,7 @@ module.exports = function(window, edgeVersion) {
       // Check if we can use BUNDLE and dispose transports.
       if ((description.type === 'offer' || description.type === 'answer') &&
           !rejected && usingBundle && sdpMLineIndex > 0 && transceiver) {
-        pc._disposeIceAndDtlsTransports(transceiver.sdpMLineIndex);
+        pc._disposeIceAndDtlsTransports(transceiver);
         // TODO: this needs to search for the transceiver with
         // sdpMLinexIndex 0, not the transceiver at [0]
         transceiver.iceGatherer = pc._transceivers[0].iceGatherer;
@@ -907,7 +915,7 @@ module.exports = function(window, edgeVersion) {
 
         if (!transceiver.iceGatherer) {
           transceiver.iceGatherer = pc._createIceGatherer(
-            transceiver.sdpMLineIndex, usingBundle);
+            transceiver, usingBundle);
         }
 
         if (cands.length && transceiver.iceTransport.state === 'new') {
@@ -1234,7 +1242,7 @@ module.exports = function(window, edgeVersion) {
 
     var sdp = SDPUtils.writeSessionBoilerplate(pc._sdpSessionId,
       pc._sdpSessionVersion++);
-    pc._transceivers.forEach(function(transceiver, sdpMLineIndex) {
+    pc._transceivers.forEach(function(transceiver) {
       // For each track, create an ice gatherer, ice transport,
       // dtls transport, potentially rtpsender and rtpreceiver.
       var track = transceiver.track;
@@ -1242,12 +1250,19 @@ module.exports = function(window, edgeVersion) {
       var mid = transceiver.mid || SDPUtils.generateIdentifier();
       transceiver.mid = mid;
       if (transceiver.sdpMLineIndex === undefined) {
-        transceiver.sdpMLineIndex = sdpMLineIndex;
+        transceiver.sdpMLineIndex = pc._transceivers.reduce(function(max, t) {
+          return t.sdpMLineIndex !== undefined &&
+            t.sdpMLineIndex >= max ? t.sdpMLineIndex + 1 : max;
+        }, 0);
       }
 
       if (!transceiver.iceGatherer) {
-        transceiver.iceGatherer = pc._createIceGatherer(sdpMLineIndex,
+        transceiver.iceGatherer = pc._createIceGatherer(transceiver,
           pc._usingBundle);
+      }
+
+      if (transceiver.rejected) {
+        return;
       }
 
       var localCapabilities = window.RTCRtpSender.getCapabilities(kind);
@@ -1291,7 +1306,7 @@ module.exports = function(window, edgeVersion) {
 
       // generate an ssrc now, to be used later in rtpSender.send
       var sendEncodingParameters = transceiver.sendEncodingParameters || [{
-        ssrc: (2 * sdpMLineIndex + 1) * 1001
+        ssrc: (2 * transceiver.sdpMLineIndex + 1) * 1001
       }];
       if (track) {
         // add RTX
@@ -1321,21 +1336,26 @@ module.exports = function(window, edgeVersion) {
     sdp += 'a=ice-options:trickle\r\n';
 
     var mediaSections = [];
-    pc._transceivers.forEach(function(transceiver, sdpMLineIndex) {
-      var mediaSection = writeMediaSection(transceiver,
-        transceiver.localCapabilities, 'offer', transceiver.stream,
-        pc._dtlsRole);
-      mediaSection += 'a=rtcp-rsize\r\n';
+    pc._transceivers.forEach(function(transceiver) {
+      var mediaSection = '';
+      if (transceiver.rejected) {
+        mediaSection = writeRejectedMediaSection(transceiver);
+      } else {
+        mediaSection = writeMediaSection(transceiver,
+          transceiver.localCapabilities, 'offer', transceiver.stream,
+          pc._dtlsRole);
+        mediaSection += 'a=rtcp-rsize\r\n';
 
-      if (transceiver.iceGatherer && pc._iceGatheringState !== 'new' &&
-          (sdpMLineIndex === 0 || !pc._usingBundle)) {
-        transceiver.iceGatherer.getLocalCandidates().forEach(function(cand) {
-          cand.component = 1;
-          mediaSection += 'a=' + SDPUtils.writeCandidate(cand) + '\r\n';
-        });
+        if (transceiver.iceGatherer && pc._iceGatheringState !== 'new' &&
+            (transceiver.sdpMLineIndex === 0 || !pc._usingBundle)) {
+          transceiver.iceGatherer.getLocalCandidates().forEach(function(cand) {
+            cand.component = 1;
+            mediaSection += 'a=' + SDPUtils.writeCandidate(cand) + '\r\n';
+          });
 
-        if (transceiver.iceGatherer.state === 'complete') {
-          mediaSection += 'a=end-of-candidates\r\n';
+          if (transceiver.iceGatherer.state === 'complete') {
+            mediaSection += 'a=end-of-candidates\r\n';
+          }
         }
       }
       mediaSections[transceiver.sdpMLineIndex] = mediaSection;
@@ -1380,23 +1400,7 @@ module.exports = function(window, edgeVersion) {
       var sdpMLineIndex = transceiver.sdpMLineIndex;
       var mediaSection = '';
       if (transceiver.rejected) {
-        if (transceiver.kind === 'application') {
-          if (transceiver.protocol === 'DTLS/SCTP') { // legacy fmt
-            mediaSection += 'm=application 0 DTLS/SCTP 5000\r\n';
-          } else {
-            mediaSection += 'm=application 0 ' + transceiver.protocol +
-                ' webrtc-datachannel\r\n';
-          }
-        } else if (transceiver.kind === 'audio') {
-          mediaSection += 'm=audio 0 UDP/TLS/RTP/SAVPF 0\r\n' +
-              'a=rtpmap:0 PCMU/8000\r\n';
-        } else if (transceiver.kind === 'video') {
-          mediaSection += 'm=video 0 UDP/TLS/RTP/SAVPF 120\r\n' +
-              'a=rtpmap:120 VP8/90000\r\n';
-        }
-        mediaSection += 'c=IN IP4 0.0.0.0\r\n' +
-            'a=inactive\r\n' +
-            'a=mid:' + transceiver.mid + '\r\n';
+        mediaSection = writeRejectedMediaSection(transceiver);
         mediaSections[sdpMLineIndex] = mediaSection;
         return;
       }
@@ -1469,7 +1473,8 @@ module.exports = function(window, edgeVersion) {
           }
           pc._transceivers[j].iceTransport.addRemoteCandidate({});
           sections = SDPUtils.getMediaSections(pc._remoteDescription.sdp);
-          sections[j] += 'a=end-of-candidates\r\n';
+          sections[pc._transceivers[j].sdpMLineIndex] +=
+              'a=end-of-candidates\r\n';
           pc._remoteDescription.sdp =
               SDPUtils.getDescription(pc._remoteDescription.sdp) +
               sections.join('');
@@ -1482,7 +1487,7 @@ module.exports = function(window, edgeVersion) {
         if (candidate.sdpMid) {
           for (var i = 0; i < pc._transceivers.length; i++) {
             if (pc._transceivers[i].mid === candidate.sdpMid) {
-              sdpMLineIndex = i;
+              sdpMLineIndex = pc._transceivers[i].sdpMLineIndex;
               break;
             }
           }
